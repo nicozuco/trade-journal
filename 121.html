@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Trade Journal</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f7f5;--surface:#fff;--surface2:#f1f0ec;--surface3:#e8e7e3;
+  --border:rgba(0,0,0,0.09);--border2:rgba(0,0,0,0.16);
+  --text:#1a1a18;--text2:#6b6b67;--text3:#9c9c97;
+  --green:#1D9E75;--green-bg:#EAF3DE;--green-text:#3B6D11;
+  --red:#D85A30;--red-bg:#FCEBEB;--red-text:#A32D2D;
+  --amber:#BA7517;--amber-bg:#FAEEDA;--amber-text:#633806;
+  --blue:#378ADD;--blue-bg:#E6F1FB;--blue-text:#185FA5;
+  --radius:8px;--radius-lg:12px;--mono:'Courier New',monospace;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#1a1a18;--surface:#242422;--surface2:#2c2c2a;--surface3:#343432;
+  --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.18);
+  --text:#e8e8e4;--text2:#a0a09b;--text3:#6b6b67;
+  --green-bg:#0a2e1e;--green-text:#5DCAA5;
+  --red-bg:#2e0f0f;--red-text:#F0997B;
+  --amber-bg:#2e1f05;--amber-text:#FAC775;
+  --blue-bg:#0a1e35;--blue-text:#85B7EB;
+}}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+input,select,textarea,button{font-family:inherit}
+
+/* NAV */
+.nav{background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+.nav-inner{max-width:1260px;margin:0 auto;padding:0 1rem;display:flex;align-items:center;height:52px}
+.nav-brand{font-size:15px;font-weight:700;margin-right:2rem;white-space:nowrap;letter-spacing:-.3px}
+.nav-tabs{display:flex}
+.nav-tab{padding:0 16px;height:52px;border:none;background:none;color:var(--text2);font-size:13px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
+.nav-tab:hover{color:var(--text)}
+.nav-tab.active{color:var(--text);border-bottom-color:var(--text)}
+
+/* LAYOUT */
+.container{max-width:1260px;margin:0 auto;padding:1.5rem 1rem}
+.section{display:none}.section.active{display:block}
+.page-header{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:1.5rem}
+.page-header h1{font-size:22px;font-weight:600;letter-spacing:-.5px}
+.page-header p{font-size:13px;color:var(--text2);margin-top:3px}
+.section-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:12px}
+.section-sub{font-size:12px;color:var(--text3);margin-bottom:16px;margin-top:-8px}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--surface);color:var(--text);font-size:13px;font-weight:500;cursor:pointer;transition:background .12s;white-space:nowrap}
+.btn:hover{background:var(--surface2)}
+.btn-primary{background:var(--text);color:var(--bg);border-color:var(--text)}
+.btn-primary:hover{opacity:.85}
+.btn-sm{padding:3px 7px;font-size:11px;border-radius:5px}
+.btn-danger{color:var(--red);border-color:transparent}
+.btn-danger:hover{background:var(--red-bg)}
+
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(115px,1fr));gap:9px;margin-bottom:1.5rem}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px}
+.kpi-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+.kpi-value{font-size:20px;font-weight:700;font-family:var(--mono);color:var(--text)}
+.pos{color:var(--green)}.neg{color:var(--red)}.neu{color:var(--blue)}
+
+/* CHARTS */
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.5rem}
+@media(max-width:640px){.charts-row{grid-template-columns:1fr}}
+.chart-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px}
+.chart-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px}
+
+/* TABLE */
+.section-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+.section-label{font-size:14px;font-weight:600}
+.count-tag{font-size:11px;color:var(--text3);margin-left:6px;font-weight:400}
+.toolbar{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.toolbar label{font-size:12px;color:var(--text2)}
+.toolbar select{font-size:12px;padding:5px 9px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface2);color:var(--text);outline:none;cursor:pointer}
+.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--surface)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead{background:var(--surface2)}
+th{padding:9px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--border)}
+td{padding:7px 10px;border-bottom:1px solid var(--border);color:var(--text);white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--surface2)}
+.mono{font-family:var(--mono);font-size:11px}
+.sym{font-weight:700;font-size:12px}
+.long-t{color:var(--green);font-weight:600;font-size:12px}
+.short-t{color:var(--red);font-weight:600;font-size:12px}
+.pnl-p{color:var(--green);font-weight:700;font-family:var(--mono);font-size:12px}
+.pnl-n{color:var(--red);font-weight:700;font-family:var(--mono);font-size:12px}
+
+/* BADGES */
+.badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:.03em}
+.b-win{background:var(--green-bg);color:var(--green-text)}
+.b-loss{background:var(--red-bg);color:var(--red-text)}
+.b-open{background:var(--blue-bg);color:var(--blue-text)}
+
+/* EMOTION CHIPS */
+.emo-wrap{display:flex;flex-wrap:wrap;gap:3px;max-width:200px}
+.emo-chip{display:inline-block;padding:1px 5px;border-radius:3px;font-size:10px;font-weight:600;white-space:nowrap}
+.eg{background:var(--green-bg);color:var(--green-text)}
+.eb{background:var(--red-bg);color:var(--red-text)}
+.en{background:var(--amber-bg);color:var(--amber-text)}
+
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;align-items:center;justify-content:center;padding:1rem}
+.overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:var(--radius-lg);width:100%;max-width:700px;max-height:92vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.35)}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:1}
+.modal-head h2{font-size:16px;font-weight:600}
+.modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--text2);line-height:1;padding:2px 6px;border-radius:4px}
+.modal-close:hover{background:var(--surface2);color:var(--text)}
+.modal-body{padding:20px}
+.modal-foot{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;position:sticky;bottom:0;background:var(--surface)}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:500px){.fg{grid-template-columns:1fr}}
+.f{display:flex;flex-direction:column;gap:5px}
+.f.full{grid-column:1/-1}
+.fl{font-size:12px;font-weight:500;color:var(--text2)}
+.fi{padding:8px 10px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-size:13px;outline:none;width:100%}
+.fi:focus{border-color:var(--blue)}
+select.fi{cursor:pointer}
+.emo-picker{display:flex;flex-wrap:wrap;gap:5px;padding:10px;background:var(--surface2);border-radius:var(--radius);border:1px solid var(--border2)}
+.eo{padding:4px 10px;border-radius:5px;font-size:12px;font-weight:600;cursor:pointer;border:2px solid transparent;transition:all .12s;user-select:none}
+.eo.eg{background:var(--green-bg);color:var(--green-text)}
+.eo.eb{background:var(--red-bg);color:var(--red-text)}
+.eo.en{background:var(--amber-bg);color:var(--amber-text)}
+.eo.sel{border-color:currentColor;box-shadow:0 0 0 2px rgba(0,0,0,.08)}
+
+/* MONTHLY TABLE */
+.mtable{width:100%;border-collapse:collapse;font-size:12px}
+.mtable th{padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);white-space:nowrap}
+.mtable td{padding:8px 12px;border-bottom:1px solid var(--border)}
+.mtable tr:last-child td{border-bottom:none;background:var(--surface2);font-weight:700}
+.mtable tbody tr:hover td{background:var(--surface2)}
+
+/* CALENDAR */
+.cal-wrap{overflow-x:auto}
+.cal{width:100%;border-collapse:collapse;min-width:600px}
+.cal th{padding:10px 8px;text-align:center;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)}
+.cal td{border:1px solid var(--border);vertical-align:top;padding:7px 8px;min-height:76px;background:var(--surface);min-width:70px}
+.cal td.emp{background:var(--surface2)}
+.cal td.wk{background:var(--surface2);text-align:right;min-width:90px;vertical-align:middle}
+.cal-dn{font-size:11px;color:var(--text3);font-weight:500;margin-bottom:4px}
+.cal-pnl{font-size:13px;font-weight:700;font-family:var(--mono)}
+.cal-cnt{font-size:10px;color:var(--text3);margin-top:2px}
+.cal-wlbl{font-size:10px;color:var(--text3);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.cal-wpnl{font-size:14px;font-weight:700;font-family:var(--mono)}
+.cal-wcnt{font-size:10px;color:var(--text3);margin-top:3px}
+
+/* ===== ANALYTICS ===== */
+.analytics-divider{height:1px;background:var(--border);margin:2rem 0}
+
+/* Emotion rows */
+.emo-table{width:100%;border-collapse:collapse}
+.emo-table th{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:8px 12px;border-bottom:1px solid var(--border);text-align:left}
+.emo-table td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.emo-table tr:last-child td{border-bottom:none}
+.emo-table tbody tr:hover td{background:var(--surface2)}
+.emo-pill-lg{display:inline-block;padding:3px 10px;border-radius:5px;font-size:12px;font-weight:700}
+.wr-bar-outer{height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;min-width:100px;flex:1}
+.wr-bar-inner{height:100%;border-radius:3px;transition:width .3s}
+.wr-row{display:flex;align-items:center;gap:8px}
+.wr-pct{font-size:12px;font-weight:700;min-width:36px;text-align:right}
+.empty-state{text-align:center;padding:3rem 1rem;color:var(--text3)}
+.empty-state .es-icon{font-size:36px;margin-bottom:10px}
+.empty-state p{font-size:13px;line-height:1.6}
+
+/* Strategy cards */
+.strat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:1.5rem}
+.strat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;text-align:center}
+.strat-name{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.strat-fullname{font-size:12px;color:var(--text2);margin-bottom:16px}
+.strat-wr{font-size:36px;font-weight:700;letter-spacing:-1px;margin-bottom:4px}
+.strat-wr.wrhigh{color:var(--green)}
+.strat-wr.wrlow{color:var(--red)}
+.strat-wr.wrmid{color:var(--amber)}
+.strat-donut{position:relative;height:110px;margin:12px auto;max-width:110px}
+.strat-stats{display:flex;justify-content:center;gap:20px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+.strat-stat-val{font-size:16px;font-weight:700;font-family:var(--mono)}
+.strat-stat-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
+.strat-no-data{color:var(--text3);font-size:13px;padding:20px 0}
+
+/* Emotion chart box */
+.emo-chart-wrap{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.5rem}
+@media(max-width:700px){.emo-chart-wrap{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <span class="nav-brand">📈 Trade Journal</span>
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="showTab('dashboard',this)">Dashboard</button>
+      <button class="nav-tab" onclick="showTab('monthly',this)">Monthly</button>
+      <button class="nav-tab" onclick="showTab('weekly',this)">Weekly</button>
+      <button class="nav-tab" onclick="showTab('analytics',this)">Analytics</button>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+
+<!-- ========== DASHBOARD ========== -->
+<section id="tab-dashboard" class="section active">
+  <div class="page-header">
+    <div><h1>Dashboard</h1><p>Forex · Febrero – Abril 2026</p></div>
+    <button class="btn btn-primary" onclick="openModal()">＋ Añadir trade</button>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-label">Balance inicial</div><div class="kpi-value">$5,000</div></div>
+    <div class="kpi"><div class="kpi-label">Balance actual</div><div class="kpi-value neg">$4,935.99</div></div>
+    <div class="kpi"><div class="kpi-label">P&L total</div><div class="kpi-value" id="kpi-pnl"></div></div>
+    <div class="kpi"><div class="kpi-label">Win rate</div><div class="kpi-value" id="kpi-wr"></div></div>
+    <div class="kpi"><div class="kpi-label">Trades</div><div class="kpi-value neu" id="kpi-total"></div></div>
+    <div class="kpi"><div class="kpi-label">Wins / Losses</div><div class="kpi-value" id="kpi-wl"></div></div>
+    <div class="kpi"><div class="kpi-label">Avg win</div><div class="kpi-value pos" id="kpi-avgw"></div></div>
+    <div class="kpi"><div class="kpi-label">Avg loss</div><div class="kpi-value neg" id="kpi-avgl"></div></div>
+    <div class="kpi"><div class="kpi-label">Max ganancia</div><div class="kpi-value pos" id="kpi-maxg"></div></div>
+    <div class="kpi"><div class="kpi-label">Max pérdida</div><div class="kpi-value neg" id="kpi-maxl"></div></div>
+  </div>
+  <div class="charts-row">
+    <div class="chart-box">
+      <div class="chart-title">Curva de equity</div>
+      <div style="position:relative;height:200px"><canvas id="eqChart"></canvas></div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">P&L mensual</div>
+      <div style="position:relative;height:200px"><canvas id="moDash"></canvas></div>
+    </div>
+  </div>
+  <div class="section-bar">
+    <div><span class="section-label">Registro de trades</span><span class="count-tag" id="tradeCount"></span></div>
+    <div class="toolbar">
+      <label>Símbolo</label>
+      <select id="fs" onchange="applyFilters()">
+        <option value="All">Todos</option><option value="EURUSD">EURUSD</option>
+        <option value="GBPUSD">GBPUSD</option><option value="USDJPY">USDJPY</option>
+        <option value="GBPJPY">GBPJPY</option><option value="XAUUSD">XAUUSD</option>
+        <option value="NQ">NQ</option><option value="ES">ES</option>
+      </select>
+      <label>Dir.</label>
+      <select id="fd" onchange="applyFilters()">
+        <option value="All">Todas</option><option value="Long">Long</option><option value="Short">Short</option>
+      </select>
+      <label>Estado</label>
+      <select id="fst" onchange="applyFilters()">
+        <option value="All">Todos</option><option value="CLOSED">Cerrado</option><option value="OPEN">Abierto</option>
+      </select>
+      <label>Resultado</label>
+      <select id="fr" onchange="applyFilters()">
+        <option value="All">Todos</option><option value="WIN">Win</option><option value="LOSS">Loss</option>
+      </select>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th>#</th><th>Símbolo</th><th>Mercado</th><th>Dir.</th>
+        <th>Entrada</th><th>Qty</th><th>Apertura</th>
+        <th>Salida</th><th>Cierre</th>
+        <th>P&L $</th><th>P&L %</th><th>Estado</th>
+        <th>Estrategia</th><th>Emociones</th><th>Acciones</th>
+      </tr></thead>
+      <tbody id="tradeBody"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ========== MONTHLY ========== -->
+<section id="tab-monthly" class="section">
+  <div class="page-header">
+    <div><h1>Monthly Overview</h1><p>Rendimiento mensual — 2026</p></div>
+  </div>
+  <div class="chart-box" style="margin-bottom:1.5rem">
+    <div class="chart-title">P&L acumulado por mes</div>
+    <div style="position:relative;height:200px"><canvas id="moFull"></canvas></div>
+  </div>
+  <div class="table-wrap">
+    <table class="mtable">
+      <thead><tr>
+        <th>Mes</th><th>Total P/L</th><th>Avg Gain</th><th>Avg Loss</th>
+        <th>Win Rate</th><th>Trades</th><th>Max Gain</th><th>Max Loss</th>
+      </tr></thead>
+      <tbody id="moBody"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ========== WEEKLY ========== -->
+<section id="tab-weekly" class="section">
+  <div class="page-header">
+    <div><h1>Weekly Overview</h1><p>Calendario de rendimiento semanal</p></div>
+    <div class="toolbar">
+      <label>Mes</label>
+      <select id="cal-month" onchange="renderCal()" style="font-size:13px;padding:6px 10px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface2);color:var(--text);outline:none">
+        <option value="2026-02">Feb 2026</option>
+        <option value="2026-03" selected>Mar 2026</option>
+        <option value="2026-04">Abr 2026</option>
+      </select>
+    </div>
+  </div>
+  <div class="cal-wrap">
+    <table class="cal" id="calTable"></table>
+  </div>
+</section>
+
+<!-- ========== ANALYTICS ========== -->
+<section id="tab-analytics" class="section">
+  <div class="page-header">
+    <div><h1>Analytics</h1><p>Análisis de rendimiento por emociones y estrategias</p></div>
+  </div>
+
+  <!-- EMOCIONES -->
+  <div class="section-title">Rendimiento por emoción</div>
+  <div class="section-sub">Basado en trades cerrados con emociones registradas</div>
+
+  <div class="emo-chart-wrap">
+    <div class="chart-box">
+      <div class="chart-title">Avg P&L por emoción</div>
+      <div style="position:relative;height:260px"><canvas id="emoBarChart"></canvas></div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">Win rate por emoción</div>
+      <div style="position:relative;height:260px"><canvas id="emoWrChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="table-wrap" style="margin-bottom:2rem" id="emoTableWrap">
+    <table class="emo-table">
+      <thead><tr>
+        <th>Emoción</th>
+        <th>Tipo</th>
+        <th>Trades</th>
+        <th>Win rate</th>
+        <th>Avg P&L</th>
+        <th>Total P&L</th>
+      </tr></thead>
+      <tbody id="emoTableBody"></tbody>
+    </table>
+  </div>
+
+  <div class="analytics-divider"></div>
+
+  <!-- ESTRATEGIAS -->
+  <div class="section-title" style="margin-bottom:4px">Win rate por estrategia</div>
+  <div class="section-sub">Comparativa de rendimiento entre estrategias</div>
+
+  <div class="strat-grid" id="stratGrid"></div>
+
+  <div class="chart-box">
+    <div class="chart-title">Comparativa estrategias — Win rate & Avg P&L</div>
+    <div style="position:relative;height:220px"><canvas id="stratCompChart"></canvas></div>
+  </div>
+
+</section>
+</div><!-- /container -->
+
+<!-- ========== MODAL ========== -->
+<div class="overlay" id="overlay" onclick="bgClose(event)">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="mTitle">Añadir trade</h2>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="fg">
+        <div class="f">
+          <label class="fl">Símbolo</label>
+          <input class="fi" id="mSym" list="symList" placeholder="EURUSD"/>
+          <datalist id="symList">
+            <option value="EURUSD"/><option value="GBPUSD"/><option value="USDJPY"/>
+            <option value="GBPJPY"/><option value="AUDUSD"/><option value="USDCAD"/>
+            <option value="USDCHF"/><option value="NZDUSD"/><option value="EURJPY"/>
+            <option value="EURGBP"/><option value="XAUUSD"/>
+            <option value="NQ"/><option value="ES"/><option value="YM"/>
+            <option value="RTY"/><option value="CL"/><option value="GC"/>
+          </datalist>
+        </div>
+        <div class="f">
+          <label class="fl">Mercado</label>
+          <select class="fi" id="mMkt"><option value="Forex">Forex</option><option value="Futures">Futures</option></select>
+        </div>
+        <div class="f">
+          <label class="fl">Dirección</label>
+          <select class="fi" id="mDir"><option value="Long">Long / Buy</option><option value="Short">Short / Sell</option></select>
+        </div>
+        <div class="f">
+          <label class="fl">Estrategia</label>
+          <select class="fi" id="mStrat">
+            <option value="">— Sin estrategia</option>
+            <option value="BAR">BAR – Barrido Asia Reversal</option>
+            <option value="FRA">FRA – Front Run Asia</option>
+            <option value="FCL">FCL – FVG Continuación Liquidez</option>
+          </select>
+        </div>
+        <div class="f">
+          <label class="fl">Precio de entrada</label>
+          <input class="fi" id="mEntry" type="number" step="0.00001" placeholder="1.15000" oninput="calcPnl()"/>
+        </div>
+        <div class="f">
+          <label class="fl">Cantidad (lots)</label>
+          <input class="fi" id="mQty" type="number" step="0.01" placeholder="0.50" oninput="calcPnl()"/>
+        </div>
+        <div class="f">
+          <label class="fl">Fecha apertura</label>
+          <input class="fi" id="mOpen" type="date"/>
+        </div>
+        <div class="f">
+          <label class="fl">Estado</label>
+          <select class="fi" id="mStat" onchange="toggleExit()">
+            <option value="OPEN">Abierto</option><option value="CLOSED">Cerrado</option>
+          </select>
+        </div>
+        <div class="f">
+          <label class="fl">Stop Loss</label>
+          <input class="fi" id="mSL" type="number" step="0.00001" placeholder="1.14800"/>
+        </div>
+        <div class="f">
+          <label class="fl">Target</label>
+          <input class="fi" id="mTarget" type="number" step="0.00001" placeholder="1.15600"/>
+        </div>
+        <div class="f" id="gExit">
+          <label class="fl">Precio de salida</label>
+          <input class="fi" id="mExit" type="number" step="0.00001" placeholder="1.15200" oninput="calcPnl()"/>
+        </div>
+        <div class="f" id="gExitDate">
+          <label class="fl">Fecha de cierre</label>
+          <input class="fi" id="mExitDate" type="date"/>
+        </div>
+        <div class="f full">
+          <label class="fl">P&L ($) <span style="color:var(--text3);font-weight:400">— auto-calculado, editable</span></label>
+          <input class="fi" id="mPnl" type="number" step="0.01" placeholder="0.00"/>
+        </div>
+        <div class="f full">
+          <label class="fl">Emociones</label>
+          <div class="emo-picker" id="emoPicker"></div>
+        </div>
+        <div class="f full">
+          <label class="fl">Observaciones</label>
+          <textarea class="fi" id="mRem" rows="2" placeholder="Notas del trade..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveTrade()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+// ===== EMOTIONS =====
+const EMOTS=[
+  {n:'Calmado',t:'eg'},{n:'Enfocado',t:'eg'},{n:'Paciente',t:'eg'},
+  {n:'Claro',t:'eg'},{n:'Confiado',t:'eg'},
+  {n:'Cansado',t:'en'},{n:'Dudoso',t:'en'},{n:'Eufórico',t:'en'},{n:'Aburrido',t:'en'},
+  {n:'Ansioso',t:'eb'},{n:'Frustrado',t:'eb'},{n:'FOMO',t:'eb'},{n:'Miedo',t:'eb'},
+];
+const EMO_COLOR={eg:'#1D9E75',en:'#EF9F27',eb:'#D85A30'};
+const EMO_BG={eg:'rgba(29,158,117,0.15)',en:'rgba(239,159,39,0.15)',eb:'rgba(216,90,48,0.15)'};
+
+// ===== DATA =====
+const INIT=[
+  {id:1,symbol:'EURUSD',market:'Forex',dir:'Long',entry:1.18087,qty:0.59,openDate:'2026-02-27',strategy:'',sl:null,target:null,exit:1.18048,exitDate:'2026-02-26',pnl:-25.37,pnlPct:-0.0364,status:'CLOSED',result:'LOSS',emotions:[],remarks:''},
+  {id:2,symbol:'EURUSD',market:'Forex',dir:'Long',entry:1.17354,qty:0.43,openDate:'2026-03-02',strategy:'',sl:null,target:null,exit:1.17279,exitDate:'2026-03-01',pnl:-33.97,pnlPct:-0.0673,status:'CLOSED',result:'LOSS',emotions:[],remarks:''},
+  {id:3,symbol:'EURUSD',market:'Forex',dir:'Short',entry:1.16245,qty:0.66,openDate:'2026-03-04',strategy:'',sl:null,target:null,exit:1.16076,exitDate:'2026-03-03',pnl:108.9,pnlPct:0.1419,status:'CLOSED',result:'WIN',emotions:[],remarks:''},
+  {id:4,symbol:'EURUSD',market:'Forex',dir:'Long',entry:1.16005,qty:0.35,openDate:'2026-03-04',strategy:'',sl:null,target:null,exit:1.15963,exitDate:'2026-03-03',pnl:-16.1,pnlPct:-0.0397,status:'CLOSED',result:'LOSS',emotions:[],remarks:''},
+  {id:5,symbol:'EURUSD',market:'Forex',dir:'Long',entry:1.16013,qty:0.29,openDate:'2026-03-04',strategy:'',sl:null,target:null,exit:1.15951,exitDate:'2026-03-03',pnl:-19.14,pnlPct:-0.0569,status:'CLOSED',result:'LOSS',emotions:[],remarks:''},
+  {id:6,symbol:'EURUSD',market:'Forex',dir:'Long',entry:1.15862,qty:0.18,openDate:'2026-03-05',strategy:'',sl:null,target:null,exit:1.16165,exitDate:'2026-03-04',pnl:53.82,pnlPct:0.2581,status:'CLOSED',result:'WIN',emotions:[],remarks:''},
+  {id:7,symbol:'EURUSD',market:'Forex',dir:'Long',entry:1.15739,qty:0.18,openDate:'2026-03-06',strategy:'',sl:null,target:null,exit:1.15644,exitDate:'2026-03-05',pnl:-17.82,pnlPct:-0.0855,status:'CLOSED',result:'LOSS',emotions:[],remarks:''},
+  {id:8,symbol:'EURUSD',market:'Forex',dir:'Short',entry:1.16373,qty:0.48,openDate:'2026-03-10',strategy:'',sl:null,target:null,exit:1.16422,exitDate:'2026-03-09',pnl:-25.44,pnlPct:-0.0455,status:'CLOSED',result:'LOSS',emotions:[],remarks:''},
+  {id:9,symbol:'EURUSD',market:'Forex',dir:'Short',entry:1.16458,qty:0.49,openDate:'2026-03-10',strategy:'',sl:null,target:null,exit:1.16523,exitDate:'2026-03-09',pnl:-33.81,pnlPct:-0.0592,status:'CLOSED',result:'LOSS',emotions:[],remarks:''},
+  {id:10,symbol:'EURUSD',market:'Forex',dir:'Long',entry:1.16176,qty:0.66,openDate:'2026-03-11',strategy:'',sl:null,target:null,exit:1.16111,exitDate:'2026-03-10',pnl:-45.54,pnlPct:-0.0594,status:'CLOSED',result:'LOSS',emotions:[],remarks:''},
+  {id:11,symbol:'EURUSD',market:'Forex',dir:'Long',entry:1.16116,qty:0.45,openDate:'2026-03-11',strategy:'',sl:null,target:null,exit:1.16157,exitDate:'2026-03-10',pnl:16.65,pnlPct:0.0319,status:'CLOSED',result:'WIN',emotions:[],remarks:''},
+  {id:12,symbol:'EURUSD',market:'Forex',dir:'Long',entry:1.16045,qty:0.89,openDate:'2026-03-11',strategy:'',sl:null,target:null,exit:1.15979,exitDate:'2026-03-10',pnl:-62.3,pnlPct:-0.0603,status:'CLOSED',result:'LOSS',emotions:[],remarks:''},
+  {id:13,symbol:'EURUSD',market:'Forex',dir:'Long',entry:1.14422,qty:1.1,openDate:'2026-03-13',strategy:'',sl:null,target:null,exit:1.14456,exitDate:'2026-03-12',pnl:33,pnlPct:0.0262,status:'CLOSED',result:'WIN',emotions:[],remarks:''},
+  {id:14,symbol:'EURUSD',market:'Forex',dir:'Long',entry:1.14583,qty:1.14,openDate:'2026-03-13',strategy:'',sl:null,target:null,exit:1.14684,exitDate:'2026-03-12',pnl:110.58,pnlPct:0.0847,status:'CLOSED',result:'WIN',emotions:[],remarks:''},
+  {id:15,symbol:'EURUSD',market:'Forex',dir:'Short',entry:1.14812,qty:0.3,openDate:'2026-03-16',strategy:'',sl:null,target:null,exit:1.14822,exitDate:'2026-03-15',pnl:-4.2,pnlPct:-0.0122,status:'CLOSED',result:'LOSS',emotions:[],remarks:''},
+  {id:16,symbol:'EURUSD',market:'Forex',dir:'Short',entry:1.14819,qty:0.4,openDate:'2026-03-16',strategy:'',sl:null,target:null,exit:1.14852,exitDate:'2026-03-15',pnl:-14.8,pnlPct:-0.0322,status:'CLOSED',result:'LOSS',emotions:[],remarks:''},
+  {id:17,symbol:'EURUSD',market:'Forex',dir:'Short',entry:1.14826,qty:0.4,openDate:'2026-03-16',strategy:'',sl:null,target:null,exit:1.14852,exitDate:'2026-03-15',pnl:-12,pnlPct:-0.0261,status:'CLOSED',result:'LOSS',emotions:[],remarks:''},
+  {id:18,symbol:'EURUSD',market:'Forex',dir:'Short',entry:1.14959,qty:0.1,openDate:'2026-03-17',strategy:'',sl:null,target:null,exit:1.14939,exitDate:'2026-03-16',pnl:1.6,pnlPct:0.0139,status:'CLOSED',result:'WIN',emotions:[],remarks:''},
+  {id:19,symbol:'EURUSD',market:'Forex',dir:'Short',entry:1.15067,qty:0.6,openDate:'2026-03-17',strategy:'',sl:null,target:null,exit:1.15053,exitDate:'2026-03-16',pnl:6,pnlPct:0.0087,status:'CLOSED',result:'WIN',emotions:[],remarks:''},
+  {id:20,symbol:'EURUSD',market:'Forex',dir:'Short',entry:1.1511,qty:0.5,openDate:'2026-03-17',strategy:'',sl:null,target:null,exit:1.1506,exitDate:'2026-03-16',pnl:23,pnlPct:0.04,status:'CLOSED',result:'WIN',emotions:[],remarks:''},
+  {id:21,symbol:'EURUSD',market:'Forex',dir:'Long',entry:1.15224,qty:0.39,openDate:'2026-03-18',strategy:'',sl:null,target:null,exit:1.15345,exitDate:'2026-03-17',pnl:45.63,pnlPct:0.1015,status:'CLOSED',result:'WIN',emotions:[],remarks:''},
+  {id:22,symbol:'EURUSD',market:'Forex',dir:'Long',entry:1.1566,qty:0.65,openDate:'2026-03-20',strategy:'',sl:null,target:null,exit:1.15794,exitDate:'2026-03-19',pnl:84.5,pnlPct:0.1124,status:'CLOSED',result:'WIN',emotions:[],remarks:''},
+  {id:23,symbol:'EURUSD',market:'Forex',dir:'Long',entry:1.15289,qty:0.7,openDate:'2026-03-23',strategy:'',sl:null,target:null,exit:1.15244,exitDate:'2026-03-22',pnl:-34.3,pnlPct:-0.0425,status:'CLOSED',result:'LOSS',emotions:[],remarks:''},
+  {id:24,symbol:'EURUSD',market:'Forex',dir:'Long',entry:1.15332,qty:0.86,openDate:'2026-03-23',strategy:'',sl:null,target:null,exit:1.15282,exitDate:'2026-03-22',pnl:-46.44,pnlPct:-0.0468,status:'CLOSED',result:'LOSS',emotions:[],remarks:''},
+  {id:25,symbol:'EURUSD',market:'Forex',dir:'Long',entry:1.15876,qty:0.91,openDate:'2026-03-24',strategy:'',sl:null,target:null,exit:1.15811,exitDate:'2026-03-23',pnl:-62.79,pnlPct:-0.0595,status:'CLOSED',result:'LOSS',emotions:[],remarks:''},
+  {id:26,symbol:'EURUSD',market:'Forex',dir:'Long',entry:1.15875,qty:1.2,openDate:'2026-03-24',strategy:'',sl:null,target:null,exit:1.15847,exitDate:'2026-03-23',pnl:-38.4,pnlPct:-0.0276,status:'CLOSED',result:'LOSS',emotions:[],remarks:''},
+  {id:27,symbol:'GBPUSD',market:'Forex',dir:'Short',entry:1.16107,qty:1,openDate:'2026-03-25',strategy:'',sl:null,target:null,exit:1.15941,exitDate:'2026-03-24',pnl:162,pnlPct:0.1395,status:'CLOSED',result:'WIN',emotions:[],remarks:''},
+  {id:28,symbol:'EURUSD',market:'Forex',dir:'Long',entry:1.33482,qty:0.7,openDate:'2026-03-26',strategy:'',sl:null,target:null,exit:1.33416,exitDate:'2026-03-25',pnl:-49,pnlPct:-0.0524,status:'CLOSED',result:'LOSS',emotions:[],remarks:''},
+  {id:29,symbol:'EURUSD',market:'Forex',dir:'Long',entry:1.15547,qty:0.84,openDate:'2026-03-26',strategy:'',sl:null,target:null,exit:1.156,exitDate:'2026-03-25',pnl:41.16,pnlPct:0.0424,status:'CLOSED',result:'WIN',emotions:[],remarks:''},
+  {id:30,symbol:'EURUSD',market:'Forex',dir:'Long',entry:1.15512,qty:0.95,openDate:'2026-03-26',strategy:'',sl:null,target:null,exit:1.15475,exitDate:'2026-03-25',pnl:-38.95,pnlPct:-0.0355,status:'CLOSED',result:'LOSS',emotions:[],remarks:''},
+  {id:31,symbol:'EURUSD',market:'Forex',dir:'Long',entry:1.15209,qty:1.09,openDate:'2026-03-27',strategy:'',sl:null,target:null,exit:1.15181,exitDate:'2026-03-26',pnl:-34.88,pnlPct:-0.0278,status:'CLOSED',result:'LOSS',emotions:[],remarks:''},
+  {id:32,symbol:'EURUSD',market:'Forex',dir:'Long',entry:1.14899,qty:1.16,openDate:'2026-03-30',strategy:'',sl:null,target:null,exit:1.1485,exitDate:'2026-03-29',pnl:-61.48,pnlPct:-0.0461,status:'CLOSED',result:'LOSS',emotions:[],remarks:''},
+  {id:33,symbol:'GBPUSD',market:'Forex',dir:'Short',entry:1.32141,qty:1,openDate:'2026-03-31',strategy:'',sl:null,target:null,exit:1.32067,exitDate:'2026-03-30',pnl:70,pnlPct:0.053,status:'CLOSED',result:'WIN',emotions:[],remarks:''},
+  {id:34,symbol:'EURUSD',market:'Forex',dir:'Short',entry:1.15675,qty:1,openDate:'2026-04-01',strategy:'',sl:null,target:null,exit:1.1568,exitDate:'2026-03-31',pnl:-9,pnlPct:-0.0078,status:'CLOSED',result:'LOSS',emotions:[],remarks:''},
+  {id:35,symbol:'GBPUSD',market:'Forex',dir:'Short',entry:1.32675,qty:1,openDate:'2026-04-01',strategy:'',sl:null,target:null,exit:1.32726,exitDate:'2026-03-31',pnl:-55,pnlPct:-0.0415,status:'CLOSED',result:'LOSS',emotions:[],remarks:''},
+  {id:36,symbol:'EURUSD',market:'Forex',dir:'Long',entry:1.15831,qty:1,openDate:'2026-04-01',strategy:'',sl:null,target:null,exit:1.15853,exitDate:'2026-03-31',pnl:18,pnlPct:0.0155,status:'CLOSED',result:'WIN',emotions:[],remarks:''},
+  {id:37,symbol:'EURUSD',market:'Forex',dir:'Long',entry:1.15859,qty:1.1,openDate:'2026-04-01',strategy:'',sl:null,target:null,exit:1.15818,exitDate:'2026-03-31',pnl:-49.5,pnlPct:-0.0388,status:'CLOSED',result:'LOSS',emotions:[],remarks:''},
+  {id:38,symbol:'EURUSD',market:'Forex',dir:'Short',entry:1.15875,qty:0.38,openDate:'2026-04-01',strategy:'',sl:null,target:null,exit:1.15935,exitDate:'2026-03-31',pnl:-24.32,pnlPct:-0.0552,status:'CLOSED',result:'LOSS',emotions:[],remarks:''},
+  {id:39,symbol:'EURUSD',market:'Forex',dir:'Long',entry:1.15279,qty:0.45,openDate:'2026-04-02',strategy:'BAR',sl:1.15229,target:1.15427,exit:1.15229,exitDate:'2026-04-01',pnl:-24.3,pnlPct:-0.0468,status:'CLOSED',result:'LOSS',emotions:['Calmado','Paciente','Claro','Confiado'],remarks:''},
+  {id:40,symbol:'EURUSD',market:'Forex',dir:'Long',entry:1.15266,qty:0.36,openDate:'2026-04-02',strategy:'BAR',sl:null,target:null,exit:null,exitDate:null,pnl:null,pnlPct:null,status:'OPEN',result:'OPEN',emotions:['Calmado','Paciente','Claro','Confiado'],remarks:''},
+];
+
+// ===== STATE =====
+let trades=JSON.parse(localStorage.getItem('tj_v2')||'null')||INIT.map(t=>({...t}));
+let nextId=Math.max(...trades.map(t=>t.id),40)+1;
+let editId=null,selEmo=[];
+let eqC=null,moDashC=null,moFullC=null,emoBarC=null,emoWrC=null,stratCompC=null;
+const stratDonuts={};
+const save=()=>localStorage.setItem('tj_v2',JSON.stringify(trades));
+
+// ===== TABS =====
+function showTab(name,btn){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='monthly')renderMonthly();
+  if(name==='weekly')renderCal();
+  if(name==='analytics')renderAnalytics();
+}
+
+// ===== UTILS =====
+const fmt=v=>v===null||isNaN(v)?'—':(v>=0?'+$':'-$')+Math.abs(v).toFixed(2);
+const fmtPct=v=>v===null||isNaN(v)?'—':(v>=0?'+':'')+v.toFixed(2)+'%';
+const isDark=matchMedia('(prefers-color-scheme:dark)').matches;
+const tc=isDark?'#6b6b67':'#9c9c97';
+const gc=isDark?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.05)';
+
+// ===== FILTERS & KPI =====
+function getFiltered(){
+  const s=document.getElementById('fs').value,d=document.getElementById('fd').value,
+        st=document.getElementById('fst').value,r=document.getElementById('fr').value;
+  return trades.filter(t=>(s==='All'||t.symbol===s)&&(d==='All'||t.dir===d)&&(st==='All'||t.status===st)&&(r==='All'||t.result===r));
+}
+function updateKPIs(f){
+  const cl=f.filter(t=>t.status==='CLOSED'&&t.pnl!==null);
+  const wi=cl.filter(t=>t.result==='WIN'),lo=cl.filter(t=>t.result==='LOSS');
+  const tp=cl.reduce((s,t)=>s+t.pnl,0);
+  const wr=cl.length?wi.length/cl.length*100:0;
+  const aw=wi.length?wi.reduce((s,t)=>s+t.pnl,0)/wi.length:null;
+  const al=lo.length?lo.reduce((s,t)=>s+t.pnl,0)/lo.length:null;
+  const ps=cl.map(t=>t.pnl);
+  const set=(id,v,cls)=>{const e=document.getElementById(id);e.textContent=v;e.className='kpi-value'+(cls?' '+cls:'')};
+  set('kpi-pnl',fmt(tp),tp>=0?'pos':'neg');
+  set('kpi-wr',wr.toFixed(1)+'%','');
+  set('kpi-total',cl.length,'neu');
+  set('kpi-wl',wi.length+' / '+lo.length,'');
+  set('kpi-avgw',aw!==null?fmt(aw):'—','pos');
+  set('kpi-avgl',al!==null?fmt(al):'—','neg');
+  set('kpi-maxg',ps.length?fmt(Math.max(...ps)):'—','pos');
+  set('kpi-maxl',ps.length?fmt(Math.min(...ps)):'—','neg');
+}
+
+// ===== CHARTS =====
+function updEq(f){
+  const cl=f.filter(t=>t.status==='CLOSED'&&t.pnl!==null);let c=0;
+  eqC.data.labels=cl.map(t=>t.id);
+  eqC.data.datasets[0].data=cl.map(t=>parseFloat((c+=t.pnl).toFixed(2)));
+  eqC.update();
+}
+function moData(f){
+  const keys=['2026-01','2026-02','2026-03','2026-04','2026-05','2026-06','2026-07','2026-08','2026-09','2026-10','2026-11','2026-12'];
+  const r={};keys.forEach(k=>r[k]=0);
+  f.filter(t=>t.status==='CLOSED'&&t.pnl!==null&&t.openDate).forEach(t=>{const m=t.openDate.substring(0,7);if(r[m]!==undefined)r[m]+=t.pnl;});
+  return keys.map(k=>parseFloat(r[k].toFixed(2)));
+}
+function updMoDash(f){
+  const vals=moData(f);
+  const lbls=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const nz=vals.map((v,i)=>v!==0?i:-1).filter(i=>i>=0);
+  const s=nz.length?nz[0]:0,e=nz.length?nz[nz.length-1]+1:4;
+  moDashC.data.labels=lbls.slice(s,e);
+  moDashC.data.datasets[0].data=vals.slice(s,e);
+  moDashC.data.datasets[0].backgroundColor=vals.slice(s,e).map(v=>v>=0?'#5DCAA5':'#F0997B');
+  moDashC.update();
+}
+
+// ===== TABLE =====
+function emoHtml(emos){
+  if(!emos||!emos.length)return '<span style="font-size:11px;color:var(--text3)">—</span>';
+  return '<div class="emo-wrap">'+emos.map(e=>{const i=EMOTS.find(x=>x.n===e);return`<span class="emo-chip ${i?i.t:'en'}">${e}</span>`}).join('')+'</div>';
+}
+function renderTable(f){
+  document.getElementById('tradeCount').textContent=f.length+' trades';
+  const stmap={BAR:'BAR',FRA:'FRA',FCL:'FCL'};
+  document.getElementById('tradeBody').innerHTML=f.map(t=>{
+    const ps=t.pnl===null?'—':(t.pnl>=0?'+$':'-$')+Math.abs(t.pnl).toFixed(2);
+    const badge=t.result==='WIN'?'<span class="badge b-win">WIN</span>':t.result==='LOSS'?'<span class="badge b-loss">LOSS</span>':'<span class="badge b-open">OPEN</span>';
+    return`<tr>
+      <td class="mono">${t.id}</td><td class="sym">${t.symbol}</td>
+      <td style="font-size:11px;color:var(--text2)">${t.market}</td>
+      <td class="${t.dir==='Long'?'long-t':'short-t'}">${t.dir}</td>
+      <td class="mono">${t.entry.toFixed(5)}</td><td class="mono">${t.qty}</td>
+      <td style="font-size:11px;color:var(--text2)">${t.openDate||'—'}</td>
+      <td class="mono">${t.exit!==null?t.exit.toFixed(5):'—'}</td>
+      <td style="font-size:11px;color:var(--text2)">${t.exitDate||'—'}</td>
+      <td class="${t.pnl===null?'':(t.pnl>=0?'pnl-p':'pnl-n')}">${ps}</td>
+      <td style="font-size:11px;${t.pnlPct===null?'':(t.pnlPct>=0?'color:var(--green)':'color:var(--red)')}">${fmtPct(t.pnlPct)}</td>
+      <td>${badge}</td>
+      <td style="font-size:11px;color:var(--text2)">${stmap[t.strategy]||'—'}</td>
+      <td>${emoHtml(t.emotions)}</td>
+      <td style="display:flex;gap:3px">
+        <button class="btn btn-sm" onclick="openModal(${t.id})">✏️</button>
+        <button class="btn btn-sm btn-danger" onclick="delTrade(${t.id})">🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+function applyFilters(){const f=getFiltered();updateKPIs(f);updEq(f);updMoDash(f);renderTable(f);}
+
+// ===== MODAL =====
+function buildPicker(){
+  document.getElementById('emoPicker').innerHTML=EMOTS.map(e=>`<span class="eo ${e.t}" data-n="${e.n}" onclick="togEmo(this)">${e.n}</span>`).join('');
+}
+function togEmo(el){const n=el.dataset.n;if(selEmo.includes(n)){selEmo=selEmo.filter(x=>x!==n);el.classList.remove('sel');}else{selEmo.push(n);el.classList.add('sel');}}
+function toggleExit(){const cl=document.getElementById('mStat').value==='CLOSED';['gExit','gExitDate'].forEach(id=>{document.getElementById(id).style.opacity=cl?'1':'0.45'});}
+function calcPnl(){
+  const en=parseFloat(document.getElementById('mEntry').value),ex=parseFloat(document.getElementById('mExit').value),qt=parseFloat(document.getElementById('mQty').value);
+  if(!isNaN(en)&&!isNaN(ex)&&!isNaN(qt)){const d=document.getElementById('mDir').value;document.getElementById('mPnl').value=((d==='Long'?(ex-en):(en-ex))*qt*100000).toFixed(2);}
+}
+function openModal(id=null){
+  editId=id;selEmo=[];buildPicker();
+  document.getElementById('mTitle').textContent=id?'Editar trade':'Añadir trade';
+  if(id){
+    const t=trades.find(x=>x.id===id);
+    document.getElementById('mSym').value=t.symbol||'';document.getElementById('mMkt').value=t.market||'Forex';
+    document.getElementById('mDir').value=t.dir||'Long';document.getElementById('mStrat').value=t.strategy||'';
+    document.getElementById('mEntry').value=t.entry||'';document.getElementById('mQty').value=t.qty||'';
+    document.getElementById('mOpen').value=t.openDate||'';document.getElementById('mSL').value=t.sl||'';
+    document.getElementById('mTarget').value=t.target||'';document.getElementById('mStat').value=t.status||'OPEN';
+    document.getElementById('mExit').value=t.exit!==null?t.exit:'';document.getElementById('mExitDate').value=t.exitDate||'';
+    document.getElementById('mPnl').value=t.pnl!==null?t.pnl:'';document.getElementById('mRem').value=t.remarks||'';
+    selEmo=[...(t.emotions||[])];document.querySelectorAll('.eo').forEach(el=>{if(selEmo.includes(el.dataset.n))el.classList.add('sel')});
+  }else{
+    ['mSym','mEntry','mQty','mSL','mTarget','mExit','mExitDate','mPnl','mRem'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('mMkt').value='Forex';document.getElementById('mDir').value='Long';
+    document.getElementById('mStrat').value='';document.getElementById('mStat').value='OPEN';
+    document.getElementById('mOpen').value=new Date().toISOString().split('T')[0];
+  }
+  toggleExit();document.getElementById('overlay').classList.add('open');
+}
+function closeModal(){document.getElementById('overlay').classList.remove('open');}
+function bgClose(e){if(e.target===document.getElementById('overlay'))closeModal();}
+function saveTrade(){
+  const sym=document.getElementById('mSym').value.trim().toUpperCase();
+  if(!sym){alert('Introduce un símbolo');return;}
+  const entry=parseFloat(document.getElementById('mEntry').value);
+  if(isNaN(entry)){alert('Introduce el precio de entrada');return;}
+  const pnlR=parseFloat(document.getElementById('mPnl').value),pnl=isNaN(pnlR)?null:pnlR;
+  const status=document.getElementById('mStat').value;
+  const exitR=parseFloat(document.getElementById('mExit').value),exit=isNaN(exitR)?null:exitR;
+  const qty=parseFloat(document.getElementById('mQty').value)||0;
+  let result='OPEN';
+  if(status==='CLOSED')result=pnl!==null?(pnl>0?'WIN':pnl<0?'LOSS':'BE'):'OPEN';
+  const pnlPct=(pnl!==null&&entry&&qty)?parseFloat((pnl/(entry*qty*100000)*100).toFixed(4)):null;
+  const td={symbol:sym,market:document.getElementById('mMkt').value,dir:document.getElementById('mDir').value,
+    strategy:document.getElementById('mStrat').value,entry,qty,openDate:document.getElementById('mOpen').value||null,
+    sl:parseFloat(document.getElementById('mSL').value)||null,target:parseFloat(document.getElementById('mTarget').value)||null,
+    exit,exitDate:document.getElementById('mExitDate').value||null,pnl,pnlPct,status,result,
+    emotions:[...selEmo],remarks:document.getElementById('mRem').value.trim()};
+  if(editId){const i=trades.findIndex(t=>t.id===editId);trades[i]={...trades[i],...td};}
+  else trades.push({id:nextId++,...td});
+  save();closeModal();applyFilters();
+}
+function delTrade(id){if(!confirm('¿Eliminar este trade?'))return;trades=trades.filter(t=>t.id!==id);save();applyFilters();}
+
+// ===== MONTHLY =====
+const MLBLS=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const MKEYS=['2026-01','2026-02','2026-03','2026-04','2026-05','2026-06','2026-07','2026-08','2026-09','2026-10','2026-11','2026-12'];
+function renderMonthly(){
+  const byM={};MKEYS.forEach(k=>byM[k]=[]);
+  trades.filter(t=>t.status==='CLOSED'&&t.pnl!==null&&t.openDate).forEach(t=>{const m=t.openDate.substring(0,7);if(byM[m])byM[m].push(t);});
+  const rows=MKEYS.map((k,i)=>{
+    const ts=byM[k],wi=ts.filter(t=>t.result==='WIN'),lo=ts.filter(t=>t.result==='LOSS');
+    const tp=ts.reduce((s,t)=>s+t.pnl,0);
+    return{lbl:MLBLS[i],ts,wi,lo,tp,ag:wi.length?wi.reduce((s,t)=>s+t.pnl,0)/wi.length:null,
+      al:lo.length?lo.reduce((s,t)=>s+t.pnl,0)/lo.length:null,wr:ts.length?wi.length/ts.length*100:null,
+      mg:ts.length?Math.max(...ts.map(t=>t.pnl)):null,ml:ts.length?Math.min(...ts.map(t=>t.pnl)):null};
+  });
+  const tot=rows.reduce((s,r)=>s+r.tp,0),totT=rows.reduce((s,r)=>s+r.ts.length,0),totW=rows.reduce((s,r)=>s+r.wi.length,0);
+  const pc3=v=>v>0?'style="color:var(--green);font-weight:600"':v<0?'style="color:var(--red);font-weight:600"':'';
+  document.getElementById('moBody').innerHTML=rows.map(r=>`<tr>
+    <td style="font-weight:500">${r.lbl} 2026</td><td ${pc3(r.tp)}>${fmt(r.tp)}</td>
+    <td style="color:var(--green)">${fmt(r.ag)}</td><td style="color:var(--red)">${fmt(r.al)}</td>
+    <td>${r.wr!==null?r.wr.toFixed(1)+'%':'—'}</td><td class="mono">${r.ts.length}</td>
+    <td style="color:var(--green)">${fmt(r.mg)}</td><td style="color:var(--red)">${fmt(r.ml)}</td>
+  </tr>`).join('')+`<tr><td>Total 2026</td><td ${pc3(tot)}>${fmt(tot)}</td><td>—</td><td>—</td>
+    <td>${totT?((totW/totT*100).toFixed(1)+'%'):'—'}</td><td class="mono">${totT}</td><td>—</td><td>—</td></tr>`;
+  const vals=rows.map(r=>parseFloat(r.tp.toFixed(2)));
+  moFullC.data.datasets[0].data=vals;
+  moFullC.data.datasets[0].backgroundColor=vals.map(v=>v>0?'#5DCAA5':v<0?'#F0997B':'#B4B2A9');
+  moFullC.update();
+}
+
+// ===== WEEKLY =====
+function renderCal(){
+  const mv=document.getElementById('cal-month').value;
+  const[yr,mo]=mv.split('-').map(Number);
+  const firstD=new Date(yr,mo-1,1),lastD=new Date(yr,mo,0);
+  const startDow=firstD.getDay(),totalDays=lastD.getDate();
+  const byDay={};
+  trades.filter(t=>t.status==='CLOSED'&&t.pnl!==null&&t.openDate&&t.openDate.startsWith(mv)).forEach(t=>{
+    if(!byDay[t.openDate])byDay[t.openDate]={pnl:0,cnt:0};byDay[t.openDate].pnl+=t.pnl;byDay[t.openDate].cnt++;
+  });
+  let html='<thead><tr>'+['Su','Mo','Tu','We','Th','Fr','Sa','Sem'].map(h=>`<th>${h}</th>`).join('')+'</tr></thead><tbody>';
+  let cur=1,wk=1;
+  while(cur<=totalDays){
+    html+='<tr>';let wp=0,wc=0;
+    for(let dow=0;dow<7;dow++){
+      if(wk===1&&dow<startDow){html+='<td class="emp"></td>';continue;}
+      if(cur>totalDays){html+='<td class="emp"></td>';continue;}
+      const ds=`${yr}-${String(mo).padStart(2,'0')}-${String(cur).padStart(2,'0')}`;
+      const d=byDay[ds];if(d){wp+=d.pnl;wc+=d.cnt;}
+      const pnlStr=d?((d.pnl>=0?'+$':'-$')+Math.abs(d.pnl).toFixed(2)):'';
+      const pnlCol=d?(d.pnl>=0?'var(--green)':'var(--red)'):'';
+      html+=`<td><div class="cal-dn">${cur}</div>${d?`<div class="cal-pnl" style="color:${pnlCol}">${pnlStr}</div><div class="cal-cnt">${d.cnt} trade${d.cnt!==1?'s':''}</div>`:''}</td>`;
+      cur++;
+    }
+    const wc2=wp>0?'var(--green)':wp<0?'var(--red)':'var(--text3)';
+    html+=`<td class="wk"><div class="cal-wlbl">Sem ${wk}</div>${wc>0?`<div class="cal-wpnl" style="color:${wc2}">${wp>=0?'+$':'-$'}${Math.abs(wp).toFixed(2)}</div><div class="cal-wcnt">${wc} trades</div>`:'<div style="color:var(--text3);font-size:11px">—</div>'}</td>`;
+    html+='</tr>';wk++;
+  }
+  document.getElementById('calTable').innerHTML=html+'</tbody>';
+}
+
+// ===== ANALYTICS =====
+function getEmoStats(){
+  const stats={};
+  EMOTS.forEach(e=>stats[e.n]={n:e.n,t:e.t,count:0,wins:0,losses:0,pnl:0});
+  trades.filter(t=>t.status==='CLOSED'&&t.pnl!==null&&t.emotions&&t.emotions.length).forEach(t=>{
+    t.emotions.forEach(em=>{
+      if(stats[em]){stats[em].count++;if(t.result==='WIN')stats[em].wins++;else if(t.result==='LOSS')stats[em].losses++;stats[em].pnl+=t.pnl;}
+    });
+  });
+  return Object.values(stats).filter(e=>e.count>0).sort((a,b)=>(b.pnl/b.count)-(a.pnl/a.count));
+}
+
+function getStratStats(){
+  const STRATS=[{k:'',n:'Sin estrategia',fn:'—'},{k:'BAR',n:'BAR',fn:'Barrido Asia Reversal'},{k:'FRA',n:'FRA',fn:'Front Run Asia'},{k:'FCL',n:'FCL',fn:'FVG Continuación Liquidez'}];
+  return STRATS.map(s=>{
+    const ts=trades.filter(t=>t.status==='CLOSED'&&t.pnl!==null&&(t.strategy||'')===s.k);
+    const wi=ts.filter(t=>t.result==='WIN'),lo=ts.filter(t=>t.result==='LOSS');
+    const wr=ts.length?wi.length/ts.length*100:0;
+    const avgPnl=ts.length?ts.reduce((a,t)=>a+t.pnl,0)/ts.length:null;
+    return{...s,ts,wi,lo,wr,avgPnl};
+  });
+}
+
+function renderAnalytics(){
+  const emoStats=getEmoStats();
+  const stratStats=getStratStats();
+
+  // ---- EMOTION TABLE ----
+  if(emoStats.length===0){
+    document.getElementById('emoTableBody').innerHTML=`<tr><td colspan="6"><div class="empty-state"><div class="es-icon">🧠</div><p>Todavía no hay trades con emociones registradas.<br>Añade emociones al crear o editar un trade para ver el análisis aquí.</p></div></td></tr>`;
+  } else {
+    const typeLabel={eg:'Positiva',en:'Neutral',eb:'Negativa'};
+    document.getElementById('emoTableBody').innerHTML=emoStats.map(e=>{
+      const wr=e.count?e.wins/e.count*100:0;
+      const avgPnl=e.count?e.pnl/e.count:0;
+      const wrCol=wr>=50?'var(--green)':wr>=30?'var(--amber)':'var(--red)';
+      return`<tr>
+        <td><span class="emo-pill-lg ${e.t}">${e.n}</span></td>
+        <td style="font-size:11px;color:var(--text2)">${typeLabel[e.t]||'—'}</td>
+        <td class="mono">${e.count}</td>
+        <td>
+          <div class="wr-row">
+            <div class="wr-bar-outer"><div class="wr-bar-inner" style="width:${wr}%;background:${wrCol}"></div></div>
+            <div class="wr-pct" style="color:${wrCol}">${wr.toFixed(0)}%</div>
+          </div>
+        </td>
+        <td style="font-weight:700;font-family:var(--mono);color:${avgPnl>=0?'var(--green)':'var(--red)'}">${fmt(avgPnl)}</td>
+        <td style="font-family:var(--mono);color:${e.pnl>=0?'var(--green)':'var(--red)'}">${fmt(e.pnl)}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ---- EMOTION CHARTS ----
+  const emoLabels=emoStats.map(e=>e.n);
+  const emoAvgPnl=emoStats.map(e=>parseFloat((e.pnl/e.count).toFixed(2)));
+  const emoWr=emoStats.map(e=>parseFloat((e.wins/e.count*100).toFixed(1)));
+  const emoBgColors=emoStats.map(e=>EMO_BG[e.t]);
+  const emoBorderColors=emoStats.map(e=>EMO_COLOR[e.t]);
+
+  if(emoBarC){emoBarC.destroy();}
+  emoBarC=new Chart(document.getElementById('emoBarChart'),{
+    type:'bar',
+    data:{
+      labels:emoLabels.length?emoLabels:['Sin datos'],
+      datasets:[{
+        label:'Avg P&L ($)',
+        data:emoLabels.length?emoAvgPnl:[0],
+        backgroundColor:emoLabels.length?emoBgColors:['#B4B2A9'],
+        borderColor:emoLabels.length?emoBorderColors:['#888780'],
+        borderWidth:1.5,borderRadius:5
+      }]
+    },
+    options:{
+      indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+fmt(ctx.raw)}}},
+      scales:{
+        x:{ticks:{color:tc,font:{size:11},callback:v=>(v>=0?'+$':'-$')+Math.abs(v)},grid:{color:gc},border:{display:false}},
+        y:{ticks:{color:tc,font:{size:11}},grid:{display:false},border:{display:false}}
+      }
+    }
+  });
+
+  if(emoWrC){emoWrC.destroy();}
+  emoWrC=new Chart(document.getElementById('emoWrChart'),{
+    type:'bar',
+    data:{
+      labels:emoLabels.length?emoLabels:['Sin datos'],
+      datasets:[{
+        label:'Win rate (%)',
+        data:emoLabels.length?emoWr:[0],
+        backgroundColor:emoLabels.length?emoLabels.map((_,i)=>emoWr[i]>=50?'rgba(29,158,117,0.2)':emoWr[i]>=30?'rgba(239,159,39,0.2)':'rgba(216,90,48,0.2)'):['#B4B2A9'],
+        borderColor:emoLabels.length?emoLabels.map((_,i)=>emoWr[i]>=50?'#1D9E75':emoWr[i]>=30?'#EF9F27':'#D85A30'):['#888780'],
+        borderWidth:1.5,borderRadius:5
+      }]
+    },
+    options:{
+      indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.raw.toFixed(1)}%`}}},
+      scales:{
+        x:{min:0,max:100,ticks:{color:tc,font:{size:11},callback:v=>v+'%'},grid:{color:gc},border:{display:false}},
+        y:{ticks:{color:tc,font:{size:11}},grid:{display:false},border:{display:false}}
+      }
+    }
+  });
+
+  // ---- STRATEGY CARDS WITH DONUTS ----
+  // Destroy old donuts
+  Object.values(stratDonuts).forEach(c=>{try{c.destroy();}catch(e){}});
+  const grid=document.getElementById('stratGrid');
+  grid.innerHTML=stratStats.filter(s=>s.ts.length>0).map(s=>`
+    <div class="strat-card">
+      <div class="strat-name">${s.n}</div>
+      <div class="strat-fullname">${s.fn}</div>
+      <div class="strat-wr ${s.wr>=50?'wrhigh':s.wr>=30?'wrmid':'wrlow'}">${s.wr.toFixed(1)}%</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px">win rate</div>
+      <div class="strat-donut"><canvas id="donut-${s.k||'none'}"></canvas></div>
+      <div class="strat-stats">
+        <div><div class="strat-stat-val">${s.ts.length}</div><div class="strat-stat-lbl">Trades</div></div>
+        <div><div class="strat-stat-val" style="color:var(--green)">${s.wi.length}</div><div class="strat-stat-lbl">Wins</div></div>
+        <div><div class="strat-stat-val" style="color:var(--red)">${s.lo.length}</div><div class="strat-stat-lbl">Losses</div></div>
+        <div><div class="strat-stat-val" style="font-size:13px;color:${s.avgPnl>=0?'var(--green)':'var(--red)'}">${fmt(s.avgPnl)}</div><div class="strat-stat-lbl">Avg P&L</div></div>
+      </div>
+    </div>
+  `).join('')+(stratStats.every(s=>s.ts.length===0)?`<div class="strat-card"><div class="empty-state"><div class="es-icon">📊</div><p>No hay trades con estrategia registrada.</p></div></div>`:'');
+
+  // Create donuts
+  stratStats.filter(s=>s.ts.length>0).forEach(s=>{
+    const canvasId='donut-'+(s.k||'none');
+    const canvas=document.getElementById(canvasId);
+    if(!canvas)return;
+    const wins=s.wi.length,losses=s.lo.length,be=s.ts.length-wins-losses;
+    const d=new Chart(canvas,{
+      type:'doughnut',
+      data:{
+        labels:['Wins','Losses','BE'],
+        datasets:[{data:[wins,losses,be>0?be:0],backgroundColor:['#5DCAA5','#F0997B','#B4B2A9'],borderWidth:0,hoverOffset:3}]
+      },
+      options:{responsive:true,maintainAspectRatio:false,cutout:'72%',
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.raw}`}}}}
+    });
+    stratDonuts[s.k||'none']=d;
+  });
+
+  // ---- STRATEGY COMPARISON CHART ----
+  const activeSt=stratStats.filter(s=>s.ts.length>0);
+  if(stratCompC){stratCompC.destroy();}
+  stratCompC=new Chart(document.getElementById('stratCompChart'),{
+    type:'bar',
+    data:{
+      labels:activeSt.map(s=>s.n||'Sin estrategia'),
+      datasets:[
+        {label:'Win rate (%)',data:activeSt.map(s=>parseFloat(s.wr.toFixed(1))),backgroundColor:'rgba(55,138,221,0.2)',borderColor:'#378ADD',borderWidth:1.5,borderRadius:4,yAxisID:'y'},
+        {label:'Avg P&L ($)',data:activeSt.map(s=>s.avgPnl!==null?parseFloat(s.avgPnl.toFixed(2)):0),backgroundColor:activeSt.map(s=>s.avgPnl>=0?'rgba(29,158,117,0.25)':'rgba(216,90,48,0.25)'),borderColor:activeSt.map(s=>s.avgPnl>=0?'#1D9E75':'#D85A30'),borderWidth:1.5,borderRadius:4,yAxisID:'y2'}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:true,labels:{color:tc,font:{size:11},boxWidth:10,padding:16}}},
+      scales:{
+        x:{ticks:{color:tc,font:{size:12}},grid:{display:false},border:{display:false}},
+        y:{position:'left',title:{display:true,text:'Win rate %',color:tc,font:{size:10}},ticks:{color:tc,font:{size:11},callback:v=>v+'%'},grid:{color:gc},border:{display:false}},
+        y2:{position:'right',title:{display:true,text:'Avg P&L $',color:tc,font:{size:10}},ticks:{color:tc,font:{size:11},callback:v=>(v>=0?'+$':'-$')+Math.abs(v)},grid:{display:false},border:{display:false}}
+      }
+    }
+  });
+}
+
+// ===== INIT CHARTS =====
+eqC=new Chart(document.getElementById('eqChart'),{
+  type:'line',data:{labels:[],datasets:[{data:[],borderColor:'#1D9E75',backgroundColor:'rgba(29,158,117,0.07)',borderWidth:1.5,pointRadius:0,fill:true,tension:0.3}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+    scales:{x:{display:false},y:{ticks:{color:tc,font:{size:11},callback:v=>(v>=0?'+':'')+v.toFixed(0)},grid:{color:gc},border:{display:false}}}}
+});
+moDashC=new Chart(document.getElementById('moDash'),{
+  type:'bar',data:{labels:[],datasets:[{data:[],backgroundColor:[],borderRadius:4}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+    scales:{x:{ticks:{color:tc,font:{size:11}},grid:{display:false},border:{display:false}},
+      y:{ticks:{color:tc,font:{size:11},callback:v=>(v>=0?'+$':'-$')+Math.abs(v)},grid:{color:gc},border:{display:false}}}}
+});
+moFullC=new Chart(document.getElementById('moFull'),{
+  type:'bar',data:{labels:MLBLS,datasets:[{data:new Array(12).fill(0),backgroundColor:new Array(12).fill('#B4B2A9'),borderRadius:5}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+    scales:{x:{ticks:{color:tc,font:{size:11}},grid:{display:false},border:{display:false}},
+      y:{ticks:{color:tc,font:{size:11},callback:v=>(v>=0?'+$':'-$')+Math.abs(v)},grid:{color:gc},border:{display:false}}}}
+});
+
+applyFilters();
+</script>
+</body>
+</html>
