@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trade Journal</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f7f7f5;
+      --surface: #ffffff;
+      --surface2: #f1f0ec;
+      --border: rgba(0,0,0,0.1);
+      --text: #1a1a18;
+      --text2: #6b6b67;
+      --text3: #9c9c97;
+      --green: #1D9E75;
+      --green-bg: #EAF3DE;
+      --green-text: #3B6D11;
+      --red: #D85A30;
+      --red-bg: #FCEBEB;
+      --red-text: #A32D2D;
+      --blue: #378ADD;
+      --blue-bg: #E6F1FB;
+      --blue-text: #185FA5;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --mono: 'Courier New', monospace;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1a1a18;
+        --surface: #242422;
+        --surface2: #2c2c2a;
+        --border: rgba(255,255,255,0.1);
+        --text: #e8e8e4;
+        --text2: #a0a09b;
+        --text3: #6b6b67;
+        --green-bg: #0a2e1e;
+        --green-text: #5DCAA5;
+        --red-bg: #2e0f0f;
+        --red-text: #F0997B;
+        --blue-bg: #0a1e35;
+        --blue-text: #85B7EB;
+      }
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    .container { max-width: 1200px; margin: 0 auto; }
+
+    header { margin-bottom: 2rem; }
+    header h1 { font-size: 26px; font-weight: 600; letter-spacing: -0.5px; }
+    header p { font-size: 14px; color: var(--text2); margin-top: 4px; }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+      margin-bottom: 1.5rem;
+    }
+
+    .kpi {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+    }
+    .kpi-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+    .kpi-value { font-size: 22px; font-weight: 600; font-family: var(--mono); color: var(--text); }
+    .kpi-value.pos { color: var(--green); }
+    .kpi-value.neg { color: var(--red); }
+    .kpi-value.neu { color: var(--blue); }
+
+    .charts-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 1.5rem;
+    }
+
+    @media (max-width: 640px) { .charts-row { grid-template-columns: 1fr; } }
+
+    .chart-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+    }
+    .chart-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 14px;
+    }
+
+    .table-section { margin-top: 1.5rem; }
+    .table-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .table-header h2 { font-size: 15px; font-weight: 600; }
+    .count-tag { font-size: 12px; color: var(--text3); margin-left: 6px; font-weight: 400; }
+
+    .filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .filters label { font-size: 12px; color: var(--text2); }
+    .filters select {
+      font-size: 12px;
+      padding: 5px 10px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      cursor: pointer;
+      outline: none;
+    }
+    .filters select:focus { border-color: var(--blue); }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+    }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead { background: var(--surface2); }
+    th {
+      padding: 10px 12px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      white-space: nowrap;
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+    tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: var(--surface2); }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      font-family: -apple-system, sans-serif;
+      letter-spacing: 0.04em;
+    }
+    .win  { background: var(--green-bg); color: var(--green-text); }
+    .loss { background: var(--red-bg);   color: var(--red-text);   }
+    .open-b { background: var(--blue-bg); color: var(--blue-text);  }
+    .long-txt  { color: var(--green); font-family: -apple-system, sans-serif; font-size: 12px; font-weight: 500; }
+    .short-txt { color: var(--red);   font-family: -apple-system, sans-serif; font-size: 12px; font-weight: 500; }
+    .sym { font-family: -apple-system, sans-serif; font-weight: 600; font-size: 12px; }
+    .strat { font-family: -apple-system, sans-serif; font-size: 11px; color: var(--text2); }
+    .date-cell { font-family: -apple-system, sans-serif; font-size: 11px; color: var(--text2); }
+
+    footer { margin-top: 2.5rem; text-align: center; font-size: 12px; color: var(--text3); }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>Trade Journal</h1>
+    <p>Forex &middot; 40 operaciones &middot; Febrero &ndash; Abril 2026</p>
+  </header>
+
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-label">Balance inicial</div><div class="kpi-value">$5,000</div></div>
+    <div class="kpi"><div class="kpi-label">Balance actual</div><div class="kpi-value neg">$4,935.99</div></div>
+    <div class="kpi"><div class="kpi-label">P&amp;L total</div><div class="kpi-value neg">-$64.01</div></div>
+    <div class="kpi"><div class="kpi-label">Win rate</div><div class="kpi-value">35.9%</div></div>
+    <div class="kpi"><div class="kpi-label">Trades cerrados</div><div class="kpi-value neu">39</div></div>
+    <div class="kpi"><div class="kpi-label">Wins / Losses</div><div class="kpi-value">14 / 25</div></div>
+    <div class="kpi"><div class="kpi-label">Avg win</div><div class="kpi-value pos">+$55.35</div></div>
+    <div class="kpi"><div class="kpi-label">Avg loss</div><div class="kpi-value neg">-$33.55</div></div>
+    <div class="kpi"><div class="kpi-label">Max ganancia</div><div class="kpi-value pos">+$162</div></div>
+    <div class="kpi"><div class="kpi-label">Max pérdida</div><div class="kpi-value neg">-$62.79</div></div>
+  </div>
+
+  <div class="charts-row">
+    <div class="chart-box">
+      <div class="chart-title">Curva de equity (P&amp;L acumulado)</div>
+      <div style="position:relative;height:200px;"><canvas id="equityChart"></canvas></div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">P&amp;L mensual</div>
+      <div style="position:relative;height:200px;"><canvas id="monthlyChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="table-section">
+    <div class="table-header">
+      <div>
+        <h2 style="display:inline">Registro de trades</h2>
+        <span class="count-tag" id="tradeCount">40 trades</span>
+      </div>
+      <div class="filters">
+        <label>Símbolo</label>
+        <select id="filterSymbol" onchange="renderTable()">
+          <option value="All">Todos</option>
+          <option value="EURUSD">EURUSD</option>
+          <option value="GBPUSD">GBPUSD</option>
+        </select>
+        <label>Dirección</label>
+        <select id="filterDir" onchange="renderTable()">
+          <option value="All">Todas</option>
+          <option value="Long">Long</option>
+          <option value="Short">Short</option>
+        </select>
+        <label>Estado</label>
+        <select id="filterStatus" onchange="renderTable()">
+          <option value="All">Todos</option>
+          <option value="CLOSED">Cerrado</option>
+          <option value="OPEN">Abierto</option>
+        </select>
+        <label>Resultado</label>
+        <select id="filterResult" onchange="renderTable()">
+          <option value="All">Todos</option>
+          <option value="WIN">Ganador</option>
+          <option value="LOSS">Perdedor</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Símbolo</th>
+            <th>Dir.</th>
+            <th>Entrada</th>
+            <th>Qty</th>
+            <th>Apertura</th>
+            <th>Salida</th>
+            <th>Cierre</th>
+            <th>P&amp;L ($)</th>
+            <th>P&amp;L (%)</th>
+            <th>Estado</th>
+            <th>Estrategia</th>
+          </tr>
+        </thead>
+        <tbody id="tradeBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer>Trade Journal &mdash; Generado con Claude &middot; Anthropic</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const trades = [
+  {id:1, symbol:'EURUSD', dir:'Long',  entry:1.18087, qty:0.59, openDate:'27 Feb', strategy:'', exitDate:'26 Feb', exit:1.18048, pnl:-25.37,  pnlPct:-0.0364, status:'CLOSED', result:'LOSS'},
+  {id:2, symbol:'EURUSD', dir:'Long',  entry:1.17354, qty:0.43, openDate:'02 Mar', strategy:'', exitDate:'01 Mar', exit:1.17279, pnl:-33.97,  pnlPct:-0.0673, status:'CLOSED', result:'LOSS'},
+  {id:3, symbol:'EURUSD', dir:'Short', entry:1.16245, qty:0.66, openDate:'04 Mar', strategy:'', exitDate:'03 Mar', exit:1.16076, pnl:108.9,   pnlPct:0.1419,  status:'CLOSED', result:'WIN'},
+  {id:4, symbol:'EURUSD', dir:'Long',  entry:1.16005, qty:0.35, openDate:'04 Mar', strategy:'', exitDate:'03 Mar', exit:1.15963, pnl:-16.1,   pnlPct:-0.0397, status:'CLOSED', result:'LOSS'},
+  {id:5, symbol:'EURUSD', dir:'Long',  entry:1.16013, qty:0.29, openDate:'04 Mar', strategy:'', exitDate:'03 Mar', exit:1.15951, pnl:-19.14,  pnlPct:-0.0569, status:'CLOSED', result:'LOSS'},
+  {id:6, symbol:'EURUSD', dir:'Long',  entry:1.15862, qty:0.18, openDate:'05 Mar', strategy:'', exitDate:'04 Mar', exit:1.16165, pnl:53.82,   pnlPct:0.2581,  status:'CLOSED', result:'WIN'},
+  {id:7, symbol:'EURUSD', dir:'Long',  entry:1.15739, qty:0.18, openDate:'06 Mar', strategy:'', exitDate:'05 Mar', exit:1.15644, pnl:-17.82,  pnlPct:-0.0855, status:'CLOSED', result:'LOSS'},
+  {id:8, symbol:'EURUSD', dir:'Short', entry:1.16373, qty:0.48, openDate:'10 Mar', strategy:'', exitDate:'09 Mar', exit:1.16422, pnl:-25.44,  pnlPct:-0.0455, status:'CLOSED', result:'LOSS'},
+  {id:9, symbol:'EURUSD', dir:'Short', entry:1.16458, qty:0.49, openDate:'10 Mar', strategy:'', exitDate:'09 Mar', exit:1.16523, pnl:-33.81,  pnlPct:-0.0592, status:'CLOSED', result:'LOSS'},
+  {id:10,symbol:'EURUSD', dir:'Long',  entry:1.16176, qty:0.66, openDate:'11 Mar', strategy:'', exitDate:'10 Mar', exit:1.16111, pnl:-45.54,  pnlPct:-0.0594, status:'CLOSED', result:'LOSS'},
+  {id:11,symbol:'EURUSD', dir:'Long',  entry:1.16116, qty:0.45, openDate:'11 Mar', strategy:'', exitDate:'10 Mar', exit:1.16157, pnl:16.65,   pnlPct:0.0319,  status:'CLOSED', result:'WIN'},
+  {id:12,symbol:'EURUSD', dir:'Long',  entry:1.16045, qty:0.89, openDate:'11 Mar', strategy:'', exitDate:'10 Mar', exit:1.15979, pnl:-62.3,   pnlPct:-0.0603, status:'CLOSED', result:'LOSS'},
+  {id:13,symbol:'EURUSD', dir:'Long',  entry:1.14422, qty:1.1,  openDate:'13 Mar', strategy:'', exitDate:'12 Mar', exit:1.14456, pnl:33,      pnlPct:0.0262,  status:'CLOSED', result:'WIN'},
+  {id:14,symbol:'EURUSD', dir:'Long',  entry:1.14583, qty:1.14, openDate:'13 Mar', strategy:'', exitDate:'12 Mar', exit:1.14684, pnl:110.58,  pnlPct:0.0847,  status:'CLOSED', result:'WIN'},
+  {id:15,symbol:'EURUSD', dir:'Short', entry:1.14812, qty:0.3,  openDate:'16 Mar', strategy:'', exitDate:'15 Mar', exit:1.14822, pnl:-4.2,    pnlPct:-0.0122, status:'CLOSED', result:'LOSS'},
+  {id:16,symbol:'EURUSD', dir:'Short', entry:1.14819, qty:0.4,  openDate:'16 Mar', strategy:'', exitDate:'15 Mar', exit:1.14852, pnl:-14.8,   pnlPct:-0.0322, status:'CLOSED', result:'LOSS'},
+  {id:17,symbol:'EURUSD', dir:'Short', entry:1.14826, qty:0.4,  openDate:'16 Mar', strategy:'', exitDate:'15 Mar', exit:1.14852, pnl:-12,     pnlPct:-0.0261, status:'CLOSED', result:'LOSS'},
+  {id:18,symbol:'EURUSD', dir:'Short', entry:1.14959, qty:0.1,  openDate:'17 Mar', strategy:'', exitDate:'16 Mar', exit:1.14939, pnl:1.6,     pnlPct:0.0139,  status:'CLOSED', result:'WIN'},
+  {id:19,symbol:'EURUSD', dir:'Short', entry:1.15067, qty:0.6,  openDate:'17 Mar', strategy:'', exitDate:'16 Mar', exit:1.15053, pnl:6,       pnlPct:0.0087,  status:'CLOSED', result:'WIN'},
+  {id:20,symbol:'EURUSD', dir:'Short', entry:1.1511,  qty:0.5,  openDate:'17 Mar', strategy:'', exitDate:'16 Mar', exit:1.1506,  pnl:23,      pnlPct:0.04,    status:'CLOSED', result:'WIN'},
+  {id:21,symbol:'EURUSD', dir:'Long',  entry:1.15224, qty:0.39, openDate:'18 Mar', strategy:'', exitDate:'17 Mar', exit:1.15345, pnl:45.63,   pnlPct:0.1015,  status:'CLOSED', result:'WIN'},
+  {id:22,symbol:'EURUSD', dir:'Long',  entry:1.1566,  qty:0.65, openDate:'20 Mar', strategy:'', exitDate:'19 Mar', exit:1.15794, pnl:84.5,    pnlPct:0.1124,  status:'CLOSED', result:'WIN'},
+  {id:23,symbol:'EURUSD', dir:'Long',  entry:1.15289, qty:0.7,  openDate:'23 Mar', strategy:'', exitDate:'22 Mar', exit:1.15244, pnl:-34.3,   pnlPct:-0.0425, status:'CLOSED', result:'LOSS'},
+  {id:24,symbol:'EURUSD', dir:'Long',  entry:1.15332, qty:0.86, openDate:'23 Mar', strategy:'', exitDate:'22 Mar', exit:1.15282, pnl:-46.44,  pnlPct:-0.0468, status:'CLOSED', result:'LOSS'},
+  {id:25,symbol:'EURUSD', dir:'Long',  entry:1.15876, qty:0.91, openDate:'24 Mar', strategy:'', exitDate:'23 Mar', exit:1.15811, pnl:-62.79,  pnlPct:-0.0595, status:'CLOSED', result:'LOSS'},
+  {id:26,symbol:'EURUSD', dir:'Long',  entry:1.15875, qty:1.2,  openDate:'24 Mar', strategy:'', exitDate:'23 Mar', exit:1.15847, pnl:-38.4,   pnlPct:-0.0276, status:'CLOSED', result:'LOSS'},
+  {id:27,symbol:'GBPUSD', dir:'Short', entry:1.16107, qty:1,    openDate:'25 Mar', strategy:'', exitDate:'24 Mar', exit:1.15941, pnl:162,     pnlPct:0.1395,  status:'CLOSED', result:'WIN'},
+  {id:28,symbol:'EURUSD', dir:'Long',  entry:1.33482, qty:0.7,  openDate:'26 Mar', strategy:'', exitDate:'25 Mar', exit:1.33416, pnl:-49,     pnlPct:-0.0524, status:'CLOSED', result:'LOSS'},
+  {id:29,symbol:'EURUSD', dir:'Long',  entry:1.15547, qty:0.84, openDate:'26 Mar', strategy:'', exitDate:'25 Mar', exit:1.156,   pnl:41.16,   pnlPct:0.0424,  status:'CLOSED', result:'WIN'},
+  {id:30,symbol:'EURUSD', dir:'Long',  entry:1.15512, qty:0.95, openDate:'26 Mar', strategy:'', exitDate:'25 Mar', exit:1.15475, pnl:-38.95,  pnlPct:-0.0355, status:'CLOSED', result:'LOSS'},
+  {id:31,symbol:'EURUSD', dir:'Long',  entry:1.15209, qty:1.09, openDate:'27 Mar', strategy:'', exitDate:'26 Mar', exit:1.15181, pnl:-34.88,  pnlPct:-0.0278, status:'CLOSED', result:'LOSS'},
+  {id:32,symbol:'EURUSD', dir:'Long',  entry:1.14899, qty:1.16, openDate:'30 Mar', strategy:'', exitDate:'29 Mar', exit:1.1485,  pnl:-61.48,  pnlPct:-0.0461, status:'CLOSED', result:'LOSS'},
+  {id:33,symbol:'GBPUSD', dir:'Short', entry:1.32141, qty:1,    openDate:'31 Mar', strategy:'', exitDate:'30 Mar', exit:1.32067, pnl:70,      pnlPct:0.053,   status:'CLOSED', result:'WIN'},
+  {id:34,symbol:'EURUSD', dir:'Short', entry:1.15675, qty:1,    openDate:'01 Abr', strategy:'', exitDate:'31 Mar', exit:1.1568,  pnl:-9,      pnlPct:-0.0078, status:'CLOSED', result:'LOSS'},
+  {id:35,symbol:'GBPUSD', dir:'Short', entry:1.32675, qty:1,    openDate:'01 Abr', strategy:'', exitDate:'31 Mar', exit:1.32726, pnl:-55,     pnlPct:-0.0415, status:'CLOSED', result:'LOSS'},
+  {id:36,symbol:'EURUSD', dir:'Long',  entry:1.15831, qty:1,    openDate:'01 Abr', strategy:'', exitDate:'31 Mar', exit:1.15853, pnl:18,      pnlPct:0.0155,  status:'CLOSED', result:'WIN'},
+  {id:37,symbol:'EURUSD', dir:'Long',  entry:1.15859, qty:1.1,  openDate:'01 Abr', strategy:'', exitDate:'31 Mar', exit:1.15818, pnl:-49.5,   pnlPct:-0.0388, status:'CLOSED', result:'LOSS'},
+  {id:38,symbol:'EURUSD', dir:'Short', entry:1.15875, qty:0.38, openDate:'01 Abr', strategy:'', exitDate:'31 Mar', exit:1.15935, pnl:-24.32,  pnlPct:-0.0552, status:'CLOSED', result:'LOSS'},
+  {id:39,symbol:'EURUSD', dir:'Long',  entry:1.15279, qty:0.45, openDate:'02 Abr', strategy:'BAR', exitDate:'01 Abr', exit:1.15229, pnl:-24.3, pnlPct:-0.0468, status:'CLOSED', result:'LOSS'},
+  {id:40,symbol:'EURUSD', dir:'Long',  entry:1.15266, qty:0.36, openDate:'02 Abr', strategy:'BAR', exitDate:'—',    exit:null,   pnl:null,    pnlPct:null,    status:'OPEN',   result:'OPEN'},
+];
+
+function renderTable() {
+  const sym = document.getElementById('filterSymbol').value;
+  const dir = document.getElementById('filterDir').value;
+  const st  = document.getElementById('filterStatus').value;
+  const res = document.getElementById('filterResult').value;
+  const filtered = trades.filter(t =>
+    (sym === 'All' || t.symbol === sym) &&
+    (dir === 'All' || t.dir === dir) &&
+    (st  === 'All' || t.status === st) &&
+    (res === 'All' || t.result === res)
+  );
+  document.getElementById('tradeCount').textContent = filtered.length + ' trades';
+  document.getElementById('tradeBody').innerHTML = filtered.map(t => {
+    const pnlStr    = t.pnl === null ? '—' : (t.pnl >= 0 ? '+$' : '-$') + Math.abs(t.pnl).toFixed(2);
+    const pnlColor  = t.pnl === null ? '' : (t.pnl >= 0 ? 'color:var(--green)' : 'color:var(--red)');
+    const pnlPctStr = t.pnlPct === null ? '—' : (t.pnlPct >= 0 ? '+' : '') + t.pnlPct.toFixed(2) + '%';
+    const badge     = t.result === 'WIN'  ? '<span class="badge win">WIN</span>'
+                    : t.result === 'LOSS' ? '<span class="badge loss">LOSS</span>'
+                    : '<span class="badge open-b">OPEN</span>';
+    const exitStr   = t.exit === null ? '—' : typeof t.exit === 'number' ? t.exit.toFixed(5) : t.exit;
+    return `<tr>
+      <td>${t.id}</td>
+      <td class="sym">${t.symbol}</td>
+      <td class="${t.dir === 'Long' ? 'long-txt' : 'short-txt'}">${t.dir}</td>
+      <td>${t.entry.toFixed(5)}</td>
+      <td>${t.qty}</td>
+      <td class="date-cell">${t.openDate}</td>
+      <td>${exitStr}</td>
+      <td class="date-cell">${t.exitDate}</td>
+      <td style="${pnlColor};font-weight:600">${pnlStr}</td>
+      <td style="${pnlColor}">${pnlPctStr}</td>
+      <td>${badge}</td>
+      <td class="strat">${t.strategy || '—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+renderTable();
+
+const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
+const textColor  = isDark ? '#6b6b67' : '#9c9c97';
+const gridColor  = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
+
+const equityPoints = [-25.37,-59.34,49.56,33.46,14.32,68.14,50.32,24.88,-8.93,-54.47,-37.82,-100.12,-67.12,43.46,39.26,24.46,12.46,14.06,20.06,43.06,88.69,173.19,138.89,92.45,29.66,-8.74,153.26,104.26,145.42,106.47,71.59,10.11,80.11,71.11,16.11,34.11,-15.39,-39.71,-64.01];
+
+new Chart(document.getElementById('equityChart'), {
+  type: 'line',
+  data: {
+    labels: equityPoints.map((_,i) => i+1),
+    datasets: [{
+      data: equityPoints,
+      borderColor: '#1D9E75',
+      backgroundColor: 'rgba(29,158,117,0.07)',
+      borderWidth: 1.5,
+      pointRadius: 0,
+      fill: true,
+      tension: 0.3
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { display: false },
+      y: {
+        ticks: { color: textColor, font: { size: 11 }, callback: v => (v >= 0 ? '+' : '') + v.toFixed(0) },
+        grid: { color: gridColor },
+        border: { display: false }
+      }
+    }
+  }
+});
+
+new Chart(document.getElementById('monthlyChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Ene', 'Feb', 'Mar', 'Abr'],
+    datasets: [{
+      data: [0, -25.37, 105.48, -144.12],
+      backgroundColor: [gridColor, '#F0997B', '#5DCAA5', '#F0997B'],
+      borderRadius: 4
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { color: textColor, font: { size: 11 } }, grid: { display: false }, border: { display: false } },
+      y: {
+        ticks: { color: textColor, font: { size: 11 }, callback: v => (v >= 0 ? '+$' : '-$') + Math.abs(v) },
+        grid: { color: gridColor },
+        border: { display: false }
+      }
+    }
+  }
+});
+</script>
+</body>
+</html>
