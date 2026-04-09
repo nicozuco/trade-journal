@@ -811,6 +811,13 @@ select.fi{cursor:pointer}
 .calc-mini-card strong{display:block;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:7px}
 .calc-mini-card span{display:block;font-size:18px;font-weight:800;font-family:var(--mono);letter-spacing:-.02em}
 .calc-mini-card small{display:block;margin-top:6px;font-size:11px;color:var(--text2)}
+.calc-stack{display:grid;gap:16px}
+.calc-card.tradovate{--calc-accent:#1D9E75}
+.calc-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px}
+.calc-note{font-size:12px;color:var(--text2);line-height:1.6}
+.calc-response{margin-top:14px;padding:14px;border-radius:16px;border:1px solid var(--border);background:rgba(255,255,255,.03);font-size:12px;line-height:1.65;color:var(--text2);font-family:var(--mono);white-space:pre-wrap;word-break:break-word}
+.calc-response.is-success{border-color:color-mix(in srgb,var(--green) 30%,var(--border));background:color-mix(in srgb,var(--green) 8%,rgba(255,255,255,.03))}
+.calc-response.is-error{border-color:color-mix(in srgb,var(--red) 30%,var(--border));background:color-mix(in srgb,var(--red) 8%,rgba(255,255,255,.03))}
 .storage-setup{display:none;flex-direction:column;gap:12px;margin-bottom:16px;padding:18px;border-radius:18px;border:1px solid var(--border);background:
   radial-gradient(circle at top right, rgba(239,159,39,0.14), transparent 24%),
   linear-gradient(180deg, rgba(255,255,255,0.03), transparent 78%)}
@@ -1900,6 +1907,87 @@ function openCalculators(btn=document.getElementById('nav-calculators')){
   showTab('calculators',btn);
   renderCalculators();
 }
+function updateTradovateTestField(field,value){
+  if(!Object.prototype.hasOwnProperty.call(tradovateTestState,field))return;
+  tradovateTestState[field]=value;
+}
+async function getCurrentSupabaseAccessToken(){
+  if(currentSession&&currentSession.access_token)return currentSession.access_token;
+  const client=getSupabaseClient();
+  const {data,error}=await client.auth.getSession();
+  if(error)throw error;
+  const session=data&&data.session?data.session:null;
+  if(!session||!session.access_token)throw new Error('No hay una sesión activa.');
+  currentSession=session;
+  currentUser=session.user||currentUser;
+  return session.access_token;
+}
+async function readTradovateFunctionResponse(response){
+  const text=await response.text();
+  if(!text)return null;
+  try{return JSON.parse(text);}catch(error){return {raw:text};}
+}
+async function connectTradovateTest(){
+  const environment=`${tradovateTestState.environment||''}`.trim();
+  const username=`${tradovateTestState.username||''}`.trim();
+  const password=`${tradovateTestState.password||''}`;
+  if(environment!=='demo'&&environment!=='live'){
+    tradovateTestState.error='Selecciona un environment válido.';
+    tradovateTestState.response=null;
+    renderCalculators();
+    showToast('Selecciona un environment válido.','error',{title:'Tradovate'});
+    return;
+  }
+  if(!username){
+    tradovateTestState.error='Introduce el username de Tradovate.';
+    tradovateTestState.response=null;
+    renderCalculators();
+    showToast('Introduce el username de Tradovate.','error',{title:'Tradovate'});
+    return;
+  }
+  if(!password){
+    tradovateTestState.error='Introduce la password de Tradovate.';
+    tradovateTestState.response=null;
+    renderCalculators();
+    showToast('Introduce la password de Tradovate.','error',{title:'Tradovate'});
+    return;
+  }
+  tradovateTestState.loading=true;
+  tradovateTestState.error='';
+  tradovateTestState.response=null;
+  renderCalculators();
+  try{
+    const accessToken=await getCurrentSupabaseAccessToken();
+    const response=await fetch(TRADOVATE_CONNECT_FUNCTION_URL,{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        Authorization:`Bearer ${accessToken}`
+      },
+      body:JSON.stringify({environment,username,password})
+    });
+    const payload=await readTradovateFunctionResponse(response);
+    if(!response.ok||!payload||payload.ok!==true){
+      const detail=(payload&&payload.error)||(payload&&payload.message)||`HTTP ${response.status}`;
+      tradovateTestState.error=`${detail||'No se pudo conectar con Tradovate.'}`;
+      tradovateTestState.response=payload;
+      showToast(tradovateTestState.error,'error',{title:'Tradovate'});
+      return;
+    }
+    tradovateTestState.response=payload;
+    tradovateTestState.error='';
+    tradovateTestState.password='';
+    showToast('Conexión Tradovate guardada.','success',{title:'Tradovate'});
+  }catch(error){
+    const detail=(error&&error.message?`${error.message}`:'').replace(/\s+/g,' ').trim();
+    tradovateTestState.error=detail||'No se pudo conectar con Tradovate.';
+    tradovateTestState.response=null;
+    showToast(tradovateTestState.error,'error',{title:'Tradovate'});
+  }finally{
+    tradovateTestState.loading=false;
+    renderCalculators();
+  }
+}
 function renderCalculators(){
   const host=document.getElementById('calculatorsHost');
   if(!host)return;
@@ -1913,155 +2001,196 @@ function renderCalculators(){
     commission:calculatorState.variable.commission
   });
   const rrLabel=getCalcRatioLabel(calculatorState.variable.rr);
+  const tradovateOutput=tradovateTestState.response
+    ? JSON.stringify(tradovateTestState.response,null,2)
+    : tradovateTestState.error
+      ? JSON.stringify({ok:false,error:tradovateTestState.error},null,2)
+      : 'Sin respuesta todavía.';
+  const tradovateResponseClass=tradovateTestState.error
+    ? 'calc-response is-error'
+    : tradovateTestState.response
+      ? 'calc-response is-success'
+      : 'calc-response';
   host.innerHTML=`
-    <div class="calc-grid">
-      <section class="calc-card normal">
-        <div class="calc-card-head">
-          <div class="calc-card-title">${getUiIconMarkup('calculator','ui-icon ui-icon-lg')} Calculadora normal</div>
-        </div>
-        <div class="calc-form-grid">
-          <label class="calc-field">
-            <span class="calc-label">Balance</span>
-            <input class="calc-input" type="number" step="any" value="${fmtCalcInput(calculatorState.normal.balance,2)}" oninput="updateCalculatorField('normal','balance',this.value)">
-          </label>
-          <label class="calc-field">
-            <span class="calc-label">Riesgo %</span>
-            <input class="calc-input" type="number" step="0.1" value="${fmtCalcInput(calculatorState.normal.riskPct,4)}" oninput="updateCalculatorField('normal','riskPct',this.value)">
-          </label>
-          <label class="calc-field">
-            <span class="calc-label">Pips de SL</span>
-            <input class="calc-input" type="number" step="any" value="${fmtCalcInput(calculatorState.normal.slPips,2)}" oninput="updateCalculatorField('normal','slPips',this.value)">
-          </label>
-          <label class="calc-field">
-            <span class="calc-label">Comisión</span>
-            <input class="calc-input" type="number" step="any" value="${fmtCalcInput(calculatorState.normal.commission,2)}" oninput="updateCalculatorField('normal','commission',this.value)">
-          </label>
-        </div>
-        <div class="calc-output-grid">
-          <div class="calc-output-card">
-            <div class="calc-output-label">Riesgo $</div>
-            <div class="calc-output-value">${fmtCalcMoney(normalMetrics.riskAmount)}</div>
-            <div class="calc-output-meta">${fmtCalcPercent(normalMetrics.riskPct)}</div>
+    <div class="calc-stack">
+      <div class="calc-grid">
+        <section class="calc-card normal">
+          <div class="calc-card-head">
+            <div class="calc-card-title">${getUiIconMarkup('calculator','ui-icon ui-icon-lg')} Calculadora normal</div>
           </div>
-          <div class="calc-output-card">
-            <div class="calc-output-label">Lotes</div>
-            <div class="calc-output-value">${roundCalc(normalMetrics.lots,2).toFixed(2)}</div>
-            <div class="calc-output-meta">SL ${fmtCalcInput(normalMetrics.slPips,2)} pips</div>
+          <div class="calc-form-grid">
+            <label class="calc-field">
+              <span class="calc-label">Balance</span>
+              <input class="calc-input" type="number" step="any" value="${fmtCalcInput(calculatorState.normal.balance,2)}" oninput="updateCalculatorField('normal','balance',this.value)">
+            </label>
+            <label class="calc-field">
+              <span class="calc-label">Riesgo %</span>
+              <input class="calc-input" type="number" step="0.1" value="${fmtCalcInput(calculatorState.normal.riskPct,4)}" oninput="updateCalculatorField('normal','riskPct',this.value)">
+            </label>
+            <label class="calc-field">
+              <span class="calc-label">Pips de SL</span>
+              <input class="calc-input" type="number" step="any" value="${fmtCalcInput(calculatorState.normal.slPips,2)}" oninput="updateCalculatorField('normal','slPips',this.value)">
+            </label>
+            <label class="calc-field">
+              <span class="calc-label">Comisión</span>
+              <input class="calc-input" type="number" step="any" value="${fmtCalcInput(calculatorState.normal.commission,2)}" oninput="updateCalculatorField('normal','commission',this.value)">
+            </label>
           </div>
-        </div>
-      </section>
-      <section class="calc-card variable">
-        <div class="calc-card-head">
-          <div class="calc-card-title">${getUiIconMarkup('risk-ladder','ui-icon ui-icon-lg')} Riesgo variable</div>
-          <div class="calc-card-badge"><strong>${rrLabel}</strong></div>
-        </div>
-        <div class="calc-form-grid">
-          <label class="calc-field">
-            <span class="calc-label">Riesgo por trade</span>
-            <input class="calc-input" type="number" step="0.1" value="${fmtCalcInput(calculatorState.variable.baseRiskPct,4)}" oninput="updateCalculatorField('variable','baseRiskPct',this.value)">
-          </label>
-          <label class="calc-field">
-            <span class="calc-label">Multiplicador</span>
-            <input class="calc-input" type="number" step="any" value="${fmtCalcInput(calculatorState.variable.multiplier,4)}" oninput="updateCalculatorField('variable','multiplier',this.value)">
-          </label>
-          <label class="calc-field">
-            <span class="calc-label">Ratio</span>
-            <input class="calc-input" type="number" step="any" value="${fmtCalcInput(calculatorState.variable.rr,2)}" oninput="updateCalculatorField('variable','rr',this.value)">
-          </label>
-          <label class="calc-field">
-            <span class="calc-label">Niveles</span>
-            <input class="calc-input" type="number" step="1" min="1" max="12" value="${Math.max(1,Math.round(calculatorState.variable.steps||8))}" oninput="updateCalculatorField('variable','steps',this.value)">
-          </label>
-        </div>
-        <div class="calc-summary-grid">
-          <div class="calc-summary-card">
-            <strong>Nivel activo</strong>
-            <span>${variableRow?variableRow.step:'—'}</span>
-            <small>${rrLabel}</small>
+          <div class="calc-output-grid">
+            <div class="calc-output-card">
+              <div class="calc-output-label">Riesgo $</div>
+              <div class="calc-output-value">${fmtCalcMoney(normalMetrics.riskAmount)}</div>
+              <div class="calc-output-meta">${fmtCalcPercent(normalMetrics.riskPct)}</div>
+            </div>
+            <div class="calc-output-card">
+              <div class="calc-output-label">Lotes</div>
+              <div class="calc-output-value">${roundCalc(normalMetrics.lots,2).toFixed(2)}</div>
+              <div class="calc-output-meta">SL ${fmtCalcInput(normalMetrics.slPips,2)} pips</div>
+            </div>
           </div>
-          <div class="calc-summary-card">
-            <strong>Riesgo</strong>
-            <span>${variableRow?fmtCalcPercent(variableRow.riskPct):'—'}</span>
-            <small>${variableMetrics.balance>0?fmtCalcMoney(variableMetrics.riskAmount):'$0.00'}</small>
+        </section>
+        <section class="calc-card variable">
+          <div class="calc-card-head">
+            <div class="calc-card-title">${getUiIconMarkup('risk-ladder','ui-icon ui-icon-lg')} Riesgo variable</div>
+            <div class="calc-card-badge"><strong>${rrLabel}</strong></div>
           </div>
-          <div class="calc-summary-card">
-            <strong>Objetivo</strong>
-            <span>${variableRow?fmtCalcPercent(variableRow.objectivePct):'—'}</span>
-            <small>${rrLabel}</small>
+          <div class="calc-form-grid">
+            <label class="calc-field">
+              <span class="calc-label">Riesgo por trade</span>
+              <input class="calc-input" type="number" step="0.1" value="${fmtCalcInput(calculatorState.variable.baseRiskPct,4)}" oninput="updateCalculatorField('variable','baseRiskPct',this.value)">
+            </label>
+            <label class="calc-field">
+              <span class="calc-label">Multiplicador</span>
+              <input class="calc-input" type="number" step="any" value="${fmtCalcInput(calculatorState.variable.multiplier,4)}" oninput="updateCalculatorField('variable','multiplier',this.value)">
+            </label>
+            <label class="calc-field">
+              <span class="calc-label">Ratio</span>
+              <input class="calc-input" type="number" step="any" value="${fmtCalcInput(calculatorState.variable.rr,2)}" oninput="updateCalculatorField('variable','rr',this.value)">
+            </label>
+            <label class="calc-field">
+              <span class="calc-label">Niveles</span>
+              <input class="calc-input" type="number" step="1" min="1" max="12" value="${Math.max(1,Math.round(calculatorState.variable.steps||8))}" oninput="updateCalculatorField('variable','steps',this.value)">
+            </label>
           </div>
-          <div class="calc-summary-card">
-            <strong>Total final</strong>
-            <span class="${variableRow&&variableRow.totalFinalPct>=0?'calc-step-positive':'neg'}">${variableRow?fmtCalcPercent(variableRow.totalFinalPct):'—'}</span>
-            <small>${variableSelection.rows.length} niveles</small>
+          <div class="calc-summary-grid">
+            <div class="calc-summary-card">
+              <strong>Nivel activo</strong>
+              <span>${variableRow?variableRow.step:'—'}</span>
+              <small>${rrLabel}</small>
+            </div>
+            <div class="calc-summary-card">
+              <strong>Riesgo</strong>
+              <span>${variableRow?fmtCalcPercent(variableRow.riskPct):'—'}</span>
+              <small>${variableMetrics.balance>0?fmtCalcMoney(variableMetrics.riskAmount):'$0.00'}</small>
+            </div>
+            <div class="calc-summary-card">
+              <strong>Objetivo</strong>
+              <span>${variableRow?fmtCalcPercent(variableRow.objectivePct):'—'}</span>
+              <small>${rrLabel}</small>
+            </div>
+            <div class="calc-summary-card">
+              <strong>Total final</strong>
+              <span class="${variableRow&&variableRow.totalFinalPct>=0?'calc-step-positive':'neg'}">${variableRow?fmtCalcPercent(variableRow.totalFinalPct):'—'}</span>
+              <small>${variableSelection.rows.length} niveles</small>
+            </div>
           </div>
-        </div>
-        <div class="calc-table-wrap">
-          <table class="calc-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Total pérdida acumulada</th>
-                <th>% riesgo por trade</th>
-                <th>% ganado / objetivo</th>
-                <th>Total final</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              ${variableSelection.rows.map(item=>{
-                const active=item.index===variableSelection.selectedIndex;
-                return `<tr class="${active?'active':''}" onclick="selectVariableRiskStep(${item.index})">
-                  <td class="calc-step-index">${item.step}</td>
-                  <td>${fmtCalcPercent(item.accumulatedLossPct)}</td>
-                  <td>${fmtCalcPercent(item.riskPct)}</td>
-                  <td>${fmtCalcPercent(item.objectivePct)}</td>
-                  <td class="${item.totalFinalPct>=0?'calc-step-positive':'neg'}">${fmtCalcPercent(item.totalFinalPct)}</td>
-                  <td class="calc-step-check-cell"><span class="calc-step-toggle ${active?'active':''}"></span></td>
-                </tr>`;
-              }).join('')}
-            </tbody>
-          </table>
-        </div>
-        <div class="calc-variable-bottom">
-          <div class="calc-panel">
-            <div class="calc-form-grid">
-              <label class="calc-field">
-                <span class="calc-label">Balance</span>
-                <input class="calc-input" type="number" step="any" value="${fmtCalcInput(calculatorState.variable.balance,2)}" oninput="updateCalculatorField('variable','balance',this.value)">
-              </label>
-              <div class="calc-field">
-                <span class="calc-label">Riesgo</span>
-                <div class="calc-readonly"><span>${variableRow?`Nivel ${variableRow.step}`:'Sin nivel'}</span><strong>${variableRow?fmtCalcPercent(variableRow.riskPct):'—'}</strong></div>
+          <div class="calc-table-wrap">
+            <table class="calc-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Total pérdida acumulada</th>
+                  <th>% riesgo por trade</th>
+                  <th>% ganado / objetivo</th>
+                  <th>Total final</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                ${variableSelection.rows.map(item=>{
+                  const active=item.index===variableSelection.selectedIndex;
+                  return `<tr class="${active?'active':''}" onclick="selectVariableRiskStep(${item.index})">
+                    <td class="calc-step-index">${item.step}</td>
+                    <td>${fmtCalcPercent(item.accumulatedLossPct)}</td>
+                    <td>${fmtCalcPercent(item.riskPct)}</td>
+                    <td>${fmtCalcPercent(item.objectivePct)}</td>
+                    <td class="${item.totalFinalPct>=0?'calc-step-positive':'neg'}">${fmtCalcPercent(item.totalFinalPct)}</td>
+                    <td class="calc-step-check-cell"><span class="calc-step-toggle ${active?'active':''}"></span></td>
+                  </tr>`;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+          <div class="calc-variable-bottom">
+            <div class="calc-panel">
+              <div class="calc-form-grid">
+                <label class="calc-field">
+                  <span class="calc-label">Balance</span>
+                  <input class="calc-input" type="number" step="any" value="${fmtCalcInput(calculatorState.variable.balance,2)}" oninput="updateCalculatorField('variable','balance',this.value)">
+                </label>
+                <div class="calc-field">
+                  <span class="calc-label">Riesgo</span>
+                  <div class="calc-readonly"><span>${variableRow?`Nivel ${variableRow.step}`:'Sin nivel'}</span><strong>${variableRow?fmtCalcPercent(variableRow.riskPct):'—'}</strong></div>
+                </div>
+                <label class="calc-field">
+                  <span class="calc-label">Pips de SL</span>
+                  <input class="calc-input" type="number" step="any" value="${fmtCalcInput(calculatorState.variable.slPips,2)}" oninput="updateCalculatorField('variable','slPips',this.value)">
+                </label>
+                <label class="calc-field">
+                  <span class="calc-label">Comisión</span>
+                  <input class="calc-input" type="number" step="any" value="${fmtCalcInput(calculatorState.variable.commission,2)}" oninput="updateCalculatorField('variable','commission',this.value)">
+                </label>
               </div>
-              <label class="calc-field">
-                <span class="calc-label">Pips de SL</span>
-                <input class="calc-input" type="number" step="any" value="${fmtCalcInput(calculatorState.variable.slPips,2)}" oninput="updateCalculatorField('variable','slPips',this.value)">
-              </label>
-              <label class="calc-field">
-                <span class="calc-label">Comisión</span>
-                <input class="calc-input" type="number" step="any" value="${fmtCalcInput(calculatorState.variable.commission,2)}" oninput="updateCalculatorField('variable','commission',this.value)">
-              </label>
+            </div>
+            <div class="calc-mini-stack">
+              <div class="calc-mini-card">
+                <strong>Riesgo $</strong>
+                <span>${fmtCalcMoney(variableMetrics.riskAmount)}</span>
+                <small>${variableRow?fmtCalcPercent(variableRow.riskPct):'—'}</small>
+              </div>
+              <div class="calc-mini-card">
+                <strong>Lotes</strong>
+                <span>${roundCalc(variableMetrics.lots,2).toFixed(2)}</span>
+                <small>SL ${fmtCalcInput(variableMetrics.slPips,2)} pips</small>
+              </div>
             </div>
           </div>
-          <div class="calc-mini-stack">
-            <div class="calc-mini-card">
-              <strong>Riesgo $</strong>
-              <span>${fmtCalcMoney(variableMetrics.riskAmount)}</span>
-              <small>${variableRow?fmtCalcPercent(variableRow.riskPct):'—'}</small>
-            </div>
-            <div class="calc-mini-card">
-              <strong>Lotes</strong>
-              <span>${roundCalc(variableMetrics.lots,2).toFixed(2)}</span>
-              <small>SL ${fmtCalcInput(variableMetrics.slPips,2)} pips</small>
-            </div>
-          </div>
+        </section>
+      </div>
+      <section class="calc-card tradovate">
+        <div class="calc-card-head">
+          <div class="calc-card-title">${getUiIconMarkup('globe','ui-icon ui-icon-lg')} Tradovate V1</div>
+          <div class="calc-card-badge"><strong>Prueba</strong></div>
         </div>
+        <div class="calc-form-grid">
+          <label class="calc-field">
+            <span class="calc-label">Environment</span>
+            <select class="calc-input" onchange="updateTradovateTestField('environment',this.value)">
+              <option value="demo" ${tradovateTestState.environment==='demo'?'selected':''}>Demo</option>
+              <option value="live" ${tradovateTestState.environment==='live'?'selected':''}>Live</option>
+            </select>
+          </label>
+          <label class="calc-field">
+            <span class="calc-label">Username</span>
+            <input class="calc-input" type="text" value="${escapeHtml(tradovateTestState.username)}" oninput="updateTradovateTestField('username',this.value)" autocomplete="username">
+          </label>
+          <label class="calc-field" style="grid-column:1 / -1">
+            <span class="calc-label">Password</span>
+            <input class="calc-input" type="password" value="${escapeHtml(tradovateTestState.password)}" oninput="updateTradovateTestField('password',this.value)" autocomplete="current-password">
+          </label>
+        </div>
+        <div class="calc-actions">
+          <button class="btn btn-primary" id="tradovateConnectBtn" type="button" onclick="connectTradovateTest()" ${tradovateTestState.loading?'disabled':''}>${tradovateTestState.loading?'Conectando...':'Conectar Tradovate'}</button>
+          <div class="calc-note">${tradovateTestState.loading?'Guardando conexión en Supabase...':'Prueba mínima para verificar que tradovate-connect guarda en tradovate_connections.'}</div>
+        </div>
+        <pre class="${tradovateResponseClass}">${escapeHtml(tradovateOutput)}</pre>
       </section>
     </div>
   `;
 }
 
 // ===== FILTERS & KPI =====
+
 function getFiltered(){
   const s=document.getElementById('fs').value,d=document.getElementById('fd').value,
         st=document.getElementById('fst').value,r=document.getElementById('fr').value;
@@ -3274,6 +3403,15 @@ const AUTH_REMEMBER_PASSWORD_KEY='zuppis-auth-remember-password';
 const calculatorState={
   normal:{balance:5000,riskPct:0.5,slPips:7,commission:5},
   variable:{baseRiskPct:0.5,multiplier:1.35,rr:3,steps:8,selectedStep:0,balance:5000,slPips:7,commission:5}
+};
+const TRADOVATE_CONNECT_FUNCTION_URL='https://wyfmmubrtkcgunwbagdq.supabase.co/functions/v1/tradovate-connect';
+const tradovateTestState={
+  environment:'demo',
+  username:'',
+  password:'',
+  loading:false,
+  response:null,
+  error:''
 };
 const accOverviewSelections={all:[],fondeo:[],backtesting:[],real:[]};
 const ACCOUNT_META_PREFIX='[zj-account]';
