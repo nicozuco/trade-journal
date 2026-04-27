@@ -2163,6 +2163,36 @@ input[type="time"].fi{
   .cal td.wk{min-width:54px}
 }
 
+/* ============================================================
+   MICRO-INTERACTIONS — fase 6
+   ============================================================ */
+*{-webkit-tap-highlight-color:transparent}
+.btn,.btn-primary,.btn-secondary,.btn-sm,.btn-icon-only,.btn-link,
+.nav-tab,.acc-sub-tab,.funding-directory-tab,.calc-mode-tab,
+.avg-entries-btn,.trade-toggle,.icon-btn,.modal-close,.toast-close,
+.chip,.det-acc-chip,.fase-chip{
+  transition:transform .14s ease,background-color .18s ease,color .18s ease,border-color .18s ease,box-shadow .18s ease,opacity .18s ease;
+}
+.btn:active,.btn-primary:active,.btn-secondary:active,.btn-sm:active,
+.btn-icon-only:active,.btn-link:active,.nav-tab:active,
+.acc-sub-tab:active,.funding-directory-tab:active,.calc-mode-tab:active,
+.avg-entries-btn:active,.trade-toggle:active,.icon-btn:active{
+  transform:scale(.97);
+}
+@keyframes sectionIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.section.active{animation:sectionIn .26s cubic-bezier(.2,.7,.2,1) both}
+@keyframes modalIn{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes modalSheetIn{from{transform:translateY(100%)}to{transform:none}}
+.modal.show .modal-content,.modal[aria-hidden="false"] .modal-content,
+.modal-overlay.show .modal-content{animation:modalIn .22s cubic-bezier(.2,.7,.2,1) both}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+@media(max-width:760px){
+  .modal.show .modal-content,.modal[aria-hidden="false"] .modal-content,
+  .modal-overlay.show .modal-content{animation:modalSheetIn .28s cubic-bezier(.2,.7,.2,1) both}
+}
+
 </style>
 </head>
 <body>
