@@ -1680,6 +1680,23 @@ input[type="time"].fi{
   .build-indicator code{max-width:62vw}
   .acc-fab{display:none!important}
 
+  /* Collapsibles en móvil dentro de la cuenta */
+  .acc-mobile-collapse{padding:0!important}
+  .acc-mobile-collapse-header{
+    display:flex;align-items:center;justify-content:space-between;
+    width:100%;padding:14px 16px;border:0;background:transparent;
+    color:var(--text);font:inherit;font-size:13px;font-weight:700;
+    cursor:pointer;gap:10px;letter-spacing:.01em;
+    border-radius:inherit;
+  }
+  .acc-mobile-collapse:not(.is-collapsed) > .acc-mobile-collapse-header{
+    border-bottom:1px solid var(--border);border-radius:inherit;border-bottom-left-radius:0;border-bottom-right-radius:0;
+  }
+  .acc-mobile-collapse-chev{display:inline-flex;width:18px;height:18px;color:var(--text2);transition:transform .22s ease}
+  .acc-mobile-collapse-chev svg{width:18px;height:18px}
+  .acc-mobile-collapse:not(.is-collapsed) > .acc-mobile-collapse-header .acc-mobile-collapse-chev{transform:rotate(180deg)}
+  .acc-mobile-collapse.is-collapsed > *:not(.acc-mobile-collapse-header){display:none!important}
+
   /* TOUCH-ACTION */
   .btn,.btn-primary,.btn-secondary,.btn-sm,.btn-icon-only,
   .btn-link,.nav-tab,.acc-sub-tab,.funding-directory-tab,
@@ -3146,6 +3163,31 @@ function setupAccountTradeFab(){
     setAccountTradeFabVisible(!(entry&&entry.isIntersecting));
   },{threshold:0.98});
   accTradeFabObserver.observe(topCta);
+}
+function setupAccountMobileCollapse(){
+  if(!matchMedia||!matchMedia('(max-width:760px)').matches)return;
+  const targets=[
+    {id:'acc-funding-panel',label:'Tracking de fondeo',collapsedDefault:true},
+    {id:'accTradeInsights',label:'Insights de trades',collapsedDefault:true}
+  ];
+  for(const t of targets){
+    const el=document.getElementById(t.id);
+    if(!el)continue;
+    if(el.dataset.mobileCollapseInit==='1'){continue}
+    el.dataset.mobileCollapseInit='1';
+    el.classList.add('acc-mobile-collapse');
+    if(t.collapsedDefault)el.classList.add('is-collapsed');
+    const header=document.createElement('button');
+    header.type='button';
+    header.className='acc-mobile-collapse-header';
+    header.setAttribute('aria-expanded',t.collapsedDefault?'false':'true');
+    header.innerHTML=`<span class="acc-mobile-collapse-label">${t.label}</span><span class="acc-mobile-collapse-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>`;
+    header.addEventListener('click',()=>{
+      const collapsed=el.classList.toggle('is-collapsed');
+      header.setAttribute('aria-expanded',collapsed?'false':'true');
+    });
+    el.prepend(header);
+  }
 }
 // ─── Toast & Confirm UI ──────────────────────────────────
 function showToast(message,type='info',{title='',duration=3600,id=''}={}){
@@ -12990,6 +13032,7 @@ function renderActiveAccount(){
   renderAccWeekly();
   renderAccStrategies();
   requestAnimationFrame(setupAccountTradeFab);
+  requestAnimationFrame(setupAccountMobileCollapse);
 }
 
 // ── Account KPI + table + charts ────────────────────────────
