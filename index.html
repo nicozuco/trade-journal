@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <link rel="icon" type="image/png" href="favicon.png"/>
 <link rel="apple-touch-icon" href="favicon.png"/>
+<link rel="preconnect" href="https://rsms.me/"/>
+<link rel="stylesheet" href="https://rsms.me/inter/inter.css"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap"/>
 <title>Trade Journal</title>
 <script>
 window.SUPABASE_URL='https://wyfmmubrtkcgunwbagdq.supabase.co';
@@ -22,11 +27,20 @@ window.FRONTEND_BUILD_ID='2026-04-18-paapex-manual-balance-v1';
   --red:#D85A30;--red-bg:#2e0f0f;--red-text:#F0997B;
   --amber:#BA7517;--amber-bg:#2e1f05;--amber-text:#FAC775;
   --blue:#378ADD;--blue-bg:#0a1e35;--blue-text:#85B7EB;
-  --radius:8px;--radius-lg:12px;--mono:'Courier New',monospace;--app-max:1480px;
+  --radius:8px;--radius-lg:12px;
+  --font-sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Monaco,monospace;
+  --mono:var(--font-mono);
+  --fs-xs:11px;--fs-sm:12px;--fs-base:14px;--fs-md:15px;--fs-lg:17px;--fs-xl:20px;--fs-2xl:24px;--fs-3xl:30px;
+  --app-max:1480px;
 }
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+@supports (font-variation-settings:normal){
+  :root{--font-sans:'Inter var',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+}
+body{font-family:var(--font-sans);background:var(--bg);color:var(--text);min-height:100vh;font-feature-settings:'cv11','ss01','ss03';-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
 input,select,textarea,button{font-family:inherit}
 [hidden]{display:none!important}
+.tabular,.kpi-value,.acc-balance-val,.acc-pnl,.home-mini-value,.home-quick-balance,.home-type-count,.calc-output-value,.avg-result-value,.acc-stat-val{font-variant-numeric:tabular-nums;font-feature-settings:'tnum','cv11'}
 
 /* NAV */
 .nav{background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
@@ -535,14 +549,14 @@ select.fi{cursor:pointer}
 .acc-card-menu:hover{background:var(--surface2);color:var(--text)}
 .acc-balance-row{display:flex;align-items:flex-end;justify-content:space-between;margin:12px 0 14px}
 .acc-balance-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
-.acc-balance-val{font-size:19px;font-weight:700;font-family:'Courier New',monospace}
-.acc-balance-change{font-size:11px;font-weight:700;font-family:'Courier New',monospace;margin-top:3px}
-.acc-pnl{font-size:13px;font-weight:700;font-family:'Courier New',monospace;text-align:right}
+.acc-balance-val{font-size:19px;font-weight:700;font-family:var(--font-mono)}
+.acc-balance-change{font-size:11px;font-weight:700;font-family:var(--font-mono);margin-top:3px}
+.acc-pnl{font-size:13px;font-weight:700;font-family:var(--font-mono);text-align:right}
 .acc-pnl-pct{font-size:11px;font-weight:500;margin-top:1px;text-align:right}
 .acc-stats-row{display:flex;gap:0;border-top:1px solid var(--border);padding-top:12px;margin-top:4px}
 .acc-stat{flex:1;text-align:center}
 .acc-stat+.acc-stat{border-left:1px solid var(--border)}
-.acc-stat-val{font-size:15px;font-weight:700;font-family:'Courier New',monospace}
+.acc-stat-val{font-size:15px;font-weight:700;font-family:var(--font-mono)}
 .acc-stat-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
 .acc-open-btn{display:block;width:100%;padding:8px;margin-top:12px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:12px;font-weight:600;cursor:pointer;text-align:center;transition:background .12s}
 .acc-open-btn:hover{background:var(--surface3,#d8d7d3)}
@@ -560,7 +574,7 @@ select.fi{cursor:pointer}
 .kpi-label-row{display:flex;align-items:center;justify-content:space-between}
 .kpi-edit-btn{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;background:none;border:none;cursor:pointer;color:var(--text3);padding:1px 3px;border-radius:6px}
 .kpi-edit-btn:hover{color:var(--blue)}
-.kpi-inp{font-size:18px;font-weight:700;font-family:'Courier New',monospace;color:var(--text);background:transparent;border:none;border-bottom:2px solid var(--blue);outline:none;width:100%;padding:1px 0}
+.kpi-inp{font-size:18px;font-weight:700;font-family:var(--font-mono);color:var(--text);background:transparent;border:none;border-bottom:2px solid var(--blue);outline:none;width:100%;padding:1px 0}
 /* Account modal */
 .acc-creation-mode-selector{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .acc-creation-mode-opt{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:14px;border-radius:16px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;transition:border-color .14s,background .14s,transform .14s}
