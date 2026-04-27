@@ -38,6 +38,10 @@ window.FRONTEND_BUILD_ID='2026-04-18-paapex-manual-balance-v1';
   --font-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Monaco,monospace;
   --mono:var(--font-mono);
   --fs-xs:11px;--fs-sm:12px;--fs-base:14px;--fs-md:15px;--fs-lg:17px;--fs-xl:20px;--fs-2xl:24px;--fs-3xl:30px;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.25),0 1px 1px rgba(0,0,0,.18);
+  --shadow-md:0 4px 12px rgba(0,0,0,.32),0 2px 4px rgba(0,0,0,.22);
+  --shadow-lg:0 18px 40px rgba(0,0,0,.42),0 6px 14px rgba(0,0,0,.28);
+  --gold:#D89B32;--gold-2:#FAC775;--gold-deep:#B57A18;
   --app-max:1480px;
 }
 @supports (font-variation-settings:normal){
@@ -125,7 +129,13 @@ input,select,textarea,button{font-family:inherit}
 .btn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--surface);color:var(--text);font-size:13px;font-weight:500;cursor:pointer;transition:background .12s;white-space:nowrap}
 .btn:hover{background:var(--surface2)}
 .btn:disabled{opacity:.58;cursor:not-allowed;pointer-events:none}
-.btn-primary{background:var(--text);color:var(--bg);border-color:var(--text)}
+.btn-primary{
+  background:linear-gradient(135deg,var(--gold-2) 0%,var(--gold) 55%,var(--gold-deep) 100%);
+  color:#1a1a1a;border-color:var(--gold);font-weight:700;
+  box-shadow:var(--shadow-sm),inset 0 1px 0 rgba(255,255,255,.25);
+}
+.btn-primary:hover{filter:brightness(1.06);box-shadow:var(--shadow-md),inset 0 1px 0 rgba(255,255,255,.32)}
+.btn-primary:active{filter:brightness(.96)}
 .btn-primary:hover{opacity:.85}
 .btn-sm{padding:3px 7px;font-size:11px;border-radius:5px}
 .btn-danger{color:var(--red);border-color:transparent}
@@ -2162,6 +2172,19 @@ input[type="time"].fi{
   .cal td{min-width:46px;min-height:48px}
   .cal td.wk{min-width:54px}
 }
+
+/* ============================================================
+   SHADOWS & POLISH — fase 7
+   ============================================================ */
+.chart-box,.home-panel,.home-mini-card,.home-quick-card,.home-type-card,
+.strat-card,.acc-card,.funding-firm-card,.funding-detail-card,
+.settings-card,.settings-hero-card,.acc-trade-insight{
+  box-shadow:var(--shadow-sm);
+}
+.modal-content,.modal-overlay-content,.filter-panel,.nav-tools-menu{
+  box-shadow:var(--shadow-lg);
+}
+.btn:hover:not([disabled]){box-shadow:var(--shadow-sm)}
 
 /* ============================================================
    MICRO-INTERACTIONS — fase 6
