@@ -966,8 +966,8 @@ select.fi{cursor:pointer}
 .home-hero::after{content:'';position:absolute;right:-80px;bottom:-80px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle, rgba(255,255,255,0.06), transparent 70%);pointer-events:none}
 .home-kicker{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.04);border:1px solid var(--border);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text2);margin-bottom:14px}
 .home-kicker::before{content:'';width:8px;height:8px;border-radius:50%;background:linear-gradient(135deg,#5DCAA5,#378ADD)}
-.home-hero h1{font-size:34px;line-height:1.05;letter-spacing:-1px;margin-bottom:10px}
-.home-hero p{font-size:14px;line-height:1.7;color:var(--text2);max-width:560px}
+.home-hero h1,.home-hero-title{font-size:34px;line-height:1.05;letter-spacing:-1px;margin-bottom:10px;font-weight:700}
+.home-hero p,.home-hero-copy{font-size:14px;line-height:1.7;color:var(--text2);max-width:560px}
 .home-hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
 .home-side{display:flex;flex-direction:column;gap:12px}
 .home-mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -1752,8 +1752,9 @@ input[type="time"].fi{
   }
   .home-hero{padding:18px;border-radius:14px}
   .home-hero::after{display:none}
-  .home-hero h1{font-size:20px;line-height:1.12;letter-spacing:-.3px}
-  .home-hero p{font-size:12px;line-height:1.5}
+  .home-hero h1,.home-hero-title{font-size:20px;line-height:1.12;letter-spacing:-.3px}
+  .home-hero p,.home-hero-copy{font-size:12px;line-height:1.5}
+  .home-hero-title,.home-hero-copy{display:none}
   .home-hero-actions{display:grid;grid-template-columns:1fr;gap:8px}
   .home-kicker{font-size:9px;padding:3px 7px;margin-bottom:6px}
   .home-mini-card,.home-quick-card,.home-type-card,.strat-card,
@@ -2258,7 +2259,9 @@ input[type="time"].fi{
   <div class="home-stack">
     <div class="home-hero">
       <div>
-        <div class="home-kicker">Multi-account workspace</div>
+        <div class="home-kicker"><span id="home-hero-greeting">Hola</span> · Multi-account workspace</div>
+        <h1 class="home-hero-title">Tu jornada, en un solo lugar</h1>
+        <p class="home-hero-copy">Sigue tus cuentas, controla tu progreso de fondeo y registra cada operación con la precisión que mereces.</p>
         <div class="home-hero-actions">
           <button class="btn btn-primary" onclick="openAccountsOverview(document.getElementById('nav-accounts'))">Ver cuentas</button>
           <button class="btn" onclick="openAccModal()">＋ Nueva cuenta</button>
@@ -15935,6 +15938,16 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
     navigator.serviceWorker.register('sw.js').catch(()=>{});
   });
 }
+(function(){
+  function greet(){
+    var h=new Date().getHours();
+    var s=h<6?'Buenas noches':h<12?'Buenos días':h<20?'Buenas tardes':'Buenas noches';
+    var el=document.getElementById('home-hero-greeting');
+    if(el) el.textContent=s;
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',greet);
+  else greet();
+})();
 </script>
 </body>
 </html>
