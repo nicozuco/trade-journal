@@ -59,6 +59,8 @@ input,select,textarea,button{font-family:inherit}
 .nav-tabs{display:flex;min-width:0;overflow-x:auto;scrollbar-width:none}
 .nav-tabs::-webkit-scrollbar{display:none}
 .nav-tab{padding:0 15px;height:84px;border:none;background:none;color:var(--text2);font-size:13px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;flex:0 0 auto}
+.nav-tab-icon{display:none}
+.nav-tab-icon svg{width:22px;height:22px;display:block}
 .nav-tab:hover{color:var(--text)}
 .nav-tab.active{color:var(--text);border-bottom-color:var(--text)}
 .nav-tools{position:relative;display:inline-flex;align-items:center;flex:0 0 auto}
@@ -1641,19 +1643,21 @@ input[type="time"].fi{
   .nav-tools{display:flex;width:100%}
   .nav-tools>.nav-tab{width:100%}
   .nav-tab{
-    display:flex;align-items:center;justify-content:center;
-    height:52px;min-height:52px;width:100%;
-    padding:4px 6px;margin:0;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    height:54px;min-height:54px;width:100%;
+    padding:5px 4px 4px;margin:0;gap:3px;
     border:1px solid transparent;border-radius:14px;
     background:transparent;color:var(--text2);
-    font-size:10px;font-weight:700;line-height:1.1;
-    letter-spacing:.01em;text-align:center;white-space:normal;
-    overflow-wrap:anywhere;hyphens:auto;
+    font-size:10px;font-weight:600;line-height:1;
+    letter-spacing:.01em;text-align:center;white-space:nowrap;
   }
+  .nav-tab-icon{display:flex;align-items:center;justify-content:center}
+  .nav-tab-icon svg{width:20px;height:20px;stroke-width:2}
+  .nav-tab-label{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .nav-tab.active,
   .nav-tools.active>.nav-tab{
-    background:rgba(255,255,255,.08);
-    border-color:var(--border);color:var(--text);
+    background:linear-gradient(135deg,rgba(216,155,50,.18),rgba(216,155,50,.08));
+    border-color:rgba(216,155,50,.35);color:#FAC775;
   }
   .nav-tab-chev{display:none}
 
@@ -2118,9 +2122,10 @@ input[type="time"].fi{
     left:8px;right:8px;padding:5px;gap:4px;border-radius:18px;
   }
   .nav-tab{
-    height:46px;min-height:46px;
-    padding:4px 3px;font-size:9.5px;border-radius:12px;
+    height:50px;min-height:50px;
+    padding:4px 3px;font-size:9px;border-radius:12px;gap:2px;
   }
+  .nav-tab-icon svg{width:18px;height:18px}
   .build-indicator{bottom:calc(84px + 10px + env(safe-area-inset-bottom,0px))}
   .acc-fab{bottom:calc(84px + 12px + env(safe-area-inset-bottom,0px))}
   .filter-panel{bottom:calc(84px + 10px + env(safe-area-inset-bottom,0px))}
@@ -2201,12 +2206,13 @@ input[type="time"].fi{
       <img id="brandLogo" data-brand-logo src="logo.png" alt="ZUPPi's Trade Journal"/>
     </button>
 	    <div class="nav-tabs">
-	      <button class="nav-tab mobile-nav-only active" id="nav-home" onclick="openHome(this)">Hoy</button>
-	      <button class="nav-tab" id="nav-accounts" onclick="openAccountsOverview(this)">Cuentas</button>
-	      <button class="nav-tab" id="nav-funding" onclick="openFundingDirectory(this)">Fondeo</button>
+	      <button class="nav-tab mobile-nav-only active" id="nav-home" onclick="openHome(this)"><span class="nav-tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span class="nav-tab-label">Hoy</span></button>
+	      <button class="nav-tab" id="nav-accounts" onclick="openAccountsOverview(this)"><span class="nav-tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg></span><span class="nav-tab-label">Cuentas</span></button>
+	      <button class="nav-tab" id="nav-funding" onclick="openFundingDirectory(this)"><span class="nav-tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg></span><span class="nav-tab-label">Fondeo</span></button>
 	      <div class="nav-tools" id="navToolsWrap">
 	        <button type="button" class="nav-tab nav-tab-tools" id="nav-tools" aria-haspopup="true" aria-expanded="false" onclick="toggleToolsMenu(event)">
-	          Herramientas
+	          <span class="nav-tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span>
+	          <span class="nav-tab-label">Herramientas</span>
 	          <span class="nav-tab-chev" aria-hidden="true">▾</span>
 	        </button>
 	        <div class="nav-tools-menu" id="navToolsMenu" role="menu" aria-label="Herramientas">
@@ -2214,7 +2220,7 @@ input[type="time"].fi{
 	          <button type="button" class="nav-tools-item" id="nav-averaging" role="menuitem" onclick="openAveraging(this);closeToolsMenu()">Promediar</button>
 	        </div>
 	      </div>
-	      <button class="nav-tab mobile-nav-only" id="nav-settings-mobile" type="button" onclick="openSettings(this)">Ajustes</button>
+	      <button class="nav-tab mobile-nav-only" id="nav-settings-mobile" type="button" onclick="openSettings(this)"><span class="nav-tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></span><span class="nav-tab-label">Ajustes</span></button>
 	    </div>
     <div class="nav-meta">
       <div class="user-chip" id="authUserChip" style="display:none">
