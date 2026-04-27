@@ -1692,7 +1692,10 @@ input[type="time"].fi{
   .acc-mobile-collapse:not(.is-collapsed) > .acc-mobile-collapse-header{
     border-bottom:1px solid var(--border);border-radius:inherit;border-bottom-left-radius:0;border-bottom-right-radius:0;
   }
-  .acc-mobile-collapse-chev{display:inline-flex;width:18px;height:18px;color:var(--text2);transition:transform .22s ease}
+  .acc-mobile-collapse-status{margin-left:auto;font-size:9px;padding:5px 9px}
+  .acc-mobile-collapse-status:empty{display:none}
+  .acc-mobile-collapse-label{margin-right:6px}
+  .acc-mobile-collapse-chev{display:inline-flex;width:18px;height:18px;color:var(--text2);transition:transform .22s ease;flex:none}
   .acc-mobile-collapse-chev svg{width:18px;height:18px}
   .acc-mobile-collapse:not(.is-collapsed) > .acc-mobile-collapse-header .acc-mobile-collapse-chev{transform:rotate(180deg)}
   .acc-mobile-collapse.is-collapsed > *:not(.acc-mobile-collapse-header){display:none!important}
@@ -3167,7 +3170,7 @@ function setupAccountTradeFab(){
 function setupAccountMobileCollapse(){
   if(!matchMedia||!matchMedia('(max-width:760px)').matches)return;
   const targets=[
-    {id:'acc-funding-panel',label:'Tracking de fondeo',collapsedDefault:true},
+    {id:'acc-funding-panel',label:'Tracking de fondeo',collapsedDefault:true,statusFromId:'acc-funding-status'},
     {id:'accTradeInsights',label:'Insights de trades',collapsedDefault:true}
   ];
   for(const t of targets){
@@ -3181,12 +3184,27 @@ function setupAccountMobileCollapse(){
     header.type='button';
     header.className='acc-mobile-collapse-header';
     header.setAttribute('aria-expanded',t.collapsedDefault?'false':'true');
-    header.innerHTML=`<span class="acc-mobile-collapse-label">${t.label}</span><span class="acc-mobile-collapse-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>`;
+    const statusSlot=t.statusFromId?'<span class="acc-mobile-collapse-status" data-status-slot></span>':'';
+    header.innerHTML=`<span class="acc-mobile-collapse-label">${t.label}</span>${statusSlot}<span class="acc-mobile-collapse-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>`;
     header.addEventListener('click',()=>{
       const collapsed=el.classList.toggle('is-collapsed');
       header.setAttribute('aria-expanded',collapsed?'false':'true');
     });
     el.prepend(header);
+    if(t.statusFromId){
+      const slot=header.querySelector('[data-status-slot]');
+      const sync=()=>{
+        const src=document.getElementById(t.statusFromId);
+        if(!src||!slot)return;
+        slot.className='acc-mobile-collapse-status '+src.className;
+        slot.textContent=src.textContent;
+      };
+      sync();
+      const src=document.getElementById(t.statusFromId);
+      if(src&&'MutationObserver' in window){
+        new MutationObserver(sync).observe(src,{childList:true,characterData:true,subtree:true,attributes:true,attributeFilter:['class']});
+      }
+    }
   }
 }
 // ─── Toast & Confirm UI ──────────────────────────────────
