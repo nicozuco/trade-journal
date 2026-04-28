@@ -11546,7 +11546,15 @@ function normalizeAccountStageFilterValue(value){
   if(/^(phase|fase)_?2$/.test(key))return'phase_2';
   if(/^(phase|fase)_?3$/.test(key))return'phase_3';
   if(['funded','fondeada','funded_account','cuenta_fondeada','live_funded','express_funded','pa'].includes(key))return'funded';
-  if(['failed','fallada','fallido','violated','violada','violado','breach','breached','invalid','invalida','invalidada','drawdown_breach','dd_breach'].includes(key))return'failed';
+  if(
+    ['failed','fallada','fallido','violated','violada','violado','breach','breached','invalid','invalida','invalidada','drawdown_breach','dd_breach','cuenta_fallida','cuenta_fallido','account_failed','failed_account','burned','burnt','quemada','quemado','cuenta_quemada','cuenta_quemado'].includes(key)||
+    /(^|_)fallid[ao]$/.test(key)||
+    /^cuenta_.*fallid[ao]$/.test(key)||
+    /(^|_)failed$/.test(key)||
+    /^account_.*failed$/.test(key)||
+    /(^|_)quemad[ao]$/.test(key)||
+    /^cuenta_.*quemad[ao]$/.test(key)
+  )return'failed';
   if(['pending','pendiente','unknown','desconocido','undefined','sin_definir','sin_configurar','unconfigured','not_configured','program_pending','programa_pendiente'].includes(key))return'pending';
   return'';
 }
