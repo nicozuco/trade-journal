@@ -5390,8 +5390,7 @@ function renderTable(f){
     if(!sequenceMaps.has(accountId))sequenceMaps.set(accountId,getAccountTradeSequenceMap(accountId));
     return getTradeSequenceFromMap(trade,sequenceMaps.get(accountId));
   };
-  const paged=f.slice((tradePage-1)*tradePageSize,tradePage*tradePageSize);
-  document.getElementById('tradeBody').innerHTML=paged.map(t=>{
+  document.getElementById('tradeBody').innerHTML=f.map(t=>{
     const ps=t.pnl===null?'—':(t.pnl>=0?'+$':'-$')+Math.abs(t.pnl).toFixed(2);
     const badge=t.result==='WIN'?'<span class="badge b-win">WIN</span>':t.result==='LOSS'?'<span class="badge b-loss">LOSS</span>':'<span class="badge b-open">OPEN</span>';
     return`<tr>
@@ -5406,6 +5405,8 @@ function renderTable(f){
       <td style="font-size:11px;${t.pnlPct===null?'':(t.pnlPct>=0?'color:var(--green)':'color:var(--red)')}">${fmtPct(t.pnlPct)}</td>
       <td>${badge}</td>
       <td style="font-size:11px;color:var(--text2)">${stmap[t.strategy]||'—'}</td>
+  const pagination=document.getElementById('tradePagination');
+  if(pagination)pagination.innerHTML='';
       <td>${emoHtml(t.emotions)}</td>
       <td style="display:flex;gap:3px">
         <button class="btn btn-sm btn-icon-only" onclick="openModal(${t.id})" aria-label="Editar trade">${getUiIconMarkup('edit','ui-icon ui-icon-sm')}</button>
@@ -5413,7 +5414,6 @@ function renderTable(f){
       </td>
     </tr>`;
   }).join('');
-  renderPagination('tradePagination',tradePage,f.length,tradePageSize,'goTradePage');
 }
 function applyFilters(){tradePage=1;const f=getFiltered();updateKPIs(f);updEq(f);updMoDash(f);renderTable(f);}
 
@@ -13351,8 +13351,9 @@ function accRenderTable(f){
   if(tradeCount)tradeCount.textContent=f.length+' trades';
   if(!body)return;
   if(!f.length){
+  const pagination=document.getElementById('accTradePagination');
+  if(pagination)pagination.innerHTML='';
     body.innerHTML='<tr><td colspan="10" style="text-align:center;padding:2rem;color:var(--text3)">No hay trades en esta cuenta con los filtros actuales.</td></tr>';
-    renderPagination('accTradePagination',1,0,accTradePageSize,'goAccTradePage');
     return;
   }
   const acc=getAccount(activeAccountId);
@@ -13368,8 +13369,7 @@ function accRenderTable(f){
     if(value===null||value===undefined||value==='')return fallback;
     return escapeHtml(String(value));
   };
-  const paged=f.slice((accTradePage-1)*accTradePageSize,accTradePage*accTradePageSize);
-  body.innerHTML=paged.map(t=>{
+  body.innerHTML=f.map(t=>{
     const ps=t.pnl===null?'—':(t.pnl>=0?'+$':'-$')+Math.abs(t.pnl).toFixed(2);
     const feeTotal=(Number(t.commission)||0)+(Number(t.fee)||0);
     const hasFee=(t.commission!==null&&t.commission!==undefined)||(t.fee!==null&&t.fee!==undefined);
@@ -13426,7 +13426,6 @@ function accRenderTable(f){
     </tr>
     <tr class="trade-detail-row" id="${detailId}" hidden><td colspan="10"><div class="trade-detail-panel">${details}</div></td></tr>`;
   }).join('');
-  renderPagination('accTradePagination',accTradePage,f.length,accTradePageSize,'goAccTradePage');
 }
 function renderAccMonthly(){
   if(!activeAccountId)return;
