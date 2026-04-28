@@ -1576,12 +1576,17 @@ input[type="time"].fi{
 
 /* MOBILE — phone */
 @media(max-width:760px){
+  :root{
+    --mobile-top-safe:max(12px, env(safe-area-inset-top,0px));
+    --mobile-header-height:60px;
+    --mobile-header-offset:calc(var(--mobile-top-safe) + var(--mobile-header-height));
+  }
   html,body{width:100%;overflow-x:hidden}
   body{
     font-size:14px;
     -webkit-text-size-adjust:100%;
     text-size-adjust:100%;
-    padding-top:calc(56px + env(safe-area-inset-top,0px));
+    padding-top:var(--mobile-header-offset);
   }
   #appShell{min-width:0}
 
@@ -1590,30 +1595,29 @@ input[type="time"].fi{
     position:fixed;top:0;left:0;right:0;width:100%;z-index:500;
     background:var(--surface);
     border-bottom:1px solid var(--border);
-    padding:0;
+    padding-top:var(--mobile-top-safe);
   }
   .nav-inner{
     display:flex;flex-direction:row;flex-wrap:nowrap;
     align-items:center;justify-content:space-between;
-    gap:10px;min-height:56px;height:auto;
-    padding:6px 12px;
-    padding-top:calc(6px + env(safe-area-inset-top,0px));
+    gap:10px;height:var(--mobile-header-height);min-height:var(--mobile-header-height);
+    padding:8px 12px 10px;
     margin:0 auto;max-width:none;width:100%;
   }
   .nav-brand{
     display:inline-flex;align-items:center;
     flex:0 1 auto;min-width:0;width:auto;
-    max-width:calc(100% - 60px);
+    max-width:calc(100% - 64px);
     margin:0;padding:0;justify-content:flex-start;line-height:0;
   }
   .nav-brand img{
-    display:block;height:34px;width:auto;
-    max-width:min(58vw,200px);object-fit:contain;
+    display:block;height:40px;width:auto;
+    max-width:min(62vw,220px);object-fit:contain;
   }
   .nav-meta{
     display:inline-flex;align-items:center;
     flex:0 0 auto;width:auto;margin-left:auto;
-    gap:6px;justify-content:flex-end;flex-wrap:nowrap;padding:0;
+    gap:8px;justify-content:flex-end;flex-wrap:nowrap;padding:0;
   }
   .nav-meta .user-chip,
   .nav-meta .sync-pill,
@@ -1623,8 +1627,8 @@ input[type="time"].fi{
   .nav-meta .nav-settings-btn,
   .nav-meta #nav-settings{
     display:inline-flex;align-items:center;justify-content:center;
-    width:38px;height:38px;min-width:38px;
-    padding:0;border-radius:10px;
+    width:40px;height:40px;min-width:40px;
+    padding:0;border-radius:12px;
     border:1px solid var(--border);
     background:var(--surface2);color:var(--text2);
     cursor:pointer;flex:0 0 auto;
@@ -1672,7 +1676,7 @@ input[type="time"].fi{
   .nav-tab-chev{display:none}
 
   /* CONTAINER & FAB / build / filter offsets */
-  .container{padding:10px 10px calc(96px + env(safe-area-inset-bottom,0px))}
+  .container{padding:6px 10px calc(96px + env(safe-area-inset-bottom,0px))}
   .build-indicator{
     bottom:calc(96px + 12px + env(safe-area-inset-bottom,0px));
     left:12px;right:12px;justify-content:space-between;
@@ -2155,10 +2159,14 @@ input[type="time"].fi{
 
 /* SMALL MOBILE */
 @media(max-width:480px){
-  .container{padding:8px 8px calc(84px + env(safe-area-inset-bottom,0px))}
-  .nav-inner{min-height:52px;padding:6px 10px}
-  .nav-brand img{height:30px;max-width:min(56vw,190px)}
-  .nav-meta .nav-settings-btn{width:36px;height:36px}
+  :root{
+    --mobile-top-safe:max(10px, env(safe-area-inset-top,0px));
+    --mobile-header-height:56px;
+  }
+  .container{padding:4px 8px calc(84px + env(safe-area-inset-bottom,0px))}
+  .nav-inner{height:var(--mobile-header-height);min-height:var(--mobile-header-height);padding:6px 10px 8px}
+  .nav-brand img{height:34px;max-width:min(60vw,200px)}
+  .nav-meta .nav-settings-btn{width:38px;height:38px}
   .nav-tabs{
     left:8px;right:8px;padding:5px;gap:4px;border-radius:18px;
   }
