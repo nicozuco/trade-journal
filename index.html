@@ -427,6 +427,7 @@ select.fi{cursor:pointer}
 .acc-overview-chip-type .ui-icon{width:15px;height:15px;opacity:.9}
 .acc-overview-chip-status{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:.05em;border:1px solid var(--border);background:var(--surface2);color:var(--text2);white-space:nowrap}
 .acc-overview-chip-status.positive{color:var(--green);border-color:color-mix(in srgb,var(--green) 28%, var(--border));background:rgba(29,158,117,0.12)}
+.acc-overview-chip-status.passed{color:var(--blue);border-color:color-mix(in srgb,var(--blue) 28%, var(--border));background:rgba(55,138,221,0.12)}
 .acc-overview-chip-status.warning{color:var(--amber);border-color:color-mix(in srgb,var(--amber) 28%, var(--border));background:rgba(239,159,39,0.12)}
 .acc-overview-chip-status.negative{color:var(--red);border-color:color-mix(in srgb,var(--red) 28%, var(--border));background:rgba(216,90,48,0.12)}
 .acc-overview-dot{width:8px;height:8px;border-radius:999px;flex:none}
@@ -449,7 +450,13 @@ select.fi{cursor:pointer}
 .acc-overview-firm-logo.has-logo{color:transparent}
 .acc-overview-firm-logo .funding-logo-img{padding:2px}
 .acc-overview-firm-logo .funding-logo-fallback{font-size:10px;font-weight:800}
-.acc-overview-visual{padding:18px}
+.acc-overview-visual{padding:0;overflow:hidden}
+.acc-overview-visual-summary{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:18px;list-style:none;cursor:pointer}
+.acc-overview-visual-summary::-webkit-details-marker{display:none}
+.acc-overview-visual-summary::after{content:'+';display:grid;place-items:center;width:28px;height:28px;border-radius:999px;background:var(--surface2);color:var(--text3);font-size:18px;line-height:1;flex:none}
+.acc-overview-visual[open] .acc-overview-visual-summary{border-bottom:1px solid var(--border)}
+.acc-overview-visual[open] .acc-overview-visual-summary::after{content:'-'}
+.acc-overview-visual-body{padding:0 18px 18px}
 .acc-overview-visual-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
 .acc-overview-visual-title{font-size:15px;font-weight:700;letter-spacing:-.25px}
 .acc-overview-visual-value{font-size:28px;font-weight:800;letter-spacing:-.8px;font-family:var(--mono);margin-top:8px}
@@ -459,46 +466,6 @@ select.fi{cursor:pointer}
 .acc-overview-visual-sub{font-size:12px;color:var(--text2);line-height:1.7;margin-top:4px}
 .acc-overview-visual-empty{padding:16px 4px 0;font-size:12px;color:var(--text3)}
 .acc-overview-empty{padding:14px 4px 2px;font-size:13px;color:var(--text3)}
-.acc-selected-widget{margin-bottom:18px}
-.acc-selected-card{position:relative;overflow:hidden;padding:18px 18px 16px;border-radius:22px;border:1px solid var(--border);background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.02));box-shadow:0 18px 44px rgba(0,0,0,.14)}
-.acc-selected-card::before{content:'';position:absolute;inset:0 0 auto 0;height:140px;background:radial-gradient(circle at top right,rgba(216,155,50,.18),transparent 48%),radial-gradient(circle at top left,rgba(55,138,221,.14),transparent 42%);pointer-events:none}
-.acc-selected-card > *{position:relative;z-index:1}
-.acc-selected-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:14px}
-.acc-selected-kicker{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:8px}
-.acc-selected-name{font-size:22px;font-weight:800;letter-spacing:-.6px;line-height:1.05;color:var(--text);margin:0}
-.acc-selected-sub{font-size:12px;line-height:1.65;color:var(--text2);margin-top:7px}
-.acc-selected-badges{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
-.acc-selected-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;border:1px solid var(--border);background:rgba(255,255,255,.04);font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text2);white-space:nowrap}
-.acc-selected-badge .ui-icon{width:14px;height:14px}
-.acc-selected-badge.tone-positive{color:var(--green);border-color:color-mix(in srgb,var(--green) 28%,var(--border));background:rgba(29,158,117,.14)}
-.acc-selected-badge.tone-warning{color:var(--amber);border-color:color-mix(in srgb,var(--amber) 28%,var(--border));background:rgba(216,155,50,.15)}
-.acc-selected-badge.tone-negative{color:var(--red);border-color:color-mix(in srgb,var(--red) 28%,var(--border));background:rgba(216,90,48,.14)}
-.acc-selected-badge.tone-neutral{color:var(--text2)}
-.acc-selected-balance{min-width:220px;padding:14px 16px;border-radius:18px;border:1px solid rgba(255,255,255,.06);background:linear-gradient(180deg,rgba(16,18,22,.56),rgba(16,18,22,.32));backdrop-filter:blur(10px)}
-.acc-selected-balance-label{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--text3)}
-.acc-selected-balance-value{margin-top:8px;font-size:31px;font-weight:800;letter-spacing:-1.1px;color:var(--text);font-family:var(--mono);line-height:1}
-.acc-selected-balance-value.pos{color:var(--green)}
-.acc-selected-balance-value.neg{color:var(--red)}
-.acc-selected-balance-meta{margin-top:7px;font-size:12px;line-height:1.6;color:var(--text2)}
-.acc-selected-balance-meta.pos{color:var(--green)}
-.acc-selected-balance-meta.neg{color:var(--red)}
-.acc-selected-metrics,.acc-selected-funding{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
-.acc-selected-funding{grid-template-columns:repeat(4,minmax(0,1fr));margin-top:10px}
-.acc-selected-stat{padding:12px 13px;border-radius:16px;border:1px solid var(--border);background:rgba(255,255,255,.03);min-width:0}
-.acc-selected-stat-label{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:6px}
-.acc-selected-stat-value{font-size:18px;font-weight:800;letter-spacing:-.45px;color:var(--text);line-height:1.15}
-.acc-selected-stat-value.mono{font-family:var(--mono)}
-.acc-selected-stat-value.pos{color:var(--green)}
-.acc-selected-stat-value.neg{color:var(--red)}
-.acc-selected-stat-meta{margin-top:5px;font-size:11px;line-height:1.55;color:var(--text2)}
-.acc-selected-footer{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-.acc-selected-meta{display:inline-flex;align-items:center;gap:7px;padding:8px 11px;border-radius:999px;border:1px solid var(--border);background:rgba(255,255,255,.03);font-size:11px;line-height:1.3;color:var(--text2);max-width:100%}
-.acc-selected-meta strong{color:var(--text);font-weight:700}
-.acc-selected-empty{display:flex;align-items:center;justify-content:space-between;gap:18px}
-.acc-selected-empty-copy{max-width:560px}
-.acc-selected-empty-copy p{font-size:13px;line-height:1.75;color:var(--text2);margin-top:7px}
-.acc-selected-empty-mark{width:52px;height:52px;border-radius:18px;border:1px solid var(--border);display:grid;place-items:center;background:rgba(255,255,255,.03);color:var(--text3);flex:none}
-.acc-selected-empty-mark .ui-icon{width:24px;height:24px}
 .acc-static-board{display:grid;gap:14px}
 .acc-static-hero{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(280px,.9fr);gap:14px;padding:18px;border-radius:18px;border:1px solid var(--border);background:
   radial-gradient(circle at top left, rgba(55,138,221,0.12), transparent 28%),
@@ -586,6 +553,7 @@ select.fi{cursor:pointer}
 .acc-sync-flag.is-real{background:rgba(29,158,117,0.10);border-color:color-mix(in srgb,var(--green) 24%,var(--border));color:var(--green-text)}
 .acc-sync-flag.is-program-required{background:rgba(239,159,39,0.14);border-color:color-mix(in srgb,var(--amber) 36%,var(--border));color:var(--amber-text)}
 .acc-sync-flag.is-stage-phase{background:rgba(239,159,39,0.14);border-color:color-mix(in srgb,var(--amber) 34%,var(--border));color:var(--amber-text)}
+.acc-sync-flag.is-stage-passed{background:rgba(55,138,221,0.14);border-color:color-mix(in srgb,var(--blue) 34%,var(--border));color:var(--blue-text)}
 .acc-sync-flag.is-stage-funded{background:var(--green-bg);border-color:color-mix(in srgb,var(--green) 30%,var(--border));color:var(--green-text)}
 .acc-sync-flag.is-stage-failed{background:var(--red-bg);border-color:color-mix(in srgb,var(--red) 30%,var(--border));color:var(--red-text)}
 .acc-sync-flag.is-stage-pending{background:rgba(255,255,255,0.04);border-color:var(--border);color:var(--text3)}
@@ -606,6 +574,7 @@ select.fi{cursor:pointer}
 .acc-stage-label{display:inline-flex;align-items:center;gap:6px;vertical-align:middle}
 .acc-stage-label::before{content:'';width:7px;height:7px;border-radius:999px;background:var(--stage-color,var(--text3));box-shadow:0 0 0 3px color-mix(in srgb,var(--stage-color,var(--text3)) 12%,transparent)}
 .acc-stage-label.stage-phase{--stage-color:var(--amber)}
+.acc-stage-label.stage-passed{--stage-color:var(--blue)}
 .acc-stage-label.stage-funded{--stage-color:var(--green)}
 .acc-stage-label.stage-failed{--stage-color:var(--red)}
 .acc-stage-label.stage-pending{--stage-color:var(--text3)}
@@ -899,6 +868,7 @@ select.fi{cursor:pointer}
 .funding-status-pill{display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border-radius:999px;border:1px solid var(--border);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
 .funding-status-pill::before{content:'';width:8px;height:8px;border-radius:999px;background:currentColor;opacity:.92}
 .funding-status-pill.evaluation{background:var(--amber-bg);color:var(--amber-text);border-color:color-mix(in srgb,var(--amber) 26%, var(--border))}
+.funding-status-pill.passed{background:rgba(55,138,221,.14);color:var(--blue-text);border-color:color-mix(in srgb,var(--blue) 30%, var(--border))}
 .funding-status-pill.funded{background:var(--green-bg);color:var(--green-text);border-color:color-mix(in srgb,var(--green) 26%, var(--border))}
 .funding-status-pill.failed{background:var(--red-bg);color:var(--red-text);border-color:color-mix(in srgb,var(--red) 26%, var(--border))}
 .funding-status-pill.pending{background:var(--surface2);color:var(--text2)}
@@ -1767,7 +1737,7 @@ input[type="time"].fi{
   /* PAGE HEADER */
   .page-header,.section-bar,.workspace-head,.acc-header,
   .home-quick-group-head,.acc-overview-head,.settings-panel-head,
-  .funding-detail-head,.acc-selected-head,.acc-selected-empty{align-items:stretch;flex-direction:column}
+  .funding-detail-head{align-items:stretch;flex-direction:column}
   .page-header{gap:6px;margin-bottom:12px}
   .page-header h1{font-size:18px;line-height:1.18;letter-spacing:-.3px}
   .page-header p{font-size:12px;line-height:1.45;margin-top:2px}
@@ -1801,7 +1771,6 @@ input[type="time"].fi{
   .funding-preview-grid,.calc-summary-grid,
   .calc-form-grid,.calc-output-grid,.avg-results-grid,
   .avg-input-group,
-  .acc-selected-metrics,.acc-selected-funding,
   .acc-creation-mode-selector,.funding-choice-grid.market,
   .funding-choice-grid.firm,.funding-choice-grid.size,
   .acc-provider-grid,.settings-layout{grid-template-columns:1fr}
@@ -1829,13 +1798,9 @@ input[type="time"].fi{
   /* CARDS */
   .chart-box,.home-panel,.acc-overview-shell,.settings-panel,
   .funding-panel,.calc-card,.calc-panel,.avg-calc-card,
-  .settings-hero,.avg-hero,.storage-setup,.acc-selected-card{
+  .settings-hero,.avg-hero,.storage-setup{
     padding:12px;border-radius:14px;
   }
-  .acc-selected-balance{min-width:0}
-  .acc-selected-name{font-size:20px}
-  .acc-selected-balance-value{font-size:28px}
-  .acc-selected-stat-value{font-size:17px}
   .home-hero{padding:18px;border-radius:14px}
   .home-hero::after{display:none}
   .home-hero h1,.home-hero-title{font-size:20px;line-height:1.12;letter-spacing:-.3px}
@@ -2593,18 +2558,6 @@ input[type="time"].fi{
 
 <!-- ========== CUENTAS ========== -->
 <section id="tab-cuentas" class="section">
-  <div id="accSelectedWidget" class="acc-selected-widget" aria-live="polite">
-    <div class="acc-selected-card">
-      <div class="acc-selected-empty">
-        <div class="acc-selected-empty-copy">
-          <div class="acc-selected-kicker">Cuenta seleccionada</div>
-          <h2 class="acc-selected-name">Sin cuenta activa</h2>
-          <p>Selecciona una cuenta para ver su resumen.</p>
-        </div>
-        <div class="acc-selected-empty-mark"><span class="ui-icon ui-icon-lg" data-ui-icon="folder"></span></div>
-      </div>
-    </div>
-  </div>
   <div id="acc-overview">
     <div class="page-header">
       <div>
@@ -2934,7 +2887,7 @@ input[type="time"].fi{
         </div>
         <div class="f">
           <label class="fl">Hora del trade</label>
-          <input class="fi" id="mOpenTime" type="time"/>
+          <input class="fi" id="mOpenTime" type="time" step="1"/>
         </div>
         <div class="f full">
           <label class="fl">P&L ($) <span style="color:var(--text3);font-weight:400">— auto-calculado, editable</span></label>
@@ -4377,6 +4330,7 @@ function renderSettings(){
         <div class="int-note">Las claves pegadas deben tener formato <code>zck_ninjatrader_...</code>. Por defecto se muestran ocultas; usa Mostrar cuando quieras ver la clave completa.</div>
       </div>
     </div>
+          ${renderWidgetKeyPanel()}
           ${renderSettingsDetectedAccountsPanel()}
         </section>
         ${tradingPanel}
@@ -6039,22 +5993,26 @@ function normalizeCsvDate(value){
 function normalizeCsvTime(value){
   const raw=`${value||''}`.trim();
   if(!raw)return'';
-  const m=raw.match(/(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)?/i);
+  const m=raw.match(/(\d{1,2}):(\d{2})(?::(\d{2})(\.\d{1,3})?)?\s*(AM|PM)?/i);
   if(!m)return'';
   let hour=Number(m[1]);
   const minute=Number(m[2]);
-  const ampm=(m[3]||'').toUpperCase();
+  const second=m[3]===undefined?null:Number(m[3]);
+  const millis=m[4]||'';
+  const ampm=(m[5]||'').toUpperCase();
   if(ampm==='PM'&&hour<12)hour+=12;
   if(ampm==='AM'&&hour===12)hour=0;
   if(hour<0||hour>23||minute<0||minute>59)return'';
-  return`${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}`;
+  if(second!==null&&(second<0||second>59))return'';
+  const base=`${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}`;
+  return second===null?base:`${base}:${String(second).padStart(2,'0')}${millis}`;
 }
 function parseCsvDateTimeParts(value){
   const raw=`${value||''}`.trim();
   if(!raw)return{date:'',time:''};
-  const iso=raw.match(/(\d{4}-\d{2}-\d{2})[T\s]+(\d{1,2}:\d{2})/);
+  const iso=raw.match(/(\d{4}-\d{2}-\d{2})[T\s]+(\d{1,2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?)/);
   if(iso)return{date:iso[1],time:normalizeCsvTime(iso[2])};
-  const euro=raw.match(/(\d{1,2}[-/]\d{1,2}[-/]\d{2,4}).*?(\d{1,2}:\d{2}(?::\d{2})?\s*(?:AM|PM)?)/i);
+  const euro=raw.match(/(\d{1,2}[-/]\d{1,2}[-/]\d{2,4}).*?(\d{1,2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?\s*(?:AM|PM)?)/i);
   if(euro)return{date:normalizeCsvDate(euro[1]),time:normalizeCsvTime(euro[2])};
   return{date:normalizeCsvDate(raw),time:normalizeCsvTime(raw)};
 }
@@ -7126,6 +7084,7 @@ const CONNECTOR_ACCOUNT_DISCOVERY_URL='https://wyfmmubrtkcgunwbagdq.supabase.co/
 const CONNECTOR_ACCOUNT_LIST_URL='https://wyfmmubrtkcgunwbagdq.supabase.co/functions/v1/connector-account-list';
 const CONNECTOR_ACCOUNT_LINK_URL='https://wyfmmubrtkcgunwbagdq.supabase.co/functions/v1/connector-account-link';
 const MANUAL_ACCOUNT_SAVE_FUNCTION_URL='https://wyfmmubrtkcgunwbagdq.supabase.co/functions/v1/manual-account-save';
+const WIDGET_SNAPSHOT_FUNCTION_URL='https://wyfmmubrtkcgunwbagdq.supabase.co/functions/v1/widget-snapshot';
 const DEFAULT_NINJATRADER_SYNC_TRADES_JSON=`[
   {
     "symbol": "MNQ JUN26",
@@ -7180,6 +7139,188 @@ function createConnectorKeyManagerState(){
   };
 }
 const connectorKeyManagerState=createConnectorKeyManagerState();
+const widgetKeyManagerState={
+  loading:false,
+  listLoading:false,
+  loaded:false,
+  items:[],
+  rawKey:'',
+  createdKeyId:'',
+  revealedKeyIds:new Set(),
+  error:'',
+  listError:''
+};
+async function loadWidgetKeys({force=false,silent=false}={}){
+  if(widgetKeyManagerState.listLoading)return;
+  if(widgetKeyManagerState.loaded&&!force)return;
+  widgetKeyManagerState.listLoading=true;
+  widgetKeyManagerState.listError='';
+  if(!silent)refreshConnectorKeyViews();
+  try{
+    const r=await callConnectorKeyFunction(CONNECTOR_KEY_LIST_FUNCTION_URL,{provider:'widget'});
+    if(!r.ok||!r.parsedResponse||r.parsedResponse.ok!==true){
+      throw new Error((r.parsedResponse&&(r.parsedResponse.error||r.parsedResponse.message))||`HTTP ${r.status}`);
+    }
+    const all=Array.isArray(r.parsedResponse.keys)?r.parsedResponse.keys:[];
+    widgetKeyManagerState.items=all.filter(k=>k&&k.provider==='widget');
+    widgetKeyManagerState.loaded=true;
+  }catch(e){
+    widgetKeyManagerState.listError=(e&&e.message)||'No se pudieron cargar las claves del widget.';
+    if(!silent)showToast(widgetKeyManagerState.listError,'error',{title:'Widget iOS'});
+  }finally{
+    widgetKeyManagerState.listLoading=false;
+    refreshConnectorKeyViews();
+  }
+}
+async function createWidgetKey(){
+  widgetKeyManagerState.loading=true;
+  widgetKeyManagerState.error='';
+  widgetKeyManagerState.rawKey='';
+  widgetKeyManagerState.createdKeyId='';
+  refreshConnectorKeyViews();
+  try{
+    const r=await callConnectorKeyFunction(CONNECTOR_KEY_CREATE_FUNCTION_URL,{provider:'widget',label:'iOS Widget',mode:'generate'});
+    if(!r.ok||!r.parsedResponse||r.parsedResponse.ok!==true){
+      throw new Error((r.parsedResponse&&(r.parsedResponse.error||r.parsedResponse.message))||`HTTP ${r.status}`);
+    }
+    widgetKeyManagerState.rawKey=`${r.parsedResponse.raw_key||''}`;
+    widgetKeyManagerState.createdKeyId=`${(r.parsedResponse.key&&r.parsedResponse.key.id)||''}`;
+    widgetKeyManagerState.loaded=false;
+    await loadWidgetKeys({force:true,silent:true});
+    showToast('Clave del widget generada. Cópiala antes de cerrar.','success',{title:'Widget iOS'});
+  }catch(e){
+    widgetKeyManagerState.error=(e&&e.message)||'No se pudo generar la clave del widget.';
+    showToast(widgetKeyManagerState.error,'error',{title:'Widget iOS'});
+  }finally{
+    widgetKeyManagerState.loading=false;
+    refreshConnectorKeyViews();
+  }
+}
+async function revokeWidgetKey(id){
+  if(!id)return;
+  if(!confirm('¿Revocar esta clave del widget? El widget dejará de funcionar hasta que generes una nueva.'))return;
+  try{
+    const r=await callConnectorKeyFunction(CONNECTOR_KEY_REVOKE_FUNCTION_URL,{id});
+    if(!r.ok||!r.parsedResponse||r.parsedResponse.ok!==true){
+      throw new Error((r.parsedResponse&&(r.parsedResponse.error||r.parsedResponse.message))||`HTTP ${r.status}`);
+    }
+    widgetKeyManagerState.loaded=false;
+    await loadWidgetKeys({force:true,silent:true});
+    showToast('Clave del widget revocada.','success',{title:'Widget iOS'});
+  }catch(e){
+    showToast((e&&e.message)||'No se pudo revocar.','error',{title:'Widget iOS'});
+  }
+}
+async function copyWidgetRawKey(rawOverride=''){
+  const raw=`${rawOverride||widgetKeyManagerState.rawKey||''}`.trim();
+  if(!raw){showToast('No hay clave para copiar.','info',{title:'Widget iOS'});return;}
+  try{
+    await navigator.clipboard.writeText(raw);
+    showToast('Clave copiada al portapapeles.','success',{title:'Widget iOS'});
+  }catch{
+    showToast('No se pudo copiar automáticamente. Selecciona y copia manualmente.','info',{title:'Widget iOS'});
+  }
+}
+function toggleWidgetKeyReveal(id){
+  if(!id)return;
+  if(!(widgetKeyManagerState.revealedKeyIds instanceof Set)){
+    widgetKeyManagerState.revealedKeyIds=new Set();
+  }
+  const set=widgetKeyManagerState.revealedKeyIds;
+  if(set.has(id))set.delete(id);else set.add(id);
+  refreshConnectorKeyViews();
+}
+async function copyWidgetKeyRowRaw(id){
+  const item=(widgetKeyManagerState.items||[]).find(k=>k&&k.id===id);
+  const raw=item?`${item.raw_key||''}`.trim():'';
+  if(!raw){showToast('Esta clave no tiene la parte secreta guardada (probablemente fue importada antes de habilitar la opción).','info',{title:'Widget iOS'});return;}
+  await copyWidgetRawKey(raw);
+}
+function ensureWidgetKeysLoaded(){
+  if(!currentUser||widgetKeyManagerState.loaded||widgetKeyManagerState.listLoading)return;
+  loadWidgetKeys({silent:true}).catch(()=>{});
+}
+function renderWidgetKeyPanel(){
+  ensureWidgetKeysLoaded();
+  const items=Array.isArray(widgetKeyManagerState.items)?widgetKeyManagerState.items:[];
+  const active=items.filter(k=>k&&k.is_active);
+  const rawJustCreated=`${widgetKeyManagerState.rawKey||''}`.trim();
+  const banner=rawJustCreated?`
+    <div class="int-note" style="border:1px solid var(--amber);padding:10px;border-radius:10px;background:rgba(216,155,50,.08)">
+      <div style="font-weight:700;margin-bottom:6px">Copia esta clave ahora — no volverá a mostrarse</div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <input class="fi" readonly value="${escapeHtml(rawJustCreated)}" style="flex:1;font-family:var(--mono);font-size:12px"/>
+        <button class="btn btn-primary" type="button" onclick="copyWidgetRawKey()">Copiar</button>
+      </div>
+    </div>`:'';
+  if(!(widgetKeyManagerState.revealedKeyIds instanceof Set)){
+    widgetKeyManagerState.revealedKeyIds=new Set();
+  }
+  const revealedSet=widgetKeyManagerState.revealedKeyIds;
+  const rows=items.length?items.map(k=>{
+    const id=`${k.id||''}`;
+    const revealed=revealedSet.has(id);
+    const raw=`${k.raw_key||''}`.trim();
+    const hasRaw=Boolean(raw);
+    const keyCell=revealed&&hasRaw
+      ? `<input class="fi" readonly value="${escapeHtml(raw)}" style="font-family:var(--mono);font-size:11px;width:100%;min-width:280px"/>`
+      : `<code>${escapeHtml(k.key_prefix||'')}</code>`;
+    const showBtn=hasRaw
+      ? `<button class="btn" type="button" onclick="toggleWidgetKeyReveal('${escapeHtml(id)}')">${revealed?'Ocultar':'Mostrar'}</button>`
+      : '';
+    const copyBtn=hasRaw
+      ? `<button class="btn" type="button" onclick="copyWidgetKeyRowRaw('${escapeHtml(id)}')">Copiar</button>`
+      : '';
+    const revokeBtn=k.is_active
+      ? `<button class="btn" type="button" onclick="revokeWidgetKey('${escapeHtml(id)}')">Revocar</button>`
+      : '';
+    return `
+    <tr>
+      <td>${keyCell}</td>
+      <td>${escapeHtml(k.label||'iOS Widget')}</td>
+      <td>${k.is_active?'<span style="color:var(--green)">Activa</span>':'<span style="color:var(--text3)">Revocada</span>'}</td>
+      <td>${escapeHtml(formatConnectorKeyDate(k.created_at))}</td>
+      <td>${escapeHtml(formatConnectorKeyDate(k.last_used_at))}</td>
+      <td><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">${showBtn}${copyBtn}${revokeBtn}</div></td>
+    </tr>`;
+  }).join(''):`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:14px">Aún no hay claves para el widget.</td></tr>`;
+  const disabled=widgetKeyManagerState.loading?'disabled':'';
+  return `
+    <div class="settings-panel" style="margin-top:14px">
+      <div class="settings-panel-head">
+        <div>
+          <div class="settings-panel-title">${getUiIconMarkup('settings','ui-icon ui-icon-md')}Widget iOS (Scriptable)</div>
+          <div class="settings-panel-sub">Genera una clave de solo lectura para el widget de pantalla de inicio en iOS.</div>
+        </div>
+        <div class="int-stats-row" style="margin:0">
+          <div class="int-stat" style="min-width:112px">
+            <span class="int-stat-label">Activas</span>
+            <span class="int-stat-value">${active.length}</span>
+          </div>
+        </div>
+      </div>
+      <div class="addon-key-body">
+        <div class="addon-key-create-actions">
+          <button class="btn btn-primary" type="button" onclick="createWidgetKey()" ${disabled}>
+            ${widgetKeyManagerState.loading?'Generando...':'Generar clave del widget'}
+          </button>
+          <button class="btn" type="button" onclick="loadWidgetKeys({force:true})" ${widgetKeyManagerState.listLoading?'disabled':''}>
+            ${widgetKeyManagerState.listLoading?'Cargando...':'Refrescar'}
+          </button>
+        </div>
+        ${banner}
+        ${widgetKeyManagerState.error?`<div class="int-note" style="color:var(--red)">${escapeHtml(widgetKeyManagerState.error)}</div>`:''}
+        ${widgetKeyManagerState.listError?`<div class="int-note" style="color:var(--red)">${escapeHtml(widgetKeyManagerState.listError)}</div>`:''}
+        <div class="int-keys-table-wrap">
+          <table class="int-keys-table">
+            <thead><tr><th>Clave</th><th>Etiqueta</th><th>Estado</th><th>Creada</th><th>Último uso</th><th></th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+        <div class="int-note">Endpoint del widget: <code>${escapeHtml(WIDGET_SNAPSHOT_FUNCTION_URL)}</code></div>
+      </div>
+    </div>`;
+}
 const ACCOUNT_CREATION_MODE_DEFS={
   manual:{label:'Manual',description:'Mantiene el flujo actual con todos los campos de la cuenta.'},
   automatic:{label:'Automática',description:'Prepara la cuenta para autosync y futuras conexiones con broker o plataforma.'}
@@ -7203,8 +7344,8 @@ const PROP_FIRM_DEFS={
   goat:{label:'GOAT Funded Trader',market:'cfd',firmSlug:'goat-funded-trader',prefixes:['GOATFUNDEDTRADER','GOAT']}
 };
 const FORCED_PROP_FIRM_PROGRAMS={
-  apex:'eod-evaluation',
-  'apex-trader-funding':'eod-evaluation'
+  apex:'intraday-evaluation',
+  'apex-trader-funding':'intraday-evaluation'
 };
 const accOverviewSelections={all:[],fondeo:[],backtesting:[],real:[]};
 const ACCOUNT_META_PREFIX='[zj-account]';
@@ -7220,7 +7361,7 @@ const TRADE_SELECT_FOR_APP=[
   'ninjatrader_user_label','pnl_is_authoritative',
   'commission_is_authoritative','created_at','updated_at'
 ].join(',');
-const REMOTE_REFRESH_INTERVAL_MS=7000;
+const REMOTE_REFRESH_INTERVAL_MS=15000;
 let fundingDirectoryMarket='cfd';
 let fundingDetailMarket='cfd';
 let fundingDetailFirmSlug='';
@@ -7233,6 +7374,7 @@ const propFirmProgramSelectionLogCache=new Set();
 const uniqList=items=>[...new Set((items||[]).map(v=>`${v}`.trim()).filter(Boolean))];
 const MONTH_NAMES=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 function escapeHtml(s){if(typeof s!=='string')return'';return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function escapeJsString(value){return `${value??''}`.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\r/g,'\\r').replace(/\n/g,'\\n');}
 function debounce(fn,ms=250){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms);}}
 function getUiIconSvg(name){
   switch(name){
@@ -7541,7 +7683,8 @@ function normalizePropFirmDetectionText(value=''){
   return `${value||''}`.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Z0-9]+/g,'');
 }
 function isPaapexFundedAccountName(value=''){
-  return normalizePropFirmDetectionText(value).startsWith('PAAPEX');
+  const compact=normalizePropFirmDetectionText(value);
+  return compact.startsWith('PAAPEX')||compact.includes('ACCOUNTPAAPEX');
 }
 function isPaapexFundedAccount(accountLike={}){
   return[
@@ -7559,8 +7702,8 @@ function isPaapexFundedAccount(accountLike={}){
 function isApexEvaluationPhase1AccountName(value=''){
   const normalized=normalizePropFirmDetectionText(value);
   if(!normalized)return false;
-  if(normalized.startsWith('PAAPEX'))return false;
-  return normalized.startsWith('APEX');
+  if(normalized.startsWith('PAAPEX')||normalized.includes('ACCOUNTPAAPEX'))return false;
+  return normalized.startsWith('APEX')||normalized.includes('ACCOUNTAPEX');
 }
 function isApexEvaluationPhase1Account(accountLike={}){
   return[
@@ -7586,7 +7729,7 @@ function detectPropFirmFromAccountName(name=''){
   const compact=normalizePropFirmDetectionText(name);
   if(!compact)return null;
   for(const [key,def] of Object.entries(PROP_FIRM_DEFS)){
-    if((def.prefixes||[]).some(prefix=>compact.startsWith(prefix))){
+    if((def.prefixes||[]).some(prefix=>compact.startsWith(prefix)||compact.includes(`ACCOUNT${prefix}`))){
       return{key,label:def.label,market:def.market,firmSlug:def.firmSlug||''};
     }
   }
@@ -7613,8 +7756,12 @@ function detectPropFirmFromAccount(accountLike={}){
   }
   const candidates=[
     accountLike.name,
+    accountLike.linked_external_account_id,
+    accountLike.linkedExternalAccountId,
     accountLike.linked_external_account_name,
     accountLike.linkedExternalAccountName,
+    accountLike.external_account_id,
+    accountLike.externalAccountId,
     accountLike.external_account_name,
     accountLike.externalAccountName,
     accountLike.detected_firm_name
@@ -7662,12 +7809,26 @@ function getExplicitSelectedProgramId(accountLike={}){
   const profile=normalizeFundingProfile(accountLike.fundingProfile||accountLike.funding_profile);
   return `${accountLike.fundingProgramSlug||accountLike.funding_program_slug||profile&&profile.programSlug||''}`.trim();
 }
+function isApexPropFirm(detectedPropFirm=null){
+  const key=`${detectedPropFirm&&detectedPropFirm.key||''}`.trim().toLowerCase();
+  const firmSlug=`${detectedPropFirm&&detectedPropFirm.firmSlug||''}`.trim().toLowerCase();
+  return key==='apex'||firmSlug==='apex-trader-funding';
+}
+function normalizeAutoPropFirmProgramSelection(selectedProgramId='',detectedPropFirm=null,accountLike={}){
+  const selected=`${selectedProgramId||''}`.trim();
+  const forced=getForcedProgramIdForPropFirm(detectedPropFirm);
+  if(!selected)return forced||'';
+  if(isApexPropFirm(detectedPropFirm)&&selected==='eod-evaluation'&&accountLike.program_selection_source!=='manual'){
+    return forced||selected;
+  }
+  return selected;
+}
 function getConfirmedFundingProgramId(accountLike={},detectedPropFirm=null){
   // Priority: explicit user selection > stored program slug on the account >
   // default program for this firm. The default (ex-"forced") is only used as
   // a starting point — the user must always be able to switch.
   const selected=getExplicitSelectedProgramId(accountLike);
-  if(selected)return selected;
+  if(selected)return normalizeAutoPropFirmProgramSelection(selected,detectedPropFirm,accountLike);
   const storedSlug=`${accountLike.fundingProgramSlug||accountLike.funding_program_slug||''}`.trim();
   const hasAutomaticSyncContext=Boolean(
     isAutomaticAccount(accountLike)||
@@ -9016,6 +9177,20 @@ function getDetectedAccountBalance(accountLike){
   if(!accountLike)return null;
   return toFiniteNumberOrNull(accountLike.detected_balance!==undefined?accountLike.detected_balance:accountLike.detectedBalance);
 }
+function getSupabaseAccountCurrentBalance(accountLike){
+  if(!accountLike)return null;
+  const detected=getDetectedAccountBalance(accountLike);
+  if(detected!==null)return detected;
+  const explicit=toFiniteNumberOrNull(accountLike.current_balance!==undefined?accountLike.current_balance:accountLike.currentBalance);
+  if(explicit!==null)return explicit;
+  return null;
+}
+function getAccountProgramAdjustedInitialBalance(accountLike){
+  if(!accountLike||normalizeAccountType(accountLike.type)!=='fondeo')return null;
+  const profile=getAccountFundingProfile(accountLike);
+  const profileBalance=toFiniteNumberOrNull(profile&&profile.accountSize);
+  return profileBalance!==null&&profileBalance>0?profileBalance:null;
+}
 function readObjectPath(source,path=[]){
   let current=source;
   for(const segment of path){
@@ -9814,9 +9989,11 @@ function inferFundingSelectionFromLegacyAccountRow(row){
 }
 function serializeAccount(acc){
   const user=getAuthenticatedUser();
-  const initialBalance=getStoredAccountBalance(acc)||0;
   const accountType=normalizeAccountType(acc&&acc.type);
   const fundingProfile=accountType==='fondeo'?getAccountFundingProfile({...acc,type:accountType}):null;
+  const initialBalance=accountType==='fondeo'
+    ?(toFiniteNumberOrNull(fundingProfile&&fundingProfile.accountSize)??getStoredAccountBalance(acc)??0)
+    :(getStoredAccountBalance(acc)||0);
   const accountMeta=buildAccountPersistenceMeta(acc,fundingProfile,accountType);
   const row={
     id:acc.id,
@@ -9857,7 +10034,9 @@ function buildCoreAccountPersistenceRow(acc,{includeId=true}={}){
   const accountType=normalizeAccountType(acc&&acc.type);
   const fundingProfile=accountType==='fondeo'?getAccountFundingProfile({...acc,type:accountType}):null;
   const accountMeta=buildAccountPersistenceMeta(acc,fundingProfile,accountType);
-  const balance=getStoredAccountBalance(acc)||0;
+  const balance=accountType==='fondeo'
+    ?(toFiniteNumberOrNull(fundingProfile&&fundingProfile.accountSize)??getStoredAccountBalance(acc)??0)
+    :(getStoredAccountBalance(acc)||0);
   const row={
     user_id:user.id,
     name:acc.name,
@@ -9890,26 +10069,51 @@ function serializeStrategyRows(acc){
 }
 function buildTradeTimestamp(dateValue,timeValue,fallbackValue=''){
   const safeDate=`${dateValue||''}`.trim();
-  const safeTime=`${timeValue||''}`.trim();
   if(!safeDate){
     return fallbackValue||nowIso();
   }
-  const normalizedTime=(safeTime||'00:00').slice(0,5);
-  const parsed=new Date(`${safeDate}T${normalizedTime}:00`);
+  const normalizedTime=normalizeTradeTimeForTimestamp(timeValue)||'00:00:00';
+  const parsed=new Date(`${safeDate}T${normalizedTime}`);
   return Number.isNaN(parsed.getTime())?(fallbackValue||nowIso()):parsed.toISOString();
+}
+function normalizeTradeTimeForTimestamp(value){
+  const raw=`${value||''}`.trim();
+  if(!raw)return'';
+  const match=raw.match(/^(\d{1,2}):(\d{2})(?::(\d{2})(\.\d{1,3})?)?/);
+  if(!match)return'';
+  const hour=Number(match[1]);
+  const minute=Number(match[2]);
+  const second=match[3]===undefined?0:Number(match[3]);
+  const fraction=match[4]||'';
+  if(hour<0||hour>23||minute<0||minute>59||second<0||second>59)return'';
+  return`${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}:${String(second).padStart(2,'0')}${fraction}`;
+}
+function normalizeTradeTimeForKey(value){
+  const normalized=normalizeTradeTimeForTimestamp(value);
+  if(!normalized)return'';
+  return normalized.replace(/(\.\d*?)0+$/,'$1').replace(/\.$/,'').replace(/:00$/,'');
+}
+function pickMostPreciseTradeTime(primary,secondary){
+  const first=`${primary||''}`.trim();
+  const second=`${secondary||''}`.trim();
+  if(!first)return second;
+  if(!second)return first;
+  return second.length>first.length?second:first;
 }
 function splitTradeTimestamp(value){
   const raw=`${value||''}`.trim();
   if(!raw)return{date:'',time:''};
-  const direct=raw.match(/^(\d{4}-\d{2}-\d{2})[T\s](\d{2}:\d{2})/);
+  const direct=raw.match(/^(\d{4}-\d{2}-\d{2})[T\s](\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?)/);
   if(direct){
-    return{date:direct[1],time:direct[2]};
+    return{date:direct[1],time:normalizeTradeTimeForKey(direct[2])||direct[2]};
   }
   const parsed=new Date(raw);
   if(Number.isNaN(parsed.getTime()))return{date:'',time:''};
+  const iso=parsed.toISOString();
+  const timeWithMs=iso.slice(11,23);
   return{
-    date:parsed.toISOString().slice(0,10),
-    time:parsed.toISOString().slice(11,16)
+    date:iso.slice(0,10),
+    time:normalizeTradeTimeForKey(timeWithMs)||timeWithMs
   };
 }
 function isBrokerImportedTrade(trade){
@@ -10068,6 +10272,7 @@ function mapAccountRow(row){
     initial_backfill_status:row.initial_backfill_status||row.initialBackfillStatus||null,
     sync_health_status:row.sync_health_status||row.syncHealthStatus||null,
     last_sync_at:row.last_sync_at||row.lastSyncAt||null,
+    current_balance:toFiniteNumberOrNull(row.current_balance!==undefined?row.current_balance:row.currentBalance),
     detected_balance:toFiniteNumberOrNull(row.detected_balance!==undefined?row.detected_balance:row.detectedBalance),
     selected_program_id:selectedProgramId,
     program_selection_required:programSelectionRequired,
@@ -10101,12 +10306,12 @@ function mapTradeRow(row){
     entry:row.entry===null||row.entry===undefined?null:Number(row.entry),
     qty:row.qty===null||row.qty===undefined?0:Number(row.qty),
     openDate:row.open_date||openedParts.date||null,
-    openTime:row.open_time||openedParts.time||'',
+    openTime:pickMostPreciseTradeTime(row.open_time,openedParts.time)||'',
     sl:null,
     target:null,
     exit:row.exit===null||row.exit===undefined?null:Number(row.exit),
     exitDate:row.exit_date||closedParts.date||null,
-    exitTime:row.exit_time||closedParts.time||'',
+    exitTime:pickMostPreciseTradeTime(row.exit_time,closedParts.time)||'',
     pnl:row.pnl===null||row.pnl===undefined?null:Number(row.pnl),
     pnlPct:row.pnl_pct===null||row.pnl_pct===undefined?null:Number(row.pnl_pct),
     grossPnl:row.gross_pnl===null||row.gross_pnl===undefined?null:Number(row.gross_pnl),
@@ -10167,15 +10372,29 @@ function getTradeDedupeKey(trade){
   if(externalKey)return`extkey:${externalKey}`;
   const fillPair=`${trade.externalFillPairId||trade.external_fill_pair_id||''}`.trim();
   if(fillPair)return`fill:${fillPair}`;
-  const symbol=`${trade.symbol||''}`.trim().toUpperCase();
+  return getTradeExactAmountTimeDedupeKey(trade);
+}
+function normalizeTradeAmountKey(value){
+  if(value===null||value===undefined||value==='')return'';
+  const num=Number(value);
+  if(!Number.isFinite(num))return'';
+  return Number(num.toFixed(8)).toString();
+}
+function getTradeExactTimestampKey(trade){
+  if(!trade)return'';
   const openDate=`${trade.openDate||trade.open_date||''}`.trim();
-  const openTime=`${trade.openTime||trade.open_time||''}`.trim().slice(0,5);
-  const entry=trade.entry===null||trade.entry===undefined||trade.entry===''?'':Number(trade.entry);
-  const qty=trade.qty===null||trade.qty===undefined||trade.qty===''?'':Number(trade.qty);
-  const dir=`${trade.dir||''}`.trim().toUpperCase();
-  const conn=`${trade.connectionName||trade.connection_name||''}`.trim().toUpperCase();
-  if(!symbol||!openDate||entry===''||qty==='')return'';
-  return`fb:${symbol}|${openDate}|${openTime}|${entry}|${qty}|${dir}|${conn}`;
+  const openTime=normalizeTradeTimeForKey(trade.openTime||trade.open_time||'');
+  if(openDate&&openTime)return`${openDate}T${openTime}`;
+  const exitDate=`${trade.exitDate||trade.exit_date||''}`.trim();
+  const exitTime=normalizeTradeTimeForKey(trade.exitTime||trade.exit_time||'');
+  if(exitDate&&exitTime)return`${exitDate}T${exitTime}`;
+  return'';
+}
+function getTradeExactAmountTimeDedupeKey(trade){
+  const amount=normalizeTradeAmountKey(trade&&trade.pnl!==undefined?trade.pnl:trade&&trade.pnl_amount);
+  const timestamp=getTradeExactTimestampKey(trade);
+  if(!amount||!timestamp)return'';
+  return`amount-time:${amount}|${timestamp}`;
 }
 function scoreTradeForDedupe(trade){
   if(!trade)return -1;
@@ -10193,15 +10412,15 @@ function getTradeContentFingerprint(trade){
   if(!trade)return'';
   const symbol=`${trade.symbol||''}`.trim().toUpperCase();
   const openDate=`${trade.openDate||trade.open_date||''}`.trim();
-  const openTime=`${trade.openTime||trade.open_time||''}`.trim().slice(0,5);
+  const openTime=normalizeTradeTimeForKey(trade.openTime||trade.open_time||'');
   const exitDate=`${trade.exitDate||trade.exit_date||''}`.trim();
-  const exitTime=`${trade.exitTime||trade.exit_time||''}`.trim().slice(0,5);
+  const exitTime=normalizeTradeTimeForKey(trade.exitTime||trade.exit_time||'');
   const entry=trade.entry===null||trade.entry===undefined||trade.entry===''?'':Number(trade.entry);
   const exit=trade.exit===null||trade.exit===undefined||trade.exit===''?'':Number(trade.exit);
   const qty=trade.qty===null||trade.qty===undefined||trade.qty===''?'':Number(trade.qty);
   const dir=`${trade.dir||''}`.trim().toUpperCase();
-  const pnl=trade.pnl===null||trade.pnl===undefined||trade.pnl===''?'':Number(trade.pnl);
-  if(!symbol||!openDate||entry===''||qty===''||exit==='')return'';
+  const pnl=normalizeTradeAmountKey(trade.pnl);
+  if(!symbol||!openDate||entry===''||qty===''||exit===''||pnl==='')return'';
   return`fp:${symbol}|${openDate}|${openTime}|${exitDate}|${exitTime}|${entry}|${exit}|${qty}|${dir}|${pnl}`;
 }
 function dedupeAccountTradeRows(rows){
@@ -10231,15 +10450,15 @@ function dedupeAccountTradeRows(rows){
     return noKey.concat(Array.from(bestByKey.values()));
   };
   let working=arr.slice();
-  working=runPass(working,getTradeDedupeKey);
+  working=runPass(working,getTradeExactAmountTimeDedupeKey);
   working=runPass(working,getTradeContentFingerprint);
   return{kept:working,removed};
 }
 function getTradeHistoricalTimestamp(trade){
   const date=`${trade&&trade.openDate||trade&&trade.exitDate||''}`.trim();
-  const time=`${trade&&trade.openTime||trade&&trade.exitTime||'00:00'}`.trim().slice(0,5)||'00:00';
+  const time=normalizeTradeTimeForTimestamp(trade&&trade.openTime||trade&&trade.exitTime||'00:00')||'00:00:00';
   if(date){
-    const parsed=new Date(`${date}T${time}:00`);
+    const parsed=new Date(`${date}T${time}`);
     if(!Number.isNaN(parsed.getTime()))return parsed.getTime();
   }
   const created=new Date(trade&&trade.createdAt||'');
@@ -10417,10 +10636,14 @@ function createSupabaseStorage(){
             ?buildFundingFieldsForDetectedPropFirm(detectedFundingInput,detectedPropFirm)
             :buildPendingPropFirmFundingFields(detectedFundingInput,detectedPropFirm))
           :null;
+        const adjustedInitialBalance=getAccountProgramAdjustedInitialBalance({
+          ...detectedFundingInput,
+          ...(detectedFundingFields||{})
+        })??resolvedInitialBalance;
         Object.assign(acc,normalizeAccountRecord({
           ...acc,
-          startBalance:resolvedInitialBalance,
-          initialBalance:resolvedInitialBalance,
+          startBalance:adjustedInitialBalance,
+          initialBalance:adjustedInitialBalance,
           detected_balance:detectedBalance,
           creation_mode:'automatic',
           sync_source:nextSyncSource,
@@ -10443,8 +10666,8 @@ function createSupabaseStorage(){
             accountId:acc.id,
             accountName:acc.name,
             detected_balance:detectedBalance,
-            initial_balance:resolvedInitialBalance,
-            balance_policy:'manual_initial_plus_trade_pnl',
+            initial_balance:adjustedInitialBalance,
+            balance_policy:'supabase_detected_balance',
             matchedBy:detectedMatch.matchedBy,
             externalAccountId:nextLinkedId,
             externalAccountName:nextLinkedName
@@ -11701,6 +11924,7 @@ function computeFundingAccountState(acc){
   const profile=getAccountFundingProfile(acc);
   if(!profile)return null;
   const baseBalance=getAccountPerformanceBaseBalance(acc)||Number(profile.accountSize)||0;
+  const currentBalanceFromBroker=getSupabaseAccountCurrentBalance(acc);
   const closed=(accountTrades[acc.id]||[])
     .filter(trade=>trade.status==='CLOSED'&&trade.pnl!==null)
     .slice()
@@ -11779,14 +12003,30 @@ function computeFundingAccountState(acc){
       }
     }
   }
-  const rules=getFundingStageRules(profile,status);
-  const stageBalance=parseFloat((stageStartBalance+stagePnl).toFixed(2));
+  let rules=getFundingStageRules(profile,status);
+  const tradeStagePnl=stagePnl;
+  const tradeStageBalance=parseFloat((stageStartBalance+tradeStagePnl).toFixed(2));
+  const stageBalance=currentBalanceFromBroker!==null
+    ?parseFloat(Number(currentBalanceFromBroker).toFixed(2))
+    :tradeStageBalance;
+  stagePnl=parseFloat((stageBalance-stageStartBalance).toFixed(2));
   const daysTraded=Object.keys(stageDailyTotals).length;
   const targetAmount=status==='evaluation'?getFundingPhaseTargetAmount(profile,currentPhase,stageStartBalance):null;
   const targetProgress=targetAmount?Math.max(0,Math.min(100,(stagePnl/targetAmount)*100)):status==='funded'?100:0;
   const dailyUsage=getStageDailyUsage(stageDailyTotals,rules,stageStartBalance,getLocalDateKey());
-  const totalUsage=getStageTotalUsage({stageBalance,startBalance:stageStartBalance,highWaterMark:stageHighWaterMark,rules});
+  let totalUsage=getStageTotalUsage({stageBalance,startBalance:stageStartBalance,highWaterMark:Math.max(stageHighWaterMark,stageBalance),rules});
+  if(status!=='failed'&&totalUsage.breached){
+    status='failed';
+    failureReason='Se superó el drawdown total permitido.';
+    rules=getFundingStageRules(profile,status);
+    totalUsage=getStageTotalUsage({stageBalance,startBalance:stageStartBalance,highWaterMark:Math.max(stageHighWaterMark,stageBalance),rules});
+  }
   const consistency=evaluateConsistencyRule(rules.consistencyRule||profile.consistencyRule,stageTrades,targetAmount,stagePnl);
+  const stagePassed=status==='evaluation'
+    &&targetAmount!==null
+    &&stagePnl>=targetAmount
+    &&daysTraded>=(Number(rules.minTradingDays)||0)
+    &&consistency.passed;
   return{
     profile,
     status,
@@ -11796,12 +12036,15 @@ function computeFundingAccountState(acc){
     stageStartBalance,
     stageBalance,
     stagePnl,
+    tradeStagePnl,
+    currentBalanceSource:currentBalanceFromBroker!==null?'broker':'trades',
     stageTrades,
     stageTradeDays:daysTraded,
     minTradingDays:Number(profile.minTradingDays)||0,
     targetAmount,
     targetProgress,
     targetRemaining:targetAmount===null?null:parseFloat((targetAmount-stagePnl).toFixed(2)),
+    stagePassed,
     dailyUsage,
     totalUsage,
     consistency,
@@ -11815,12 +12058,14 @@ function computeFundingAccountState(acc){
 const ACCOUNT_STAGE_FILTER_DEFS=[
   {key:'all',label:'Todas',tone:'neutral'},
   {key:'evaluation',label:'En evaluación',tone:'phase'},
+  {key:'passed',label:'Pasadas',tone:'passed'},
   {key:'funded',label:'Fondeadas',tone:'funded'},
   {key:'failed',label:'Quemadas',tone:'failed'}
 ];
 const ACCOUNT_STAGE_FILTER_DEF_MAP=Object.fromEntries(ACCOUNT_STAGE_FILTER_DEFS.map(item=>[item.key,item]));
 function getAccountStageFilterGroup(acc){
   const v=getAccountStageFilterValue(acc);
+  if(v==='passed')return'passed';
   if(v==='funded')return'funded';
   if(v==='failed')return'failed';
   if(v==='phase_1'||v==='phase_2'||v==='phase_3'||v==='evaluation')return'evaluation';
@@ -11836,6 +12081,7 @@ function normalizeAccountStageFilterValue(value){
   if(/^(phase|fase)_?1$/.test(key))return'phase_1';
   if(/^(phase|fase)_?2$/.test(key))return'phase_2';
   if(/^(phase|fase)_?3$/.test(key))return'phase_3';
+  if(['passed','pasada','pasado','pasadas','pasados','phase_passed','fase_pasada','fase_pasado','cuenta_pasada','account_passed','challenge_passed','evaluacion_pasada','evaluation_passed'].includes(key))return'passed';
   if(['funded','fondeada','funded_account','cuenta_fondeada','live_funded','express_funded','pa'].includes(key))return'funded';
   if(
     ['failed','fallada','fallido','violated','violada','violado','breach','breached','invalid','invalida','invalidada','drawdown_breach','dd_breach','cuenta_fallida','cuenta_fallido','account_failed','failed_account','burned','burnt','quemada','quemado','cuenta_quemada','cuenta_quemado'].includes(key)||
@@ -11876,10 +12122,12 @@ function getAccountStageFilterValue(acc){
   if(!acc||acc.type!=='fondeo')return'all';
   const state=computeFundingAccountState(acc);
   if(state&&state.status==='failed')return'failed';
-  if(state&&state.status==='funded')return'funded';
   const explicit=getExplicitAccountStageFilterValue(acc);
-  if(explicit)return explicit;
+  if(explicit==='failed'||explicit==='funded')return explicit;
   if(isPaapexFundedAccount(acc))return'funded';
+  if(state&&(state.stagePassed||(Array.isArray(state.transitions)&&state.transitions.length>0)))return'passed';
+  if(explicit)return explicit;
+  if(state&&state.status==='funded')return'funded';
   if(isApexEvaluationPhase1Account(acc))return'phase_1';
   if(acc.program_selection_required)return'pending';
   if(!state)return'pending';
@@ -11944,6 +12192,8 @@ function getAccountSubtitle(acc){
 }
 function getAccountPerformanceBaseBalance(acc){
   if(!acc)return 0;
+  const programAdjusted=getAccountProgramAdjustedInitialBalance(acc);
+  if(programAdjusted!==null)return programAdjusted;
   const stored=getAccountInitialBalanceRaw(acc);
   if(stored!==null&&stored>0)return stored;
   const propFirm=detectPropFirmFromAccount(acc)||detectPropFirmFromAccountName(acc&&acc.name);
@@ -11955,9 +12205,6 @@ function getAccountPerformanceBaseBalance(acc){
     accountLike:acc,
   });
   if(suggested!==null&&suggested>0)return suggested;
-  const profile=getAccountFundingProfile(acc);
-  const profileBalance=toFiniteNumberOrNull(profile&&profile.accountSize);
-  if(profileBalance!==null&&profileBalance>0)return profileBalance;
   if(stored!==null)return stored;
   return 0;
 }
@@ -11984,146 +12231,6 @@ function formatBalanceChangeLabel(change){
   if(!change||change.pct===null)return'—';
   return `${fmtPct(change.pct)} sobre inicial`;
 }
-function formatAccountCurrency(value){
-  const num=Number(value);
-  if(!Number.isFinite(num))return'—';
-  return `$${num.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
-}
-function getSelectedAccountWidgetToneClass(tone=''){
-  const key=`${tone||''}`.trim().toLowerCase();
-  if(['funded','positive','healthy'].includes(key))return'tone-positive';
-  if(['failed','negative','error'].includes(key))return'tone-negative';
-  if(['phase','warning','degraded','stale'].includes(key))return'tone-warning';
-  return'tone-neutral';
-}
-function getSelectedAccountWidgetProviderLabel(acc){
-  if(!acc)return'';
-  return getAccountPropFirmLabel(acc)||`${acc.firm||''}`.trim()||getAccountSyncSourceLabel(acc.sync_source)||'';
-}
-function getSelectedAccountWidgetSyncState(acc){
-  if(!acc)return{label:'Sin sync',meta:'Sin datos',tone:'neutral'};
-  const runtime=isAutomaticAccount(acc)?getAutomaticAccountRuntimeStatus(acc):null;
-  const lastSync=`${
-    acc.last_sync_at||
-    acc.lastSyncAt||
-    runtime&&runtime.detected&&runtime.detected.lastSeenAt||
-    acc.updatedAt||
-    acc.updated_at||
-    acc.createdAt||
-    acc.created_at||
-    ''
-  }`.trim();
-  if(!isAutomaticAccount(acc)){
-    return{
-      label:'Manual',
-      meta:lastSync?`Actualizada ${formatRelativeTime(lastSync)}`:'Sin sincronización automática',
-      tone:'neutral'
-    };
-  }
-  return{
-    label:formatSyncHealthStatus(runtime&&runtime.syncHealth),
-    meta:lastSync?`Última sync ${formatRelativeTime(lastSync)}`:formatBackfillStatus(runtime&&runtime.backfillStatus),
-    tone:runtime&&runtime.syncHealth||'neutral'
-  };
-}
-function renderSelectedAccountWidget(){
-  const host=document.getElementById('accSelectedWidget');
-  if(!host)return;
-  const acc=activeAccountId?getAccount(activeAccountId):null;
-  if(!acc){
-    host.innerHTML=`<div class="acc-selected-card">
-      <div class="acc-selected-empty">
-        <div class="acc-selected-empty-copy">
-          <div class="acc-selected-kicker">Cuenta seleccionada</div>
-          <h2 class="acc-selected-name">Sin cuenta activa</h2>
-          <p>Selecciona una cuenta para ver su resumen.</p>
-        </div>
-        <div class="acc-selected-empty-mark">${getUiIconMarkup('folder','ui-icon ui-icon-lg')}</div>
-      </div>
-    </div>`;
-    return;
-  }
-  const def=ACC_DEFS[acc.type]||ACC_DEFS.backtesting;
-  const snapshot=getAccountSnapshot(acc);
-  const startBalance=getAccountPerformanceBaseBalance(acc)||0;
-  const balanceChange=getAccountBalanceChange(acc,snapshot);
-  const providerLabel=getSelectedAccountWidgetProviderLabel(acc);
-  const connectionLabel=getAccountConnectionDisplayName(acc);
-  const syncState=getSelectedAccountWidgetSyncState(acc);
-  const subtitle=getAccountPrimarySubtitle(acc)||getAccountCardSecondaryText(acc)||'Cuenta lista dentro del journal.';
-  const stageDef=acc.type==='fondeo'?getAccountStageFilterDef(getAccountStageFilterValue(acc)):null;
-  const fundingState=acc.type==='fondeo'?computeFundingAccountState(acc):null;
-  const fundingProfile=fundingState&&fundingState.profile||getAccountFundingProfile(acc)||null;
-  const totalMargin=fundingState?getFundingMarginState(fundingState.totalUsage):null;
-  const metricCards=[
-    {label:'Balance inicial',value:formatAccountCurrency(startBalance),cls:'mono',meta:fundingProfile&&fundingProfile.sizeLabel&&Number(fundingProfile.accountSize)!==Number(startBalance)?`Perfil ${fundingProfile.sizeLabel}`:''},
-    {label:'P&L total',value:fmt(snapshot.totalPnl),cls:snapshot.totalPnl>=0?'pos mono':'neg mono',meta:snapshot.closed.length?`${snapshot.closed.length} cerrados`:'Sin trades cerrados'},
-    {label:'% inicial',value:balanceChange.pct===null?'—':fmtPct(balanceChange.pct),cls:balanceChange.tone==='pos'?'pos mono':balanceChange.tone==='neg'?'neg mono':'mono',meta:'Sobre balance inicial'},
-    {label:'Win rate',value:`${snapshot.winRate.toFixed(1)}%`,cls:'mono',meta:snapshot.closed.length?`${snapshot.wins.length} wins / ${snapshot.closed.length-snapshot.wins.length} losses`:'Sin muestra'},
-    {label:'Trades',value:String(snapshot.tradeCount),cls:'mono',meta:snapshot.openCount?`${snapshot.openCount} abiertos`:'Sin abiertos'}
-  ];
-  const fundingCards=[];
-  if(fundingState){
-    fundingCards.push(
-      {label:'Programa',value:fundingProfile&&fundingProfile.programName||'—',meta:fundingProfile&&fundingProfile.sizeLabel||''},
-      {label:'Fase',value:fundingState.currentPhaseLabel||getAccountStageLabel(acc),meta:fundingState.stageTradeDays?`${fundingState.stageTradeDays} día${fundingState.stageTradeDays===1?'':'s'} operados`:(fundingState.status==='funded'?'Cuenta fondeada':'Sin progreso todavía')}
-    );
-    if(fundingState.targetAmount!==null){
-      fundingCards.push({
-        label:'Target restante',
-        value:fundingState.targetRemaining!==null&&fundingState.targetRemaining<=0?'Completado':formatAccountCurrency(Math.max(0,Number(fundingState.targetRemaining)||0)),
-        meta:fundingState.targetAmount?`${Math.max(0,Math.min(100,Number(fundingState.targetProgress)||0)).toFixed(1)}% del target`:''
-      });
-    }
-    if(totalMargin&&totalMargin.enabled){
-      fundingCards.push({
-        label:'DD restante',
-        value:totalMargin.breached?'$0.00':formatAccountCurrency(Math.max(0,Number(totalMargin.remaining)||0)),
-        meta:totalMargin.breached?'Límite superado':`${totalMargin.remainingPct.toFixed(1)}% disponible`
-      });
-    }
-  }
-  const metaBits=[
-    providerLabel?`<span class="acc-selected-meta"><strong>Firma</strong> ${escapeHtml(providerLabel)}</span>`:'',
-    connectionLabel?`<span class="acc-selected-meta"><strong>Conexión</strong> ${escapeHtml(connectionLabel)}</span>`:'',
-    `<span class="acc-selected-meta"><strong>Sync</strong> ${escapeHtml(syncState.meta)}</span>`
-  ].filter(Boolean).join('');
-  host.innerHTML=`<div class="acc-selected-card">
-    <div class="acc-selected-head">
-      <div>
-        <div class="acc-selected-kicker">Cuenta seleccionada</div>
-        <h2 class="acc-selected-name">${escapeHtml(acc.name||'Cuenta')}</h2>
-        <div class="acc-selected-sub">${escapeHtml(subtitle)}</div>
-        <div class="acc-selected-badges">
-          <span class="acc-selected-badge">${getUiIconMarkup(def.icon,'ui-icon ui-icon-sm')}${escapeHtml(def.label)}</span>
-          ${stageDef?`<span class="acc-selected-badge ${getSelectedAccountWidgetToneClass(stageDef.tone)}">${escapeHtml(stageDef.label)}</span>`:''}
-          ${providerLabel&&!connectionLabel?`<span class="acc-selected-badge">${escapeHtml(providerLabel)}</span>`:''}
-          <span class="acc-selected-badge ${getSelectedAccountWidgetToneClass(syncState.tone)}">${escapeHtml(syncState.label)}</span>
-        </div>
-      </div>
-      <div class="acc-selected-balance">
-        <div class="acc-selected-balance-label">Balance actual</div>
-        <div class="acc-selected-balance-value ${balanceChange.tone==='pos'?'pos':balanceChange.tone==='neg'?'neg':''}">${formatAccountCurrency(snapshot.currentBalance)}</div>
-        <div class="acc-selected-balance-meta ${balanceChange.tone==='pos'?'pos':balanceChange.tone==='neg'?'neg':''}">${fmt(balanceChange.amount)} · ${formatBalanceChangeLabel(balanceChange)}</div>
-      </div>
-    </div>
-    <div class="acc-selected-metrics">
-      ${metricCards.map(item=>`<div class="acc-selected-stat">
-        <div class="acc-selected-stat-label">${escapeHtml(item.label)}</div>
-        <div class="acc-selected-stat-value ${item.cls||''}">${escapeHtml(item.value)}</div>
-        <div class="acc-selected-stat-meta">${escapeHtml(item.meta||'—')}</div>
-      </div>`).join('')}
-    </div>
-    ${fundingCards.length?`<div class="acc-selected-funding">
-      ${fundingCards.map(item=>`<div class="acc-selected-stat">
-        <div class="acc-selected-stat-label">${escapeHtml(item.label)}</div>
-        <div class="acc-selected-stat-value">${escapeHtml(item.value)}</div>
-        <div class="acc-selected-stat-meta">${escapeHtml(item.meta||'—')}</div>
-      </div>`).join('')}
-    </div>`:''}
-    <div class="acc-selected-footer">${metaBits}</div>
-  </div>`;
-}
 const _snapshotCache=new Map();
 let _snapshotCacheVersion=0;
 function invalidateSnapshotCache(){_snapshotCacheVersion++;_snapshotCache.clear();}
@@ -12133,14 +12240,21 @@ function getAccountSnapshot(acc){
   const ts=accountTrades[acc.id]||[];
   const closed=ts.filter(t=>t.status==='CLOSED'&&t.pnl!==null);
   const wins=closed.filter(t=>t.result==='WIN');
-  const totalPnl=closed.reduce((sum,t)=>sum+t.pnl,0);
+  const tradeTotalPnl=closed.reduce((sum,t)=>sum+t.pnl,0);
   const startBalance=getAccountPerformanceBaseBalance(acc)||0;
+  const calculatedCurrentBalance=parseFloat((startBalance+tradeTotalPnl).toFixed(2));
+  const supabaseCurrentBalance=getSupabaseAccountCurrentBalance(acc);
+  const currentBalance=supabaseCurrentBalance!==null?parseFloat(supabaseCurrentBalance.toFixed(2)):calculatedCurrentBalance;
+  const balanceTotalPnl=parseFloat((currentBalance-startBalance).toFixed(2));
   const result={
     trades:ts,
     closed,
     wins,
-    totalPnl,
-    currentBalance:parseFloat((startBalance+totalPnl).toFixed(2)),
+    totalPnl:balanceTotalPnl,
+    tradeTotalPnl,
+    currentBalance,
+    calculatedCurrentBalance,
+    currentBalanceSource:supabaseCurrentBalance!==null?'supabase':'trades',
     winRate:closed.length?(wins.length/closed.length*100):0,
     tradeCount:ts.length,
     openCount:ts.filter(t=>t.status==='OPEN').length
@@ -12206,9 +12320,9 @@ async function ensureMultiAccountData({persist=false}={}){
     const storedBalance=getStoredAccountBalance(acc);
     const defaultBalance=usesDetectedAccountBalance(acc)?0:5000;
     const profileBalance=toFiniteNumberOrNull(fundingProfile&&fundingProfile.accountSize);
-    const startBalance=storedBalance!==null
-      ?storedBalance
-      :(profileBalance!==null?profileBalance:defaultBalance);
+    const startBalance=normalizeAccountType(acc&&acc.type)==='fondeo'&&profileBalance!==null
+      ?profileBalance
+      :(storedBalance!==null?storedBalance:defaultBalance);
     return normalizeAccountRecord({
       ...acc,
       startBalance,
@@ -12271,7 +12385,7 @@ function getOverviewAccountStatus(acc){
   if(acc&&acc.type==='fondeo'){
     const stageValue=getAccountStageFilterValue(acc);
     const stageDef=getAccountStageFilterDef(stageValue);
-    const tone=stageValue==='funded'?'positive':stageValue==='failed'?'negative':stageValue==='pending'?'neutral':'warning';
+    const tone=stageValue==='funded'?'positive':stageValue==='passed'?'passed':stageValue==='failed'?'negative':stageValue==='pending'?'neutral':'warning';
     return{label:stageDef.label,tone};
   }
   const snapshot=getAccountSnapshot(acc);
@@ -12348,7 +12462,7 @@ function getVisibleAccounts(type=accFilterType){
   return base.filter(acc=>getAccountStageFilterGroup(acc)===accFundingStageFilter);
 }
 function getFundingStageFilterCounts(baseAccounts=[]){
-  const counts={all:baseAccounts.length,evaluation:0,funded:0,failed:0};
+  const counts={all:baseAccounts.length,evaluation:0,passed:0,funded:0,failed:0};
   baseAccounts.forEach(acc=>{
     const key=getAccountStageFilterGroup(acc);
     if(counts[key]!==undefined)counts[key]+=1;
@@ -12373,6 +12487,56 @@ function setFundingStageFilter(value='all'){
   const normalized=normalizeAccountStageFilterValue(value)||value;
   accFundingStageFilter=ACCOUNT_STAGE_FILTER_DEF_MAP[normalized]?normalized:'all';
   renderAccOverview();
+}
+function renderOverviewChartFromElement(root=document){
+  const overviewCanvas=root.querySelector?root.querySelector('#accOverviewChart'):document.getElementById('accOverviewChart');
+  if(!overviewCanvas)return;
+  const labels=JSON.parse(overviewCanvas.dataset.labels||'[]');
+  const values=JSON.parse(overviewCanvas.dataset.values||'[]');
+  const color=overviewCanvas.dataset.color||'#D79A39';
+  const fill=overviewCanvas.dataset.fill||'rgba(186,117,23,0.28)';
+  if(!labels.length||!values.length)return;
+  const ctx=overviewCanvas.getContext('2d');
+  const gradient=ctx.createLinearGradient(0,0,0,240);
+  gradient.addColorStop(0,fill);
+  gradient.addColorStop(1,'rgba(0,0,0,0)');
+  if(accOverviewC&&accOverviewC.canvas!==overviewCanvas){
+    try{accOverviewC.destroy()}catch(_){}
+    accOverviewC=null;
+  }
+  if(accOverviewC){
+    accOverviewC.data.labels=labels;
+    accOverviewC.data.datasets[0].data=values;
+    accOverviewC.data.datasets[0].borderColor=color;
+    accOverviewC.data.datasets[0].backgroundColor=gradient;
+    accOverviewC.update();
+  }else{
+    accOverviewC=new Chart(overviewCanvas,{
+      type:'line',
+      data:{
+        labels,
+        datasets:[{
+          data:values,
+          borderColor:color,
+          backgroundColor:gradient,
+          fill:true,
+          tension:0.35,
+          pointRadius:0,
+          pointHoverRadius:4,
+          borderWidth:2
+        }]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        plugins:{legend:{display:false}},
+        scales:{
+          x:{ticks:{color:tc,font:{size:11}},grid:{display:false},border:{display:false}},
+          y:{ticks:{color:tc,font:{size:11},callback:value=>`${value>=0?'+$':'-$'}${Math.abs(value).toFixed(0)}`},grid:{color:gc},border:{display:false}}
+        }
+      }
+    });
+  }
 }
 function getSelectedOverviewIds(type=accFilterType){
   const visibleIds=getVisibleAccounts(type).map(acc=>acc.id);
@@ -12846,7 +13010,6 @@ function renderHome(){
 
 // ── Render accounts overview ────────────────────────────────
 function renderAccOverview(){
-  renderSelectedAccountWidget();
   const host=document.getElementById('acc-cards-container');
   if(!host)return;
   const baseVisible=getAccountsForType();
@@ -12859,7 +13022,15 @@ function renderAccOverview(){
   const typeDef=ACC_DEFS[accFilterType]||null;
   const scopeLabel=accFilterType==='all'?'Todas las cuentas':typeDef.label;
   const showSelectableOverview=accFilterType==='fondeo'||accFilterType==='real';
-  const selected=showSelectableOverview?getSelectedOverviewAccounts():visible;
+  const allConnections=Array.from(new Set(baseVisible.map(getAccountConnectionDisplayName).filter(Boolean))).sort();
+  const connectionMatches=accConnectionFilter
+    ?acc=>getAccountConnectionDisplayName(acc)===accConnectionFilter
+    :()=>true;
+  const visibleAccounts=visible.filter(connectionMatches);
+  let selected=showSelectableOverview?getSelectedOverviewAccounts().filter(connectionMatches):visibleAccounts;
+  if(showSelectableOverview&&accConnectionFilter&&!selected.length&&visibleAccounts.length){
+    selected=visibleAccounts;
+  }
   const selectedIds=new Set(selected.map(acc=>acc.id));
   const summaryAccounts=selected;
   const selectedTypeCounts={fondeo:0,backtesting:0,real:0};
@@ -12879,17 +13050,16 @@ function renderAccOverview(){
   const emptyFilteredCardsHtml=accFilterType==='fondeo'&&visible.length===0
     ?`<div class="chart-box home-empty" style="grid-column:1/-1"><div class="empty-state"><div class="es-icon">${getUiIconMarkup('filter','ui-icon ui-icon-xl')}</div><p>No hay cuentas en ${escapeHtml(getAccountStageFilterDef(accFundingStageFilter).label)}.<br>Cambia el filtro para ver otras etapas.</p></div></div>`
     :'';
-  const allConnections=Array.from(new Set(accounts.map(getAccountConnectionDisplayName).filter(Boolean))).sort();
   const connectionFilterHtml=allConnections.length
     ? `<div class="acc-connection-filter" style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
          <span style="font-size:12px;color:var(--text2);font-weight:600">Conexión:</span>
          <button class="acc-conn-chip ${!accConnectionFilter?'is-active':''}" onclick="setAccConnectionFilter('')">Todas</button>
-         ${allConnections.map(c=>`<button class="acc-conn-chip ${accConnectionFilter===c?'is-active':''}" onclick="setAccConnectionFilter('${escapeHtml(c).replace(/'/g,"\\'")}')">${escapeHtml(c)}</button>`).join('')}
+         ${allConnections.map(c=>`<button class="acc-conn-chip ${accConnectionFilter===c?'is-active':''}" onclick="setAccConnectionFilter('${escapeJsString(c)}')">${escapeHtml(c)}</button>`).join('')}
        </div>`
     : '';
-  const visibleAccounts=accConnectionFilter
-    ? visible.filter(a=>getAccountConnectionDisplayName(a)===accConnectionFilter)
-    : visible;
+  const emptyCardsHtml=accConnectionFilter&&visibleAccounts.length===0
+    ?`<div class="chart-box home-empty" style="grid-column:1/-1"><div class="empty-state"><div class="es-icon">${getUiIconMarkup('filter','ui-icon ui-icon-xl')}</div><p>No hay cuentas para ${escapeHtml(accConnectionFilter)} en esta vista.<br>Cambia el filtro de conexión para ver otras cuentas.</p></div></div>`
+    :emptyFilteredCardsHtml;
   const cardsHtml=(visibleAccounts.length?visibleAccounts.map(acc=>{
     const def=ACC_DEFS[acc.type]||ACC_DEFS.backtesting;
     const snapshot=getAccountSnapshot(acc);
@@ -12925,14 +13095,14 @@ function renderAccOverview(){
         <button class="acc-open-btn">Abrir cuenta →</button>
       </div>
     </div>`;
-  }).join(''):emptyFilteredCardsHtml)+`<div class="acc-new-card" onclick="openAccModal()">
+  }).join(''):emptyCardsHtml)+`<div class="acc-new-card" onclick="openAccModal()">
     <div class="acc-new-icon">＋</div>
     <div class="acc-new-lbl">Nueva cuenta</div>
   </div>`;
   const selectionCardLabel=showSelectableOverview?'Selección actual':'Cuentas visibles';
-  const selectionCardValue=showSelectableOverview?selected.length:visible.length;
+  const selectionCardValue=showSelectableOverview?selected.length:visibleAccounts.length;
   const selectionCardMeta=showSelectableOverview
-    ?(selected.length===visible.length?'Toda la vista actual está incluida.':`${visible.length-selected.length} cuenta${visible.length-selected.length===1?'':'s'} queda${visible.length-selected.length===1?'':'n'} fuera del overview.`)
+    ?(selected.length===visibleAccounts.length?'Toda la vista actual está incluida.':`${visibleAccounts.length-selected.length} cuenta${visibleAccounts.length-selected.length===1?'':'s'} queda${visibleAccounts.length-selected.length===1?'':'n'} fuera del overview.`)
     :(accFilterType==='all'
       ?'Resumen general del sistema sin mezclar métricas financieras.'
       :`Vista organizada de tus cuentas de ${scopeLabel.toLowerCase()}.`);
@@ -12940,14 +13110,8 @@ function renderAccOverview(){
     <div class="acc-overview-shell">
       <div class="acc-overview-head">
         <div class="acc-overview-copy">
-          <h2>${scopeLabel}</h2>
-          <p>${showSelectableOverview
-              ?`Vista compacta de ${scopeLabel.toLowerCase()}; si necesitas ajustar la gráfica conjunta, abre la configuración.`
-            :accFilterType==='all'
-              ?'Vista limpia para entrar rápido en tus cuentas sin mezclar métricas entre espacios distintos.'
-              :`Zona ordenada para revisar tus cuentas de ${scopeLabel.toLowerCase()} y entrar rápido en cada una.`}</p>
           <div class="acc-overview-meta">
-            <span>${showSelectableOverview?`${selected.length} de ${visible.length} cuenta${visible.length===1?'':'s'} incluida${selected.length===1?'':'s'}`:`${visible.length} cuenta${visible.length===1?'':'s'} visible${visible.length===1?'':'s'}`}</span>
+            <span>${showSelectableOverview?`${selected.length} de ${visibleAccounts.length} cuenta${visibleAccounts.length===1?'':'s'} incluida${selected.length===1?'':'s'}`:`${visibleAccounts.length} cuenta${visibleAccounts.length===1?'':'s'} visible${visibleAccounts.length===1?'':'s'}`}</span>
             <span>•</span>
             <span>${activeTypeCount} tipo${activeTypeCount===1?'':'s'} activo${activeTypeCount===1?'':'s'} en la selección</span>
           </div>
@@ -12962,7 +13126,7 @@ function renderAccOverview(){
         <div class="acc-overview-config-body">
           <div class="acc-overview-selection-note">Activa o desactiva cuentas concretas solo si quieres cambiar la gráfica conjunta de ${scopeLabel.toLowerCase()}.</div>
           <div class="acc-overview-chip-grid">
-            ${visible.map(acc=>{
+            ${visibleAccounts.map(acc=>{
               const def=ACC_DEFS[acc.type]||ACC_DEFS.backtesting;
               const status=getOverviewAccountStatus(acc);
               return`<button class="acc-overview-chip ${selectedIds.has(acc.id)?'active':''}" style="--chip-accent:${acc.color||def.barDefault}" type="button" onclick="toggleAccOverviewAccount('${acc.id}')">
@@ -13009,19 +13173,21 @@ function renderAccOverview(){
         </div>
       </details>`:staticOverviewHtml}
     </div>
-    ${showSelectableOverview?`<div class="chart-box acc-overview-visual">
-      <div class="acc-overview-visual-head">
+    ${showSelectableOverview?`<details class="chart-box acc-overview-visual">
+      <summary class="acc-overview-visual-summary">
         <div>
           <div class="acc-overview-visual-title">Ganancia conjunta</div>
           <div class="acc-overview-visual-value ${combinedGain>=0?'pos':'neg'}">${fmt(combinedGain)}</div>
           <div class="acc-overview-visual-meta">${combinedSeries.labels.length?'Resultado acumulado de la selección actual.':'Todavía no hay trades cerrados en esta selección.'}</div>
-          <div class="acc-overview-visual-sub">Curva combinada de las cuentas seleccionadas de ${scopeLabel.toLowerCase()}.</div>
+          <div class="acc-overview-visual-sub">Curva combinada de ${accConnectionFilter?escapeHtml(accConnectionFilter):`las cuentas seleccionadas de ${scopeLabel.toLowerCase()}`}.</div>
         </div>
         <span class="home-pill">${selected.length} cuenta${selected.length===1?'':'s'} activas</span>
-      </div>
-      <div style="position:relative;height:240px"><canvas id="accOverviewChart"></canvas></div>
+      </summary>
+      <div class="acc-overview-visual-body">
+      <div style="position:relative;height:240px"><canvas id="accOverviewChart" data-labels="${escapeHtml(JSON.stringify(combinedSeries.labels))}" data-values="${escapeHtml(JSON.stringify(combinedSeries.values))}" data-color="${accFilterType==='fondeo'?'#D79A39':'#1D9E75'}" data-fill="${accFilterType==='fondeo'?'rgba(186,117,23,0.28)':'rgba(29,158,117,0.28)'}"></canvas></div>
       ${combinedSeries.labels.length?'':`<div class="acc-overview-visual-empty">Aún no hay trades cerrados dentro de esta selección para dibujar una curva conjunta.</div>`}
-    </div>`:''}
+      </div>
+    </details>`:''}
     <div class="acc-list-block">
       <div class="acc-header">
         <div>
@@ -13038,50 +13204,12 @@ function renderAccOverview(){
     setTimeout(()=>syncAllOverviewPanelsToContextHeight(host),40);
   });
   if(showSelectableOverview){
-    const overviewCanvas=document.getElementById('accOverviewChart');
-    if(overviewCanvas&&combinedSeries.labels.length){
-      const accent=(ACC_DEFS[accFilterType]||ACC_DEFS.backtesting).barDefault;
-      const ctx=overviewCanvas.getContext('2d');
-      const gradient=ctx.createLinearGradient(0,0,0,240);
-      gradient.addColorStop(0,accent==='var(--green)'?'rgba(29,158,117,0.28)':accFilterType==='fondeo'?'rgba(186,117,23,0.28)':'rgba(29,158,117,0.28)');
-      gradient.addColorStop(1,'rgba(0,0,0,0)');
-      if(accOverviewC&&accOverviewC.canvas!==overviewCanvas){
-        try{accOverviewC.destroy()}catch(_){}
-        accOverviewC=null;
-      }
-      if(accOverviewC){
-        accOverviewC.data.labels=combinedSeries.labels;
-        accOverviewC.data.datasets[0].data=combinedSeries.values;
-        accOverviewC.data.datasets[0].borderColor=accFilterType==='fondeo'?'#D79A39':'#1D9E75';
-        accOverviewC.data.datasets[0].backgroundColor=gradient;
-        accOverviewC.update();
-      }else{
-        accOverviewC=new Chart(overviewCanvas,{
-          type:'line',
-          data:{
-            labels:combinedSeries.labels,
-            datasets:[{
-              data:combinedSeries.values,
-              borderColor:accFilterType==='fondeo'?'#D79A39':'#1D9E75',
-              backgroundColor:gradient,
-              fill:true,
-              tension:0.35,
-              pointRadius:0,
-              pointHoverRadius:4,
-              borderWidth:2
-            }]
-          },
-          options:{
-            responsive:true,
-            maintainAspectRatio:false,
-            plugins:{legend:{display:false}},
-            scales:{
-              x:{ticks:{color:tc,font:{size:11}},grid:{display:false},border:{display:false}},
-              y:{ticks:{color:tc,font:{size:11},callback:value=>`${value>=0?'+$':'-$'}${Math.abs(value).toFixed(0)}`},grid:{color:gc},border:{display:false}}
-            }
-          }
-        });
-      }
+    const overviewDetails=host.querySelector('.acc-overview-visual');
+    if(overviewDetails){
+      overviewDetails.addEventListener('toggle',()=>{
+        if(overviewDetails.open)requestAnimationFrame(()=>renderOverviewChartFromElement(overviewDetails));
+      });
+      if(overviewDetails.open)requestAnimationFrame(()=>renderOverviewChartFromElement(overviewDetails));
     }
   }
 }
@@ -13284,6 +13412,7 @@ async function switchAutomaticPropFirmProgram(programId){
     ...acc,
     selected_program_id:selectedProgramId,
     fundingProgramSlug:selectedProgramId,
+    program_selection_source:'manual',
     creation_mode:'automatic'
   },propFirm);
   if(!fundingFields||!fundingFields.fundingProfile){
@@ -13296,6 +13425,7 @@ async function switchAutomaticPropFirmProgram(programId){
     firm:propFirm.label,
     account_origin_type:'fondeada',
     selected_program_id:selectedProgramId,
+    program_selection_source:'manual',
     program_selection_required:false,
     ...fundingFields
   });
@@ -13327,6 +13457,7 @@ async function selectAutomaticPropFirmProgram(programId){
   const fundingFields=buildFundingFieldsForDetectedPropFirm({
     ...acc,
     selected_program_id:selectedProgramId,
+    program_selection_source:'manual',
     creation_mode:'automatic'
   },propFirm);
   if(!fundingFields||!fundingFields.fundingProfile){
@@ -13340,6 +13471,7 @@ async function selectAutomaticPropFirmProgram(programId){
     firm:propFirm.label,
     account_origin_type:'fondeada',
     selected_program_id:selectedProgramId,
+    program_selection_source:'manual',
     program_selection_required:false,
     ...fundingFields
   });
@@ -13407,15 +13539,18 @@ function renderFundingDashboard(acc){
   const money=value=>value===null||value===undefined?'—':`$${Math.abs(Number(value)||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
   const statusEl=document.getElementById('acc-funding-status');
   const targetLabel=document.getElementById('acc-funding-target-label');
-  const statusClass=state.status==='failed'?'failed':state.status==='funded'?'funded':'evaluation';
+  const dashboardStatus=state.status==='evaluation'&&state.stagePassed?'passed':state.status;
+  const statusClass=dashboardStatus==='failed'?'failed':dashboardStatus==='funded'?'funded':dashboardStatus==='passed'?'passed':'evaluation';
   statusEl.className=`funding-status-pill ${statusClass}`;
-  statusEl.textContent=state.status==='failed'?'Cuenta fallida':state.status==='funded'?(profile.fundedLabel||'Fondeada'):'En evaluación';
+  statusEl.textContent=dashboardStatus==='failed'?'Cuenta fallida':dashboardStatus==='funded'?(profile.fundedLabel||'Fondeada'):dashboardStatus==='passed'?'Pasada':'En evaluación';
   document.getElementById('acc-funding-sub').textContent=
-    state.status==='failed'
+    dashboardStatus==='failed'
       ?`${profile.firmName} · ${profile.programName} · ${profile.sizeLabel}. ${state.failureReason||'La cuenta alcanzó una brecha según las reglas configuradas.'}`
-      :state.status==='funded'
+      :dashboardStatus==='funded'
         ?`${profile.firmName} · ${profile.programName} · ${profile.sizeLabel}. La evaluación quedó superada y el bloque de target ahora sigue las reglas de payout de ${profile.fundedTransition}.`
-        :`${profile.firmName} · ${profile.programName} · ${profile.sizeLabel}. La fase actual se recalcula automáticamente según tus trades cerrados.`;
+        :dashboardStatus==='passed'
+          ?`${profile.firmName} · ${profile.programName} · ${profile.sizeLabel}. La fase actual alcanzó el target usando el balance actual detectado.`
+          :`${profile.firmName} · ${profile.programName} · ${profile.sizeLabel}. La fase actual se recalcula automáticamente según el balance actual detectado.`;
   document.getElementById('acc-funding-market').textContent=profile.marketLabel||'—';
   const fundingFirm=getFundingFirm(profile.market,profile.firmSlug)||{name:profile.firmName||'—',slug:profile.firmSlug||''};
   document.getElementById('acc-funding-firm').innerHTML=getFundingFirmInlineBrandMarkup(fundingFirm);
@@ -13427,7 +13562,7 @@ function renderFundingDashboard(acc){
     :state.transitions.length
       ?`Último salto el ${formatDateLabel(state.transitions[state.transitions.length-1].date)}`
       :'Sin transiciones registradas aún';
-  if(targetLabel)targetLabel.textContent=state.status==='failed'?'Estado de cuenta':state.status==='funded'?'Objetivo de payout':'Target fase actual';
+  if(targetLabel)targetLabel.textContent=dashboardStatus==='failed'?'Estado de cuenta':dashboardStatus==='funded'?'Objetivo de payout':dashboardStatus==='passed'?'Fase superada':'Target fase actual';
 
   const targetBar=document.getElementById('acc-funding-target-bar');
   const targetValue=document.getElementById('acc-funding-target-value');
@@ -13496,7 +13631,6 @@ function renderActiveAccount(){
   if(!activeAccountId){teardownAccountTradeFab();return;}
   const acc=getAccount(activeAccountId);
   if(!acc){teardownAccountTradeFab();return;}
-  renderSelectedAccountWidget();
   acc.strategies=collectAccountStrategies(acc);
   syncAccountStrategiesViewVisibility(acc);
   document.getElementById('acc-dash-name').textContent=acc.name;
@@ -13726,21 +13860,19 @@ function renderAccTradeInsights(filteredTrades=[]){
   host.innerHTML=cards;
 }
 function accUpdateKPIs(f){
-  renderSelectedAccountWidget();
   const acc=getAccount(activeAccountId);
   const fundingState=acc?computeFundingAccountState(acc):null;
   const cl=f.filter(t=>t.status==='CLOSED'&&t.pnl!==null);
   const wrScopeTrades=fundingState?getScopedFundingWinRateTrades(acc,cl,fundingState):cl;
   const wi=cl.filter(t=>t.result==='WIN'),lo=cl.filter(t=>t.result==='LOSS');
   const wrWins=wrScopeTrades.filter(t=>t.result==='WIN');
-  const tp=cl.reduce((s,t)=>s+t.pnl,0);
+  const snapshot=getAccountSnapshot(acc);
+  const tp=snapshot.totalPnl;
   const wr=wrScopeTrades.length?wrWins.length/wrScopeTrades.length*100:0;
   const aw=wi.length?wi.reduce((s,t)=>s+t.pnl,0)/wi.length:null;
   const al=lo.length?lo.reduce((s,t)=>s+t.pnl,0)/lo.length:null;
   const ps=cl.map(t=>t.pnl);
-  const allPnl=(accountTrades[activeAccountId]||[]).filter(t=>t.status==='CLOSED'&&t.pnl!==null).reduce((s,t)=>s+t.pnl,0);
-  const startBalance=getAccountPerformanceBaseBalance(acc)||0;
-  const curr=parseFloat((startBalance+allPnl).toFixed(2));
+  const curr=snapshot.currentBalance;
   const balanceChange=getAccountBalanceChange(acc,{currentBalance:curr});
   const set=(id,v,cls)=>{const e=document.getElementById(id);if(e){e.textContent=v;e.className='kpi-value'+(cls?' '+cls:'');}};
   const setSub=(id,v,cls)=>{const e=document.getElementById(id);if(e){e.textContent=v;e.className='kpi-subvalue'+(cls?' '+cls:'');}};
@@ -16207,15 +16339,59 @@ function renderWholeApp(){
   const avgTab=document.getElementById('tab-averaging');
   if(avgTab&&avgTab.classList.contains('active'))renderAveraging();
 }
+function getUiDataSignature(){
+  const accountSig=accounts
+    .map(acc=>({
+      id:acc.id,
+      name:acc.name,
+      type:acc.type,
+      color:acc.color,
+      firm:acc.firm,
+      startBalance:acc.startBalance,
+      initialBalance:acc.initialBalance,
+      detectedBalance:acc.detected_balance,
+      currentBalance:acc.current_balance,
+      connectionDisplayName:getAccountConnectionDisplayName(acc),
+      fundingMarket:acc.fundingMarket,
+      fundingFirmSlug:acc.fundingFirmSlug,
+      fundingProgramSlug:acc.fundingProgramSlug,
+      fundingSizeKey:acc.fundingSizeKey,
+      syncStatus:acc.sync_status,
+      updatedAt:acc.updated_at||acc.updatedAt||''
+    }))
+    .sort((a,b)=>`${a.id}`.localeCompare(`${b.id}`));
+  const tradeSig=Object.entries(accountTrades||{})
+    .sort(([a],[b])=>`${a}`.localeCompare(`${b}`))
+    .map(([accountId,rows])=>[
+      accountId,
+      (rows||[]).map(t=>[
+        t.id,
+        t.status,
+        t.result,
+        t.pnl,
+        t.openDate,
+        t.exitDate,
+        t.openTime,
+        t.exitTime,
+        t.symbol,
+        t.updatedAt||t.updated_at||''
+      ]).sort((a,b)=>`${a[0]}`.localeCompare(`${b[0]}`))
+    ]);
+  return JSON.stringify({accounts:accountSig,trades:tradeSig});
+}
 async function refreshRemoteState({silent=false,force=false}={}){
   if(!storageBackend||storageBackend.kind!=='supabase')return;
   if(!force&&document.querySelector('.overlay.open'))return;
+  const beforeSignature=silent&&!force?getUiDataSignature():null;
   try{
     if(!silent)setSyncState('syncing');
     const remoteState=await storageBackend.loadState();
     applyLoadedState(mergeLocalFallbackState(remoteState));
     await ensureMultiAccountData({persist:false});
-    renderWholeApp();
+    const afterSignature=silent&&!force?getUiDataSignature():null;
+    if(force||!silent||beforeSignature!==afterSignature){
+      renderWholeApp();
+    }
     setSyncState('online');
   }catch(error){
     const detail=(error&&error.message?`${error.message}`:'').replace(/\s+/g,' ').trim();
