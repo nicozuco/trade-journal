@@ -557,6 +557,7 @@ select.fi{cursor:pointer}
 .acc-sync-flag.is-stage-funded{background:var(--green-bg);border-color:color-mix(in srgb,var(--green) 30%,var(--border));color:var(--green-text)}
 .acc-sync-flag.is-stage-failed{background:var(--red-bg);border-color:color-mix(in srgb,var(--red) 30%,var(--border));color:var(--red-text)}
 .acc-sync-flag.is-stage-pending{background:rgba(255,255,255,0.04);border-color:var(--border);color:var(--text3)}
+.acc-sync-flag.is-stage-payout{background:rgba(216,155,50,0.18);border-color:color-mix(in srgb,#D89B32 46%,var(--border));color:#e6b96a}
 .acc-sync-flag.is-connection{background:rgba(216,155,50,.15);color:#D89B32;border-color:rgba(216,155,50,.4)}
 .acc-conn-chip{padding:4px 10px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;transition:all .15s}
 .acc-conn-chip:hover{background:var(--surface2);color:var(--text)}
@@ -578,6 +579,7 @@ select.fi{cursor:pointer}
 .acc-stage-label.stage-funded{--stage-color:var(--green)}
 .acc-stage-label.stage-failed{--stage-color:var(--red)}
 .acc-stage-label.stage-pending{--stage-color:var(--text3)}
+.acc-stage-label.stage-payout{--stage-color:#D89B32}
 .acc-card-menu{background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;padding:2px 6px;border-radius:4px;line-height:1}
 .acc-card-menu:hover{background:var(--surface2);color:var(--text)}
 .acc-balance-row{display:flex;align-items:flex-end;justify-content:space-between;margin:12px 0 14px}
@@ -870,6 +872,7 @@ select.fi{cursor:pointer}
 .funding-status-pill.evaluation{background:var(--amber-bg);color:var(--amber-text);border-color:color-mix(in srgb,var(--amber) 26%, var(--border))}
 .funding-status-pill.passed{background:rgba(55,138,221,.14);color:var(--blue-text);border-color:color-mix(in srgb,var(--blue) 30%, var(--border))}
 .funding-status-pill.funded{background:var(--green-bg);color:var(--green-text);border-color:color-mix(in srgb,var(--green) 26%, var(--border))}
+.funding-status-pill.payout{background:rgba(216,155,50,.18);color:#e6b96a;border-color:color-mix(in srgb,#D89B32 42%, var(--border))}
 .funding-status-pill.failed{background:var(--red-bg);color:var(--red-text);border-color:color-mix(in srgb,var(--red) 26%, var(--border))}
 .funding-status-pill.pending{background:var(--surface2);color:var(--text2)}
 .funding-mini-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
@@ -12066,7 +12069,7 @@ const ACCOUNT_STAGE_FILTER_DEF_MAP=Object.fromEntries(ACCOUNT_STAGE_FILTER_DEFS.
 function getAccountStageFilterGroup(acc){
   const v=getAccountStageFilterValue(acc);
   if(v==='passed')return'passed';
-  if(v==='funded')return'funded';
+  if(v==='funded'||v==='payout_ready')return'funded';
   if(v==='failed')return'failed';
   if(v==='phase_1'||v==='phase_2'||v==='phase_3'||v==='evaluation')return'evaluation';
   return'pending';
@@ -12083,6 +12086,7 @@ function normalizeAccountStageFilterValue(value){
   if(/^(phase|fase)_?3$/.test(key))return'phase_3';
   if(['passed','pasada','pasado','pasadas','pasados','phase_passed','fase_pasada','fase_pasado','cuenta_pasada','account_passed','challenge_passed','evaluacion_pasada','evaluation_passed'].includes(key))return'passed';
   if(['funded','fondeada','funded_account','cuenta_fondeada','live_funded','express_funded','pa'].includes(key))return'funded';
+  if(['payout_ready','lista_para_retiro','ready_for_payout','payoutready','listaparaderetiro'].includes(key))return'payout_ready';
   if(
     ['failed','fallada','fallido','violated','violada','violado','breach','breached','invalid','invalida','invalidada','drawdown_breach','dd_breach','cuenta_fallida','cuenta_fallido','account_failed','failed_account','burned','burnt','quemada','quemado','cuenta_quemada','cuenta_quemado'].includes(key)||
     /(^|_)fallid[ao]$/.test(key)||
@@ -12118,16 +12122,47 @@ function getExplicitAccountStageFilterValue(acc){
   }
   return'';
 }
+// Apex publishes per-PA-size "safety net" thresholds that gate payouts. Stored
+// here because the in-app catalog only describes consistency rules, not the
+// numeric profit floor required before the first withdrawal.
+const APEX_PA_SAFETY_NETS={
+  '25000':1500,'50000':2600,'75000':2750,'100000':2600,'150000':2600,'250000':4100,'300000':7500
+};
+function getAccountPayoutTargetAmount(acc){
+  const profile=getAccountFundingProfile(acc);
+  if(!profile)return null;
+  const rules=profile.payoutRules;
+  if(rules&&rules.targetMode==='amount'){
+    const v=Number(rules.targetValue);
+    if(Number.isFinite(v)&&v>0)return v;
+  }
+  if(`${profile.firmSlug||''}`==='apex-trader-funding'){
+    const sizeKey=`${profile.sizeKey||profile.accountSize||''}`;
+    const v=APEX_PA_SAFETY_NETS[sizeKey];
+    if(Number.isFinite(Number(v))&&Number(v)>0)return Number(v);
+  }
+  return null;
+}
+function isAccountReadyForPayout(acc){
+  if(!acc||acc.type!=='fondeo')return false;
+  const target=getAccountPayoutTargetAmount(acc);
+  if(target===null)return false;
+  const snap=getAccountSnapshot(acc);
+  const initial=getAccountPerformanceBaseBalance(acc)||0;
+  const profit=snap?snap.currentBalance-initial:0;
+  return Number.isFinite(profit)&&profit>=target;
+}
 function getAccountStageFilterValue(acc){
   if(!acc||acc.type!=='fondeo')return'all';
   const state=computeFundingAccountState(acc);
   if(state&&state.status==='failed')return'failed';
   const explicit=getExplicitAccountStageFilterValue(acc);
-  if(explicit==='failed'||explicit==='funded')return explicit;
-  if(isPaapexFundedAccount(acc))return'funded';
+  if(explicit==='failed')return'failed';
+  if(explicit==='funded')return isAccountReadyForPayout(acc)?'payout_ready':'funded';
+  if(isPaapexFundedAccount(acc))return isAccountReadyForPayout(acc)?'payout_ready':'funded';
   if(state&&(state.stagePassed||(Array.isArray(state.transitions)&&state.transitions.length>0)))return'passed';
   if(explicit)return explicit;
-  if(state&&state.status==='funded')return'funded';
+  if(state&&state.status==='funded')return isAccountReadyForPayout(acc)?'payout_ready':'funded';
   if(isApexEvaluationPhase1Account(acc))return'phase_1';
   if(acc.program_selection_required)return'pending';
   if(!state)return'pending';
@@ -12141,6 +12176,7 @@ const ACCOUNT_STAGE_LEGACY_DEF_MAP={
   phase_1:{key:'phase_1',label:'Fase 1',tone:'phase'},
   phase_2:{key:'phase_2',label:'Fase 2',tone:'phase'},
   phase_3:{key:'phase_3',label:'Fase 3',tone:'phase'},
+  payout_ready:{key:'payout_ready',label:'Lista para retiro',tone:'payout'},
   pending:{key:'pending',label:'Pendiente / Sin definir',tone:'pending'}
 };
 function getAccountStageFilterDef(value){
@@ -13540,9 +13576,10 @@ function renderFundingDashboard(acc){
   const statusEl=document.getElementById('acc-funding-status');
   const targetLabel=document.getElementById('acc-funding-target-label');
   const dashboardStatus=state.status==='evaluation'&&state.stagePassed?'passed':state.status;
-  const statusClass=dashboardStatus==='failed'?'failed':dashboardStatus==='funded'?'funded':dashboardStatus==='passed'?'passed':'evaluation';
+  const payoutReady=dashboardStatus==='funded'&&isAccountReadyForPayout(acc);
+  const statusClass=dashboardStatus==='failed'?'failed':payoutReady?'payout':dashboardStatus==='funded'?'funded':dashboardStatus==='passed'?'passed':'evaluation';
   statusEl.className=`funding-status-pill ${statusClass}`;
-  statusEl.textContent=dashboardStatus==='failed'?'Cuenta fallida':dashboardStatus==='funded'?(profile.fundedLabel||'Fondeada'):dashboardStatus==='passed'?'Pasada':'En evaluación';
+  statusEl.textContent=dashboardStatus==='failed'?'Cuenta fallida':payoutReady?'Lista para retiro':dashboardStatus==='funded'?(profile.fundedLabel||'Fondeada'):dashboardStatus==='passed'?'Pasada':'En evaluación';
   document.getElementById('acc-funding-sub').textContent=
     dashboardStatus==='failed'
       ?`${profile.firmName} · ${profile.programName} · ${profile.sizeLabel}. ${state.failureReason||'La cuenta alcanzó una brecha según las reglas configuradas.'}`
