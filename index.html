@@ -9193,6 +9193,18 @@ function getDetectedAccountBalance(accountLike){
   if(!accountLike)return null;
   return toFiniteNumberOrNull(accountLike.detected_balance!==undefined?accountLike.detected_balance:accountLike.detectedBalance);
 }
+function getNinjaTraderTrailingMaxDrawdown(accountLike){
+  if(!accountLike)return null;
+  const meta=accountLike.metadata&&typeof accountLike.metadata==='object'?accountLike.metadata:null;
+  const direct=toFiniteNumberOrNull(
+    accountLike.trailing_max_drawdown!==undefined?accountLike.trailing_max_drawdown:
+    accountLike.trailingMaxDrawdown!==undefined?accountLike.trailingMaxDrawdown:
+    accountLike.ninjatrader_trailing_max_drawdown!==undefined?accountLike.ninjatrader_trailing_max_drawdown:
+    accountLike.ninjaTraderTrailingMaxDrawdown
+  );
+  if(direct!==null)return direct;
+  return getTrailingMaxDrawdownFromPayload(meta);
+}
 function getSupabaseAccountCurrentBalance(accountLike){
   if(!accountLike)return null;
   const detected=getDetectedAccountBalance(accountLike);
@@ -9244,6 +9256,24 @@ function getDetectedBalanceFromPayload(payload){
     ['summary','netLiquidation']
   ];
   for(const path of balancePaths){
+    const parsed=toFiniteNumberOrNull(readObjectPath(payload,path));
+    if(parsed!==null)return parsed;
+  }
+  return null;
+}
+function getTrailingMaxDrawdownFromPayload(payload){
+  if(!payload||typeof payload!=='object')return null;
+  const paths=[
+    ['trailing_max_drawdown'],
+    ['trailingMaxDrawdown'],
+    ['trailingMaxDD'],
+    ['trailing_max_dd'],
+    ['account','trailing_max_drawdown'],
+    ['account','trailingMaxDrawdown'],
+    ['summary','trailing_max_drawdown'],
+    ['summary','trailingMaxDrawdown']
+  ];
+  for(const path of paths){
     const parsed=toFiniteNumberOrNull(readObjectPath(payload,path));
     if(parsed!==null)return parsed;
   }
@@ -9325,6 +9355,7 @@ function normalizeDetectedExternalAccountRow(row){
   const ninjaTraderUserLabel=`${row.ninjatrader_user_label||row.ninjaTraderUserLabel||(metadata&&(metadata.ninjatrader_user_label||metadata.ninjaTraderUserLabel))||''}`.trim()||null;
   const legacyExternalAccountId=`${row.legacy_external_account_id||row.legacyExternalAccountId||(metadata&&(metadata.legacy_external_account_id||metadata.legacyExternalAccountId||metadata.account_name))||''}`.trim()||null;
   const detectedBalance=getDetectedBalanceFromPayload(row)??getDetectedBalanceFromPayload(metadata);
+  const trailingMaxDrawdown=getTrailingMaxDrawdownFromPayload(row)??getTrailingMaxDrawdownFromPayload(metadata);
   return{
     id:`${row.id||''}`.trim()||null,
     provider:normalizeAccountSyncSource(row.provider||row.sync_source||row.syncSource)||'ninjatrader',
@@ -9339,7 +9370,8 @@ function normalizeDetectedExternalAccountRow(row){
     firstSeenAt:row.first_seen_at||row.firstSeenAt||null,
     lastSeenAt:row.last_seen_at||row.lastSeenAt||null,
     metadata,
-    balance:detectedBalance
+    balance:detectedBalance,
+    trailingMaxDrawdown
   };
 }
 function extractInstrumentRoot(symbol){
@@ -9490,6 +9522,7 @@ function buildAccountFromLinkedDetectedRow(detected){
   if(!detected||!detected.isLinked||!detected.linkedAccountId)return null;
   const type=mapAccountOriginTypeToAccountType(detected.detectedOriginType,'real');
   const detectedBalance=detected.balance!==null?detected.balance:null;
+  const trailingMaxDrawdown=detected.trailingMaxDrawdown!==null&&detected.trailingMaxDrawdown!==undefined?detected.trailingMaxDrawdown:null;
   const syncSource=detected.provider||'ninjatrader';
   const displayName=detected.externalAccountName||detected.externalAccountId||getAccountSyncSourceLabel(syncSource)||'NinjaTrader';
   const propFirm=detectPropFirmFromAccountName(displayName);
@@ -9523,6 +9556,9 @@ function buildAccountFromLinkedDetectedRow(detected){
     startBalance:initialBalance,
     initialBalance,
     detected_balance:detectedBalance,
+    trailing_max_drawdown:trailingMaxDrawdown,
+    ninjaTraderTrailingMaxDrawdown:trailingMaxDrawdown,
+    metadata:detected.metadata||null,
     firm:propFirm&&propFirm.label||getAccountSyncSourceLabel(syncSource)||syncSource,
     fundingMarket:fundingFields&&fundingFields.fundingMarket||'',
     fundingFirmSlug:fundingFields&&fundingFields.fundingFirmSlug||'',
@@ -10602,7 +10638,7 @@ function createSupabaseStorage(){
       const detectedByExternalKey=new Map();
       detectedRows.forEach(normalizedDetectedRow=>{
         if(!normalizedDetectedRow.isLinked||!normalizedDetectedRow.linkedAccountId)return;
-        if(normalizedDetectedRow.balance===null)return;
+        if(normalizedDetectedRow.balance===null&&normalizedDetectedRow.trailingMaxDrawdown===null)return;
         const linkedId=normalizedDetectedRow.linkedAccountId||'';
         const externalId=normalizedDetectedRow.externalAccountId||'';
         const externalName=normalizedDetectedRow.externalAccountName||'';
@@ -10615,6 +10651,9 @@ function createSupabaseStorage(){
         const detectedMatch=findDetectedAccountMatch(acc,detectedByLinkedAccountId,detectedByExternalKey);
         if(!detectedMatch||!detectedMatch.match)return;
         const detectedBalance=detectedMatch.match.balance;
+        const trailingMaxDrawdown=detectedMatch.match.trailingMaxDrawdown!==null&&detectedMatch.match.trailingMaxDrawdown!==undefined
+          ?detectedMatch.match.trailingMaxDrawdown
+          :getNinjaTraderTrailingMaxDrawdown(acc);
         const nextLinkedId=`${acc.linked_external_account_id||detectedMatch.match.externalAccountId||''}`.trim()||null;
         const nextLinkedName=`${acc.linked_external_account_name||detectedMatch.match.externalAccountName||''}`.trim()||null;
         const nextSyncSource=detectedMatch.match.provider||inferAccountSyncSource(acc)||'ninjatrader';
@@ -10644,7 +10683,10 @@ function createSupabaseStorage(){
           sync_source:nextSyncSource,
           detected_balance:detectedBalance,
           startBalance:resolvedInitialBalance,
-          initialBalance:resolvedInitialBalance
+          initialBalance:resolvedInitialBalance,
+          trailing_max_drawdown:trailingMaxDrawdown,
+          ninjaTraderTrailingMaxDrawdown:trailingMaxDrawdown,
+          metadata:detectedMatch.match.metadata||acc.metadata||null
         };
         const detectedProgramState=detectedPropFirm?getPropFirmProgramSelectionState(detectedFundingInput,detectedPropFirm):null;
         const detectedFundingFields=detectedPropFirm
@@ -10661,6 +10703,9 @@ function createSupabaseStorage(){
           startBalance:adjustedInitialBalance,
           initialBalance:adjustedInitialBalance,
           detected_balance:detectedBalance,
+          trailing_max_drawdown:trailingMaxDrawdown,
+          ninjaTraderTrailingMaxDrawdown:trailingMaxDrawdown,
+          metadata:detectedMatch.match.metadata||acc.metadata||null,
           creation_mode:'automatic',
           sync_source:nextSyncSource,
           sync_status:normalizeAccountSyncStatus(acc.sync_status,nextLinkedId||nextLinkedName,'automatic'),
@@ -10675,6 +10720,8 @@ function createSupabaseStorage(){
           ...(detectedFundingFields||{})
         }),{
           detected_balance:detectedBalance,
+          trailing_max_drawdown:trailingMaxDrawdown,
+          ninjaTraderTrailingMaxDrawdown:trailingMaxDrawdown,
           detected_balance_match:detectedMatch.matchedBy
         });
         try{
@@ -10682,6 +10729,7 @@ function createSupabaseStorage(){
             accountId:acc.id,
             accountName:acc.name,
             detected_balance:detectedBalance,
+            trailing_max_drawdown:trailingMaxDrawdown,
             initial_balance:adjustedInitialBalance,
             balance_policy:'supabase_detected_balance',
             matchedBy:detectedMatch.matchedBy,
@@ -11684,7 +11732,27 @@ function getStageTotalUsage({stageBalance,startBalance,highWaterMark,rules}){
     remaining,
     progress,
     floor,
-    breached:floor!==null&&stageBalance<floor-0.0001
+    breached:remaining!==null&&remaining<=0.0001
+  };
+}
+function applyBrokerTrailingMaxDrawdown(totalUsage,stageBalance,brokerRemaining){
+  const remaining=toFiniteNumberOrNull(brokerRemaining);
+  if(!totalUsage||!totalUsage.enabled||totalUsage.limit===null||remaining===null)return totalUsage;
+  const safeRemaining=parseFloat(Math.max(0,remaining).toFixed(2));
+  const limit=Number(totalUsage.limit)||0;
+  const used=parseFloat(Math.max(0,limit-safeRemaining).toFixed(2));
+  const progress=limit?Math.max(0,Math.min(100,(used/limit)*100)):0;
+  const floor=toFiniteNumberOrNull(stageBalance)!==null
+    ?parseFloat((Number(stageBalance)-safeRemaining).toFixed(2))
+    :totalUsage.floor;
+  return{
+    ...totalUsage,
+    used,
+    remaining:safeRemaining,
+    progress,
+    floor,
+    breached:safeRemaining<=0.0001,
+    source:'ninjatrader_trailing_max_drawdown'
   };
 }
 function isEodTrailingDrawdownType(type){
@@ -11820,16 +11888,6 @@ function getFundingTradeSegments(acc){
     const eodTrailing=isEodTrailingDrawdownType(totalType);
     if(isIntradayTrailingDrawdownType(totalType)){
       stageHighWaterMark=Math.max(stageHighWaterMark,stageBalance);
-    }
-    const dailyUsage=getStageDailyUsage(stageDailyTotals,rules,stageStartBalance,dayKey);
-    const totalUsage=getStageTotalUsage({stageBalance,startBalance:stageStartBalance,highWaterMark:stageHighWaterMark,rules});
-    if(totalUsage.breached){
-      status='failed';
-      continue;
-    }
-    if(dailyUsage.breached&&((rules.dailyDrawdownHardness||'hard')==='hard')){
-      status='failed';
-      continue;
     }
     const nextTrade=ordered[index+1]||null;
     const nextDayKey=nextTrade&&(nextTrade.openDate||nextTrade.exitDate||'');
@@ -11972,18 +12030,7 @@ function computeFundingAccountState(acc){
       stageHighWaterMark=Math.max(stageHighWaterMark,stageBalance);
     }
     const dailyUsage=getStageDailyUsage(stageDailyTotals,rules,stageStartBalance,dayKey);
-    const totalUsage=getStageTotalUsage({stageBalance,startBalance:stageStartBalance,highWaterMark:stageHighWaterMark,rules});
-    if(totalUsage.breached){
-      status='failed';
-      failureReason='Se superó el drawdown total permitido.';
-      break;
-    }
     if(dailyUsage.breached){
-      if((rules.dailyDrawdownHardness||'hard')==='hard'){
-        status='failed';
-        failureReason='Se superó el drawdown diario permitido.';
-        break;
-      }
       if(dayKey&&!breachedDailyKeys.has(dayKey)){
         breachedDailyKeys.add(dayKey);
         dailyBreachCount++;
@@ -12031,11 +12078,19 @@ function computeFundingAccountState(acc){
   const targetProgress=targetAmount?Math.max(0,Math.min(100,(stagePnl/targetAmount)*100)):status==='funded'?100:0;
   const dailyUsage=getStageDailyUsage(stageDailyTotals,rules,stageStartBalance,getLocalDateKey());
   let totalUsage=getStageTotalUsage({stageBalance,startBalance:stageStartBalance,highWaterMark:Math.max(stageHighWaterMark,stageBalance),rules});
-  if(status!=='failed'&&totalUsage.breached){
+  const brokerTrailingMaxDrawdown=getNinjaTraderTrailingMaxDrawdown(acc);
+  totalUsage=applyBrokerTrailingMaxDrawdown(totalUsage,stageBalance,brokerTrailingMaxDrawdown);
+  if(totalUsage.breached){
     status='failed';
-    failureReason='Se superó el drawdown total permitido.';
+    failureReason=totalUsage.source==='ninjatrader_trailing_max_drawdown'
+      ?'NinjaTrader reporta el trailing max drawdown agotado.'
+      :'Se superó el drawdown total permitido.';
     rules=getFundingStageRules(profile,status);
-    totalUsage=getStageTotalUsage({stageBalance,startBalance:stageStartBalance,highWaterMark:Math.max(stageHighWaterMark,stageBalance),rules});
+    totalUsage=applyBrokerTrailingMaxDrawdown(
+      getStageTotalUsage({stageBalance,startBalance:stageStartBalance,highWaterMark:Math.max(stageHighWaterMark,stageBalance),rules}),
+      stageBalance,
+      brokerTrailingMaxDrawdown
+    );
   }
   const consistency=evaluateConsistencyRule(rules.consistencyRule||profile.consistencyRule,stageTrades,targetAmount,stagePnl);
   const stagePassed=status==='evaluation'
@@ -12135,12 +12190,6 @@ function getExplicitAccountStageFilterValue(acc){
   }
   return'';
 }
-// Apex publishes per-PA-size "safety net" thresholds that gate payouts. Stored
-// here because the in-app catalog only describes consistency rules, not the
-// numeric profit floor required before the first withdrawal.
-const APEX_PA_SAFETY_NETS={
-  '25000':1500,'50000':2600,'75000':2750,'100000':2600,'150000':2600,'250000':4100,'300000':7500
-};
 function getAccountPayoutTargetAmount(acc){
   const profile=getAccountFundingProfile(acc);
   if(!profile)return null;
@@ -12148,11 +12197,6 @@ function getAccountPayoutTargetAmount(acc){
   if(rules&&rules.targetMode==='amount'){
     const v=Number(rules.targetValue);
     if(Number.isFinite(v)&&v>0)return v;
-  }
-  if(`${profile.firmSlug||''}`==='apex-trader-funding'){
-    const sizeKey=`${profile.sizeKey||profile.accountSize||''}`;
-    const v=APEX_PA_SAFETY_NETS[sizeKey];
-    if(Number.isFinite(Number(v))&&Number(v)>0)return Number(v);
   }
   return null;
 }
@@ -12169,7 +12213,7 @@ function getAccountStageFilterValue(acc){
   if(!acc||acc.type!=='fondeo')return'all';
   const state=computeFundingAccountState(acc);
   if(state&&state.status==='failed')return'failed';
-  const explicit=getExplicitAccountStageFilterValue(acc);
+  let explicit=getExplicitAccountStageFilterValue(acc);
   if(explicit==='failed')return'failed';
   if(explicit==='funded')return isAccountReadyForPayout(acc)?'payout_ready':'funded';
   if(isPaapexFundedAccount(acc))return isAccountReadyForPayout(acc)?'payout_ready':'funded';
@@ -12605,7 +12649,6 @@ function getVisibleAccounts(type=accFilterType){
     if(normalizeAccountType(acc&&acc.type)!=='fondeo')return true;
     const stageGroup=getAccountStageFilterGroup(acc);
     const isArchivedStage=stageGroup==='passed'||stageGroup==='failed';
-    if(type!=='fondeo'&&isArchivedStage)return false;
     if(type==='fondeo'&&(accFundingStageFilter==='passed'||accFundingStageFilter==='failed')){
       return stageGroup===accFundingStageFilter;
     }
@@ -13777,11 +13820,12 @@ function renderFundingDashboard(acc){
     totalMeta.textContent='No hay límite total cargado para este perfil.';
   }else{
     const totalMargin=getFundingMarginState(state.totalUsage);
+    const totalSourceText=state.totalUsage&&state.totalUsage.source==='ninjatrader_trailing_max_drawdown'?' · NinjaTrader Account Data':'';
     totalValue.textContent=totalMargin.breached?'0.0%':`${totalMargin.remainingPct.toFixed(1)}%`;
     totalBar.style.width=`${totalMargin.remainingPct.toFixed(1)}%`;
     totalMeta.textContent=totalMargin.breached
-      ?`${money(totalMargin.over)} por encima del límite · usado ${money(totalMargin.used)} de ${money(totalMargin.limit)} · suelo ${money(state.totalUsage.floor)} · ${formatFundingDrawdownType(activeRules.totalDrawdownType)}`
-      :`${money(totalMargin.remaining)} disponibles · usado ${money(totalMargin.used)} de ${money(totalMargin.limit)} · suelo ${money(state.totalUsage.floor)} · ${formatFundingDrawdownType(activeRules.totalDrawdownType)}`;
+      ?`${money(totalMargin.over)} por encima del límite · usado ${money(totalMargin.used)} de ${money(totalMargin.limit)} · suelo ${money(state.totalUsage.floor)} · ${formatFundingDrawdownType(activeRules.totalDrawdownType)}${totalSourceText}`
+      :`${money(totalMargin.remaining)} disponibles · usado ${money(totalMargin.used)} de ${money(totalMargin.limit)} · suelo ${money(state.totalUsage.floor)} · ${formatFundingDrawdownType(activeRules.totalDrawdownType)}${totalSourceText}`;
   }
 }
 function renderActiveAccount(){
@@ -15286,11 +15330,7 @@ function isDetectedAccountLinkedForUi(account){
 function renderAutoStep3(){
   const el=document.getElementById('accAutoStep3');
   if(!el)return;
-  const hasNonZeroBalance=a=>{
-    const b=getDetectedBalanceFromPayload(a&&a.metadata);
-    return b===null||Number(b)!==0;
-  };
-  const detectedList=accDetectedAccounts.filter(hasNonZeroBalance);
+  const detectedList=accDetectedAccounts;
   const linked=detectedList.filter(isDetectedAccountLinkedForUi);
   const unlinked=detectedList.filter(a=>!isDetectedAccountLinkedForUi(a));
   const filter=accDetectedFilter||'available';
@@ -15432,6 +15472,7 @@ function renderAutoStep3(){
   const selectedDetected=accDetectedAccounts.find(a=>a&&a.id===accSelectedDetectedId)||null;
   const selectedOrigin=selectedDetected?getDetectedRowOrigin(selectedDetected):'real';
   const selectedBalance=selectedDetected?getDetectedBalanceFromPayload(selectedDetected.metadata):null;
+  const selectedTrailingMaxDrawdown=selectedDetected?getTrailingMaxDrawdownFromPayload(selectedDetected.metadata):null;
   const selectedBuffered=selectedDetected?getDetectedBufferedBackfillInfo(selectedDetected):{state:'none',count:0};
   const selectedIdentityParts=selectedDetected?[
     getDetectedNinjaTraderUserLabel(selectedDetected)?`Usuario ${getDetectedNinjaTraderUserLabel(selectedDetected)}`:'',
@@ -15446,6 +15487,7 @@ function renderAutoStep3(){
           ${selectedIdentityParts.length?`<li><span>Identidad NT</span><strong>${escHtml(selectedIdentityParts.join(' · '))}</strong></li>`:''}
           <li><span>Origen</span><strong>${escHtml(selectedOrigin==='fondeada'?'Fondeada':'Real')}</strong></li>
           <li><span>Balance detectado</span><strong>${selectedBalance!==null?'$'+Number(selectedBalance).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</strong></li>
+          <li><span>Trailing max DD</span><strong>${selectedTrailingMaxDrawdown!==null?'$'+Number(selectedTrailingMaxDrawdown).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</strong></li>
           <li><span>Trades en buffer</span><strong>${selectedBuffered.state==='pending'?selectedBuffered.count+' listos para importar':selectedBuffered.state==='imported'?'ya importados':'0'}</strong></li>
         </ul>
       </div>`
@@ -15507,6 +15549,9 @@ async function linkSelectedDetectedAccount(){
     const linkedBalance=toFiniteNumberOrNull(data.detected_balance)!==null
       ?toFiniteNumberOrNull(data.detected_balance)
       :(normalizedLinked&&normalizedLinked.balance!==null?normalizedLinked.balance:getDetectedBalanceFromPayload(linked.metadata));
+    const linkedTrailingMaxDrawdown=toFiniteNumberOrNull(data.trailing_max_drawdown)!==null
+      ?toFiniteNumberOrNull(data.trailing_max_drawdown)
+      :(normalizedLinked&&normalizedLinked.trailingMaxDrawdown!==null?normalizedLinked.trailingMaxDrawdown:getTrailingMaxDrawdownFromPayload(linked.metadata));
     const linkedInitialBalance=toFiniteNumberOrNull(data.initial_balance);
     const linkedPropFirm=detectPropFirmFromAccountName(linked.external_account_name||linked.external_account_id||'');
     const linkedProgramState=linkedPropFirm?getPropFirmProgramSelectionState({
@@ -15527,6 +15572,8 @@ async function linkSelectedDetectedAccount(){
       ninjatrader_user_label:data.ninjatrader_user_label||linked.ninjatrader_user_label||linked.metadata&&linked.metadata.ninjatrader_user_label||'',
       account_origin_type:linkedPropFirm?'fondeada':linked.detected_origin_type||'real',
       detected_balance:linkedBalance,
+      trailing_max_drawdown:linkedTrailingMaxDrawdown,
+      ninjaTraderTrailingMaxDrawdown:linkedTrailingMaxDrawdown,
       user_initial_balance:linkedInitialBalance,
       _balance_manually_overridden:false,
       initial_backfill_status:data.initial_backfill_status||null,
@@ -16259,6 +16306,12 @@ async function saveAutomaticAccount(){
     selectedDetected&&selectedDetected.balance!==null?selectedDetected.balance:null
   ].find(value=>value!==null);
   const detectedBalance=resolvedDetectedBalance===undefined?null:resolvedDetectedBalance;
+  const resolvedTrailingMaxDrawdown=[
+    getNinjaTraderTrailingMaxDrawdown(accAutomaticDraft),
+    matchedDetected&&matchedDetected.trailingMaxDrawdown!==null?matchedDetected.trailingMaxDrawdown:null,
+    selectedDetected&&selectedDetected.trailingMaxDrawdown!==null?selectedDetected.trailingMaxDrawdown:null
+  ].find(value=>value!==null);
+  const trailingMaxDrawdown=resolvedTrailingMaxDrawdown===undefined?null:resolvedTrailingMaxDrawdown;
   const rawUserBalance=toFiniteNumberOrNull(accAutomaticDraft.user_initial_balance);
   const manualBalanceLocked=accAutomaticDraft._balance_manually_overridden===true&&rawUserBalance!==null&&rawUserBalance>0;
   const userBalance=manualBalanceLocked?rawUserBalance:null;
@@ -16294,6 +16347,9 @@ async function saveAutomaticAccount(){
     sync_source:syncSource,
     startBalance:balance,
     detected_balance:detectedBalance,
+    trailing_max_drawdown:trailingMaxDrawdown,
+    ninjaTraderTrailingMaxDrawdown:trailingMaxDrawdown,
+    metadata:accAutomaticDraft.metadata||matchedDetected&&matchedDetected.metadata||selectedDetected&&selectedDetected.metadata||null,
     selected_program_id:existing&&existing.selected_program_id||accAutomaticDraft.selected_program_id||null
   };
   const detectedProgramState=detectedPropFirm?getPropFirmProgramSelectionState(propFundingInput,detectedPropFirm):null;
@@ -16344,6 +16400,9 @@ async function saveAutomaticAccount(){
           firm:nextFirm,
           strategies,
           description,
+          trailing_max_drawdown:trailingMaxDrawdown,
+          ninjaTraderTrailingMaxDrawdown:trailingMaxDrawdown,
+          metadata:accAutomaticDraft.metadata||matchedDetected&&matchedDetected.metadata||selectedDetected&&selectedDetected.metadata||null,
           connection_display_name:connectionDisplayName,
           connectionDisplayName,
           connection_name:accAutomaticDraft.connection_name||accAutomaticDraft.connectionName||existing&&getAccountConnectionName(existing)||'',
@@ -16382,6 +16441,9 @@ async function saveAutomaticAccount(){
         startBalance:balance,
         initialBalance:balance,
         detected_balance:detectedBalance,
+        trailing_max_drawdown:trailingMaxDrawdown,
+        ninjaTraderTrailingMaxDrawdown:trailingMaxDrawdown,
+        metadata:accAutomaticDraft.metadata||matchedDetected&&matchedDetected.metadata||selectedDetected&&selectedDetected.metadata||null,
         firm:nextFirm,
         strategies,
         description,
