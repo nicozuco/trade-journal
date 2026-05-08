@@ -4823,7 +4823,21 @@ async function getAuthenticatedFunctionContext(){
   const {data:sessionData,error:sessionError}=await client.auth.getSession();
   if(sessionError)throw sessionError;
 
-  const session=sessionData&&sessionData.session?sessionData.session:null;
+  let session=sessionData&&sessionData.session?sessionData.session:null;
+  if(session){
+    const {data:userData,error:userError}=await client.auth.getUser();
+    if(userError||!userData||!userData.user){
+      const {data:refreshData,error:refreshError}=await client.auth.refreshSession();
+      session=refreshData&&refreshData.session?refreshData.session:null;
+      if(refreshError||!session){
+        try{await client.auth.signOut();}catch(_){}
+        currentUser=null;
+        throw new Error('Tu sesión de Supabase ha caducado. Cierra esta ventana, inicia sesión de nuevo y vuelve a generar la clave.');
+      }
+    }else{
+      currentUser=userData.user;
+    }
+  }
   const accessToken=session&&session.access_token?session.access_token:'';
   const anonKey=(window.SUPABASE_ANON_KEY||'').trim();
 
