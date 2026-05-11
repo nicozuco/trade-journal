@@ -22,7 +22,7 @@
 <script>
 window.SUPABASE_URL='https://wyfmmubrtkcgunwbagdq.supabase.co';
 window.SUPABASE_ANON_KEY='sb_publishable_c-hn5yimnUx9ZGeSGI9-WA_RVjqR2-q';
-window.FRONTEND_BUILD_ID='2026-04-18-paapex-manual-balance-v1';
+window.FRONTEND_BUILD_ID='2026-05-08-broker-balance-pass-v1';
 </script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -11875,6 +11875,7 @@ function getFundingTradeSegments(acc){
   const profile=getAccountFundingProfile(acc);
   if(!profile)return null;
   const baseBalance=getAccountPerformanceBaseBalance(acc)||Number(profile.accountSize)||0;
+  const brokerBalanceAuthoritative=getSupabaseAccountCurrentBalance(acc)!==null;
   const ordered=(accountTrades[acc.id]||[])
     .slice()
     .sort((a,b)=>getTradeChronologyKey(a).localeCompare(getTradeChronologyKey(b)));
@@ -11908,7 +11909,7 @@ function getFundingTradeSegments(acc){
     if(eodTrailing&&dayKey&&dayKey!==nextDayKey){
       stageHighWaterMark=Math.max(stageHighWaterMark,stageBalance);
     }
-    if(status!=='evaluation')continue;
+    if(status!=='evaluation'||brokerBalanceAuthoritative)continue;
     const targetAmount=getFundingPhaseTargetAmount(profile,currentPhase,stageStartBalance);
     const daysTraded=Object.keys(stageDailyTotals).length;
     const consistency=evaluateConsistencyRule(rules.consistencyRule||profile.consistencyRule,stageTrades,targetAmount,stagePnl);
@@ -12013,6 +12014,7 @@ function computeFundingAccountState(acc){
   if(!profile)return null;
   const baseBalance=getAccountPerformanceBaseBalance(acc)||Number(profile.accountSize)||0;
   const currentBalanceFromBroker=getSupabaseAccountCurrentBalance(acc);
+  const brokerBalanceAuthoritative=currentBalanceFromBroker!==null;
   const closed=(accountTrades[acc.id]||[])
     .filter(trade=>trade.status==='CLOSED'&&trade.pnl!==null)
     .slice()
@@ -12055,7 +12057,7 @@ function computeFundingAccountState(acc){
     if(eodTrailing&&dayKey&&dayKey!==nextDayKey){
       stageHighWaterMark=Math.max(stageHighWaterMark,stageBalance);
     }
-    if(status!=='evaluation')continue;
+    if(status!=='evaluation'||brokerBalanceAuthoritative)continue;
     const targetAmount=getFundingPhaseTargetAmount(profile,currentPhase,stageStartBalance);
     const daysTraded=Object.keys(stageDailyTotals).length;
     const consistency=evaluateConsistencyRule(rules.consistencyRule||profile.consistencyRule,stageTrades,targetAmount,stagePnl);
@@ -12231,7 +12233,11 @@ function getAccountStageFilterValue(acc){
   if(explicit==='failed')return'failed';
   if(explicit==='funded')return isAccountReadyForPayout(acc)?'payout_ready':'funded';
   if(isPaapexFundedAccount(acc))return isAccountReadyForPayout(acc)?'payout_ready':'funded';
-  if(state&&(state.stagePassed||(Array.isArray(state.transitions)&&state.transitions.length>0)))return'passed';
+  if(explicit==='passed'&&state&&state.currentBalanceSource==='broker'&&!state.stagePassed){
+    explicit='';
+  }
+  if(state&&state.stagePassed)return'passed';
+  if(state&&state.currentBalanceSource!=='broker'&&Array.isArray(state.transitions)&&state.transitions.length>0)return'passed';
   if(explicit)return explicit;
   if(state&&state.status==='funded')return isAccountReadyForPayout(acc)?'payout_ready':'funded';
   if(isApexEvaluationPhase1Account(acc))return'phase_1';
@@ -12626,13 +12632,27 @@ function getCombinedSeriesTradesForAccount(acc){
 }
 function getCombinedOverviewSeries(accs){
   const dailyTotals={};
+  let targetBalanceGain=0;
+  let hasBalanceBaseline=false;
+  let hasBrokerBalance=false;
   accs.forEach(acc=>{
-    getCombinedSeriesTradesForAccount(acc).forEach(trade=>{
+    const snapshot=getAccountSnapshot(acc);
+    targetBalanceGain+=Number(snapshot.totalPnl)||0;
+    hasBalanceBaseline=hasBalanceBaseline||Boolean(getAccountPerformanceBaseBalance(acc));
+    hasBrokerBalance=hasBrokerBalance||snapshot.currentBalanceSource==='supabase';
+    getClosedAccountTrades(acc.id).forEach(trade=>{
       const key=trade.openDate||trade.exitDate||'';
       if(!key)return;
       dailyTotals[key]=(dailyTotals[key]||0)+(Number(trade.pnl)||0);
     });
   });
+  targetBalanceGain=parseFloat(targetBalanceGain.toFixed(2));
+  const tradeGain=parseFloat(Object.values(dailyTotals).reduce((sum,value)=>sum+(Number(value)||0),0).toFixed(2));
+  const balanceAdjustment=parseFloat((targetBalanceGain-tradeGain).toFixed(2));
+  if(Math.abs(balanceAdjustment)>0.005){
+    const today=getLocalDateKey();
+    dailyTotals[today]=(dailyTotals[today]||0)+balanceAdjustment;
+  }
   const keys=Object.keys(dailyTotals).sort();
   let cumulative=0;
   return{
@@ -12640,7 +12660,11 @@ function getCombinedOverviewSeries(accs){
     values:keys.map(key=>{
       cumulative+=dailyTotals[key];
       return parseFloat(cumulative.toFixed(2));
-    })
+    }),
+    balanceGain:targetBalanceGain,
+    hasBalanceBaseline,
+    hasBrokerBalance,
+    includesBalanceAdjustment:Math.abs(balanceAdjustment)>0.005
   };
 }
 function sortAccountsForDisplay(items){
@@ -13256,8 +13280,10 @@ function renderAccOverview(){
     return profile?profile.firmName:(acc.firm||'');
   }).filter(Boolean));
   const firmsPreview=selectedFirms.slice(0,4);
-  const combinedSeries=showSelectableOverview?getCombinedOverviewSeries(selected):{labels:[],values:[]};
-  const combinedGain=combinedSeries.values.length?combinedSeries.values[combinedSeries.values.length-1]:0;
+  const combinedSeries=showSelectableOverview?getCombinedOverviewSeries(selected):{labels:[],values:[],balanceGain:0};
+  const combinedGain=Number.isFinite(Number(combinedSeries.balanceGain))
+    ?Number(combinedSeries.balanceGain)
+    :(combinedSeries.values.length?combinedSeries.values[combinedSeries.values.length-1]:0);
   const staticOverviewHtml=!showSelectableOverview&&accFilterType!=='all'?renderStaticOverviewBoard(summaryAccounts,accFilterType):'';
   const fundingStageFilterHtml=renderFundingStageFilterBar(baseVisible);
   const emptyFilteredCardsHtml=accFilterType==='fondeo'&&visible.length===0
@@ -13391,14 +13417,14 @@ function renderAccOverview(){
         <div>
           <div class="acc-overview-visual-title">Ganancia conjunta</div>
           <div class="acc-overview-visual-value ${combinedGain>=0?'pos':'neg'}">${fmt(combinedGain)}</div>
-          <div class="acc-overview-visual-meta">${combinedSeries.labels.length?'Resultado acumulado de la selección actual.':'Todavía no hay trades cerrados en esta selección.'}</div>
-          <div class="acc-overview-visual-sub">Curva combinada de ${accConnectionFilter?escapeHtml(accConnectionFilter):`las cuentas seleccionadas de ${scopeLabel.toLowerCase()}`}.</div>
+          <div class="acc-overview-visual-meta">${combinedSeries.hasBalanceBaseline?'Balance actual menos balance inicial de la selección.':'Todavía falta balance inicial en esta selección.'}</div>
+          <div class="acc-overview-visual-sub">Curva combinada de ${accConnectionFilter?escapeHtml(accConnectionFilter):`las cuentas seleccionadas de ${scopeLabel.toLowerCase()}`}${combinedSeries.includesBalanceAdjustment?' ajustada al balance detectado':''}.</div>
         </div>
         <span class="home-pill">${selected.length} cuenta${selected.length===1?'':'s'} activas</span>
       </summary>
       <div class="acc-overview-visual-body">
       <div style="position:relative;height:240px"><canvas id="accOverviewChart" data-labels="${escapeHtml(JSON.stringify(combinedSeries.labels))}" data-values="${escapeHtml(JSON.stringify(combinedSeries.values))}" data-color="${accFilterType==='fondeo'?'#D79A39':'#1D9E75'}" data-fill="${accFilterType==='fondeo'?'rgba(186,117,23,0.28)':'rgba(29,158,117,0.28)'}"></canvas></div>
-      ${combinedSeries.labels.length?'':`<div class="acc-overview-visual-empty">Aún no hay trades cerrados dentro de esta selección para dibujar una curva conjunta.</div>`}
+	      ${combinedSeries.labels.length?'':`<div class="acc-overview-visual-empty">Aún no hay movimientos o cambios de balance dentro de esta selección para dibujar una curva conjunta.</div>`}
       </div>
     </details>`:''}
     <div class="acc-list-block">
