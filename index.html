@@ -2708,6 +2708,24 @@ input[type="time"].fi{
         <div class="kpi"><div class="kpi-label">Trades</div><div class="kpi-value neu" id="acc-kpi-total">—</div></div>
       </div>
 
+      <div id="acc-withdrawals-panel" class="funding-panel" style="margin-top:12px">
+        <div class="funding-panel-head">
+          <div>
+            <div class="funding-panel-title">Retiros</div>
+            <div class="funding-panel-sub" id="acc-withdrawals-sub">Total retirado: $0.00</div>
+          </div>
+          <button type="button" class="acc-trade-cta" id="acc-withdrawals-add-btn" onclick="openWithdrawalForm()">＋ Registrar retiro</button>
+        </div>
+        <form id="acc-withdrawals-form" style="display:none;margin-top:10px;gap:8px;flex-wrap:wrap" onsubmit="submitWithdrawalForm(event)">
+          <input id="acc-withdrawal-amount" type="number" step="0.01" min="0" placeholder="Monto USD" required style="padding:6px 10px;border-radius:6px;border:1px solid #2a3147;background:#0f1626;color:inherit"/>
+          <input id="acc-withdrawal-date" type="date" required style="padding:6px 10px;border-radius:6px;border:1px solid #2a3147;background:#0f1626;color:inherit"/>
+          <input id="acc-withdrawal-note" type="text" placeholder="Nota (opcional)" style="padding:6px 10px;border-radius:6px;border:1px solid #2a3147;background:#0f1626;color:inherit;flex:1;min-width:160px"/>
+          <button type="submit" class="acc-trade-cta">Guardar</button>
+          <button type="button" class="acc-trade-cta" onclick="closeWithdrawalForm()" style="background:#2a3147">Cancelar</button>
+        </form>
+        <div id="acc-withdrawals-list" style="margin-top:10px"></div>
+      </div>
+
       <details class="acc-advanced-panel" id="accAdvancedPanel">
         <summary>Métricas avanzadas y gráficos</summary>
         <div class="acc-advanced-body">
@@ -7056,6 +7074,7 @@ const FUNDING_FIRM_META={
 };
 let accounts=[];
 let accountTrades={};
+let accountWithdrawals={};
 let activeAccountId=null;
 let accFilterType='all';
 let accFundingStageFilter='all';
@@ -10560,11 +10579,15 @@ function applyLoadedState(data){
   invalidateSnapshotCache();
   accounts=cloneData(data.accounts||[]).map(normalizeAccountRecord);
   accountTrades={};
-  accounts.forEach(acc=>{accountTrades[acc.id]=[];});
+  accountWithdrawals={};
+  accounts.forEach(acc=>{accountTrades[acc.id]=[];accountWithdrawals[acc.id]=[];});
   Object.entries(data.accountTrades||{}).forEach(([id,rows])=>{
     const cloned=cloneData(Array.isArray(rows)?rows:[]);
     const {kept}=dedupeAccountTradeRows(cloned);
     accountTrades[id]=kept;
+  });
+  Object.entries(data.accountWithdrawals||{}).forEach(([id,rows])=>{
+    accountWithdrawals[id]=cloneData(Array.isArray(rows)?rows:[]);
   });
   const hasAccountRows=Object.values(accountTrades).some(rows=>(rows||[]).length);
   if(hasAccountRows||accounts.length){
@@ -10771,9 +10794,40 @@ function createSupabaseStorage(){
       accountList.forEach(acc=>{
         acc.strategies=uniqList(strategyMap[acc.id]||[]);
       });
+      const withdrawalsMap={};
+      if(accountIds.length){
+        const {data:rawWithdrawals,error:withdrawalsError}=await client
+          .from('account_withdrawals')
+          .select('id,account_id,amount,withdrawn_at,note,created_at,updated_at')
+          .eq('user_id',user.id)
+          .in('account_id',accountIds)
+          .order('withdrawn_at',{ascending:false});
+        if(withdrawalsError){
+          const code=`${withdrawalsError.code||''}`;
+          const msg=`${withdrawalsError.message||''}`.toLowerCase();
+          const isMissingTable=code==='42P01'||code==='PGRST205'||code==='PGRST204'||msg.includes('schema cache')||msg.includes('does not exist');
+          if(!isMissingTable)throw withdrawalsError;
+          console.warn('[withdrawals] tabla account_withdrawals no disponible todavía; ejecutá la migración en Supabase.');
+        }
+        (rawWithdrawals||[]).forEach(row=>{
+          const accId=row.account_id;
+          if(!accId)return;
+          if(!withdrawalsMap[accId])withdrawalsMap[accId]=[];
+          withdrawalsMap[accId].push({
+            id:row.id,
+            account_id:accId,
+            amount:Number(row.amount)||0,
+            withdrawn_at:row.withdrawn_at,
+            note:row.note||'',
+            created_at:row.created_at,
+            updated_at:row.updated_at
+          });
+        });
+      }
       return{
         accounts:accountList,
         accountTrades:tradesMap,
+        accountWithdrawals:withdrawalsMap,
         trades:Object.values(tradesMap).flat()
       };
     },
@@ -11728,13 +11782,56 @@ function getStageDailyUsage(stageDailyTotals,rules,startBalance,activeDayKey='')
     breached:limit!==null&&used>limit+0.0001
   };
 }
-function getStageTotalUsage({stageBalance,startBalance,highWaterMark,rules}){
+function getAccountWithdrawalsList(accountId){
+  if(!accountId)return[];
+  const rows=accountWithdrawals&&accountWithdrawals[accountId];
+  return Array.isArray(rows)?rows:[];
+}
+function getAccountWithdrawalTotal(accountId){
+  return getAccountWithdrawalsList(accountId).reduce((sum,row)=>sum+(Number(row&&row.amount)||0),0);
+}
+async function addAccountWithdrawal({accountId,amount,withdrawnAt,note}){
+  const userId=getAuthenticatedUser().id;
+  const client=getOrCreateSupabaseClient();
+  const payload={
+    user_id:userId,
+    account_id:accountId,
+    amount:Number(amount)||0,
+    withdrawn_at:withdrawnAt||new Date().toISOString().slice(0,10),
+    note:note?String(note).trim()||null:null
+  };
+  const {data,error}=await client.from('account_withdrawals').insert(payload).select().single();
+  if(error)throw error;
+  if(!accountWithdrawals[accountId])accountWithdrawals[accountId]=[];
+  accountWithdrawals[accountId].unshift({
+    id:data.id,
+    account_id:accountId,
+    amount:Number(data.amount)||0,
+    withdrawn_at:data.withdrawn_at,
+    note:data.note||'',
+    created_at:data.created_at,
+    updated_at:data.updated_at
+  });
+  return data;
+}
+async function deleteAccountWithdrawal(accountId,withdrawalId){
+  const userId=getAuthenticatedUser().id;
+  const client=getOrCreateSupabaseClient();
+  const {error}=await client.from('account_withdrawals').delete().eq('user_id',userId).eq('id',withdrawalId);
+  if(error)throw error;
+  if(Array.isArray(accountWithdrawals[accountId])){
+    accountWithdrawals[accountId]=accountWithdrawals[accountId].filter(row=>row&&row.id!==withdrawalId);
+  }
+}
+function getStageTotalUsage({stageBalance,startBalance,highWaterMark,rules,withdrawn}){
   if(!rules||rules.totalDrawdownMode==='none'||rules.totalDrawdownValue===null){
     return{enabled:false,limit:null,used:0,remaining:null,progress:0,breached:false,floor:null};
   }
-  const limit=resolveFundingValue(rules.totalDrawdownMode,rules.totalDrawdownValue,startBalance);
+  const baseLimit=resolveFundingValue(rules.totalDrawdownMode,rules.totalDrawdownValue,startBalance);
   const isTrailing=['trailing','intraday_trailing','eod_trailing'].includes(rules.totalDrawdownType);
   const reference=isTrailing?(Number(highWaterMark)||startBalance):startBalance;
+  const withdrawnAmount=Math.max(0,Number(withdrawn)||0);
+  const limit=baseLimit===null?null:parseFloat((baseLimit+(isTrailing?withdrawnAmount:0)).toFixed(2));
   const floor=limit===null?null:parseFloat((reference-limit).toFixed(2));
   const used=parseFloat(Math.max(0,reference-stageBalance).toFixed(2));
   const remaining=limit===null?null:parseFloat((limit-used).toFixed(2));
@@ -11749,10 +11846,11 @@ function getStageTotalUsage({stageBalance,startBalance,highWaterMark,rules}){
     breached:remaining!==null&&remaining<=0.0001
   };
 }
-function applyBrokerTrailingMaxDrawdown(totalUsage,stageBalance,brokerRemaining){
+function applyBrokerTrailingMaxDrawdown(totalUsage,stageBalance,brokerRemaining,withdrawn){
   const remaining=toFiniteNumberOrNull(brokerRemaining);
   if(!totalUsage||!totalUsage.enabled||totalUsage.limit===null||remaining===null)return totalUsage;
-  const safeRemaining=parseFloat(Math.max(0,remaining).toFixed(2));
+  const withdrawnAmount=Math.max(0,Number(withdrawn)||0);
+  const safeRemaining=parseFloat(Math.max(0,remaining+withdrawnAmount).toFixed(2));
   const limit=Number(totalUsage.limit)||0;
   const used=parseFloat(Math.max(0,limit-safeRemaining).toFixed(2));
   const progress=limit?Math.max(0,Math.min(100,(used/limit)*100)):0;
@@ -12093,9 +12191,10 @@ function computeFundingAccountState(acc){
   const targetAmount=status==='evaluation'?getFundingPhaseTargetAmount(profile,currentPhase,stageStartBalance):null;
   const targetProgress=targetAmount?Math.max(0,Math.min(100,(stagePnl/targetAmount)*100)):status==='funded'?100:0;
   const dailyUsage=getStageDailyUsage(stageDailyTotals,rules,stageStartBalance,getLocalDateKey());
-  let totalUsage=getStageTotalUsage({stageBalance,startBalance:stageStartBalance,highWaterMark:Math.max(stageHighWaterMark,stageBalance),rules});
+  const totalWithdrawn=getAccountWithdrawalTotal(acc&&acc.id);
+  let totalUsage=getStageTotalUsage({stageBalance,startBalance:stageStartBalance,highWaterMark:Math.max(stageHighWaterMark,stageBalance),rules,withdrawn:totalWithdrawn});
   const brokerTrailingMaxDrawdown=getNinjaTraderTrailingMaxDrawdown(acc);
-  totalUsage=applyBrokerTrailingMaxDrawdown(totalUsage,stageBalance,brokerTrailingMaxDrawdown);
+  totalUsage=applyBrokerTrailingMaxDrawdown(totalUsage,stageBalance,brokerTrailingMaxDrawdown,totalWithdrawn);
   if(totalUsage.breached){
     status='failed';
     failureReason=totalUsage.source==='ninjatrader_trailing_max_drawdown'
@@ -12103,9 +12202,10 @@ function computeFundingAccountState(acc){
       :'Se superó el drawdown total permitido.';
     rules=getFundingStageRules(profile,status);
     totalUsage=applyBrokerTrailingMaxDrawdown(
-      getStageTotalUsage({stageBalance,startBalance:stageStartBalance,highWaterMark:Math.max(stageHighWaterMark,stageBalance),rules}),
+      getStageTotalUsage({stageBalance,startBalance:stageStartBalance,highWaterMark:Math.max(stageHighWaterMark,stageBalance),rules,withdrawn:totalWithdrawn}),
       stageBalance,
-      brokerTrailingMaxDrawdown
+      brokerTrailingMaxDrawdown,
+      totalWithdrawn
     );
   }
   const consistency=evaluateConsistencyRule(rules.consistencyRule||profile.consistencyRule,stageTrades,targetAmount,stagePnl);
@@ -12469,8 +12569,19 @@ function getAccountSnapshot(acc){
   _snapshotCache.set(cacheKey,result);
   return result;
 }
+function shiftTradeTimeForDisplay(value,hours=2){
+  const raw=`${value||''}`.trim();
+  if(!raw)return'';
+  const match=raw.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  if(!match)return raw;
+  const h=(Number(match[1])+hours+24)%24;
+  const m=match[2];
+  const s=match[3];
+  return s!==undefined?`${String(h).padStart(2,'0')}:${m}:${s}`:`${String(h).padStart(2,'0')}:${m}`;
+}
 function tradeDateCell(trade){
-  return`<div class="trade-date"><div class="trade-date-main">${formatDateLabel(trade.openDate)}</div><div class="trade-date-sub">${trade.openTime||'—'}</div></div>`;
+  const shifted=shiftTradeTimeForDisplay(trade.openTime);
+  return`<div class="trade-date"><div class="trade-date-main">${formatDateLabel(trade.openDate)}</div><div class="trade-date-sub">${shifted||'—'}</div></div>`;
 }
 function getClosedAccountTrades(id){
   return(accountTrades[id]||[]).filter(t=>t.status==='CLOSED'&&t.pnl!==null&&t.openDate);
@@ -13893,6 +14004,7 @@ function renderActiveAccount(){
   if(editBtn)editBtn.style.display='inline-flex';
   if(startNode)startNode.style.cursor='pointer';
   renderFundingDashboard(acc);
+  renderAccountWithdrawals(acc);
   syncAccTradeFilterOptions();
   accApplyFilters();
   renderAccWeekly();
@@ -14234,7 +14346,7 @@ function accRenderTable(f){
             <span class="trade-symbol">${text(t.symbol)}</span>
             <span class="trade-dir-pill ${dirClass}">${text(t.dir)}</span>
           </div>
-          <div class="trade-meta-line"><span>${text(t.market)}</span><span class="trade-mobile-date">${escapeHtml(formatDateLabel(t.openDate))} ${text(t.openTime,'')}</span></div>
+          <div class="trade-meta-line"><span>${text(t.market)}</span><span class="trade-mobile-date">${escapeHtml(formatDateLabel(t.openDate))} ${escapeHtml(shiftTradeTimeForDisplay(t.openTime))}</span></div>
         </div>
       </td>
       <td>${tradeDateCell(t)}</td>
@@ -14388,6 +14500,91 @@ function renderAccStrategies(){
 }
 
 // ── Account balance edit ────────────────────────────────────
+function isAccountFundedOrBurnedFromFunded(acc){
+  if(!acc)return false;
+  const explicit=typeof getExplicitAccountStageFilterValue==='function'?getExplicitAccountStageFilterValue(acc):'';
+  if(explicit==='funded'||explicit==='payout_ready')return true;
+  if(typeof isPaapexFundedAccount==='function'&&isPaapexFundedAccount(acc))return true;
+  let state=null;
+  try{state=computeFundingAccountState(acc);}catch(_){state=null;}
+  if(!state)return false;
+  if(state.status==='funded')return true;
+  if(state.status==='failed'){
+    const phaseCount=Number(state.phaseCount)||0;
+    const transitions=Array.isArray(state.transitions)?state.transitions:[];
+    if(phaseCount===0)return true;
+    if(transitions.length>=phaseCount)return true;
+  }
+  return false;
+}
+function renderAccountWithdrawals(acc){
+  const panel=document.getElementById('acc-withdrawals-panel');
+  if(!panel)return;
+  if(!acc||!acc.id||!isAccountFundedOrBurnedFromFunded(acc)){panel.classList.remove('open');return;}
+  panel.classList.add('open');
+  const list=getAccountWithdrawalsList(acc.id).slice().sort((a,b)=>`${b.withdrawn_at||''}`.localeCompare(`${a.withdrawn_at||''}`));
+  const total=list.reduce((s,r)=>s+(Number(r.amount)||0),0);
+  const sub=document.getElementById('acc-withdrawals-sub');
+  if(sub)sub.textContent=`Total retirado: $${total.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} · ${list.length} retiro${list.length===1?'':'s'}`;
+  const container=document.getElementById('acc-withdrawals-list');
+  if(!container)return;
+  if(!list.length){
+    container.innerHTML='<div style="opacity:.6;font-size:13px">Sin retiros registrados.</div>';
+    return;
+  }
+  container.innerHTML=list.map(row=>{
+    const amount=Number(row.amount)||0;
+    const date=row.withdrawn_at||'—';
+    const note=row.note?` · ${escapeHtml(row.note)}`:'';
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #1f2638">
+      <div><strong>$${amount.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</strong> <span style="opacity:.7">${escapeHtml(date)}${note}</span></div>
+      <button type="button" class="acc-trade-cta" style="background:#3a1f2a;padding:2px 8px;font-size:12px" onclick="removeWithdrawal('${row.id}')">Eliminar</button>
+    </div>`;
+  }).join('');
+}
+function openWithdrawalForm(){
+  const form=document.getElementById('acc-withdrawals-form');
+  if(!form)return;
+  form.style.display='flex';
+  const amt=document.getElementById('acc-withdrawal-amount');
+  const date=document.getElementById('acc-withdrawal-date');
+  const note=document.getElementById('acc-withdrawal-note');
+  if(amt)amt.value='';
+  if(date)date.value=new Date().toISOString().slice(0,10);
+  if(note)note.value='';
+  if(amt)amt.focus();
+}
+function closeWithdrawalForm(){
+  const form=document.getElementById('acc-withdrawals-form');
+  if(form)form.style.display='none';
+}
+async function submitWithdrawalForm(event){
+  if(event&&event.preventDefault)event.preventDefault();
+  if(!activeAccountId)return;
+  const amount=parseFloat(document.getElementById('acc-withdrawal-amount').value);
+  const withdrawnAt=document.getElementById('acc-withdrawal-date').value;
+  const note=document.getElementById('acc-withdrawal-note').value;
+  if(!isFinite(amount)||amount<=0){alert('Monto inválido.');return;}
+  try{
+    await addAccountWithdrawal({accountId:activeAccountId,amount,withdrawnAt,note});
+    closeWithdrawalForm();
+    renderActiveAccount();
+  }catch(err){
+    console.error('[withdrawal] insert failed',err);
+    alert('No se pudo registrar el retiro: '+(err&&err.message||err));
+  }
+}
+async function removeWithdrawal(withdrawalId){
+  if(!activeAccountId||!withdrawalId)return;
+  if(!confirm('¿Eliminar este retiro?'))return;
+  try{
+    await deleteAccountWithdrawal(activeAccountId,withdrawalId);
+    renderActiveAccount();
+  }catch(err){
+    console.error('[withdrawal] delete failed',err);
+    alert('No se pudo eliminar el retiro: '+(err&&err.message||err));
+  }
+}
 function accEditBalance(){
   const acc=getAccount(activeAccountId);if(!acc)return;
   document.getElementById('acc-kpi-start').style.display='none';
