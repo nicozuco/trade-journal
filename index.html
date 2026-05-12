@@ -348,6 +348,11 @@ select.fi{cursor:pointer}
 .trade-form-grid{display:grid;gap:12px}
 .trade-form-section{display:grid;gap:12px;padding:14px;border:1px solid var(--border);border-radius:16px;background:rgba(255,255,255,0.025)}
 .trade-section-title{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--text3)}
+.trade-section-summary{display:flex;align-items:center;justify-content:space-between;gap:10px;list-style:none;cursor:pointer}
+.trade-section-summary::-webkit-details-marker{display:none}
+.trade-section-summary::after{content:'+';display:grid;place-items:center;width:24px;height:24px;border-radius:999px;background:var(--surface2);color:var(--text3);font-size:16px;font-weight:700;line-height:1;flex:none}
+.trade-form-section[open]>.trade-section-summary::after{content:'-'}
+.trade-section-hint{font-size:10px;font-weight:700;color:var(--text3);white-space:nowrap;margin-left:auto}
 .trade-section-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .trade-field-strategy,.trade-field-pnl{grid-column:1/-1}
 .trade-follow-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
@@ -2122,6 +2127,19 @@ input[type="time"].fi{
     text-transform:uppercase;
     color:var(--text3);
   }
+  .trade-section-summary{
+    min-height:30px;
+    margin:-2px 0;
+  }
+  .trade-section-summary::after{
+    width:26px;
+    height:26px;
+    background:var(--surface2);
+  }
+  .trade-section-hint{
+    font-size:10px;
+    letter-spacing:.02em;
+  }
   .trade-section-grid,
   .trade-follow-grid{
     display:grid;
@@ -2129,8 +2147,16 @@ input[type="time"].fi{
     gap:9px;
   }
   .trade-field-symbol,
+  .trade-field-direction,
   .trade-field-strategy,
   .trade-field-pnl{
+    grid-column:1/-1;
+  }
+  .trade-field-market,
+  .trade-field-status{
+    grid-column:auto;
+  }
+  .trade-section-prices .trade-section-grid .trade-field:nth-child(3){
     grid-column:1/-1;
   }
   .trade-field{gap:5px;min-width:0}
@@ -2969,6 +2995,359 @@ input[type="time"].fi{
   .modal-overlay.show .modal-content{animation:modalSheetIn .28s cubic-bezier(.2,.7,.2,1) both}
 }
 
+/* ADD ACCOUNT — app mobile layout, overrides generic modal rules */
+@media(max-width:760px){
+  #accOverlay{
+    z-index:1450;
+    align-items:stretch;
+    justify-content:stretch;
+    padding:0;
+    background:var(--bg);
+  }
+  #accOverlay .account-modal{
+    width:100%;
+    max-width:none;
+    height:100dvh;
+    max-height:100dvh;
+    border-radius:0;
+    display:flex;
+    flex-direction:column;
+    background:var(--bg);
+    box-shadow:none;
+    overflow:hidden;
+    contain:none;
+  }
+  #accOverlay .account-modal .modal-head{
+    position:sticky;
+    top:0;
+    z-index:5;
+    padding:calc(12px + env(safe-area-inset-top,0px)) 14px 10px;
+    padding-left:calc(14px + env(safe-area-inset-left,0px));
+    padding-right:calc(14px + env(safe-area-inset-right,0px));
+    background:var(--bg);
+    border-bottom:1px solid var(--border);
+  }
+  #accOverlay .account-modal .modal-head::before{display:none}
+  #accOverlay .account-modal .modal-head h2{
+    font-size:20px;
+    font-weight:850;
+    letter-spacing:-.45px;
+  }
+  #accOverlay .account-modal .modal-close{
+    width:42px;
+    height:42px;
+    min-width:42px;
+    min-height:42px;
+    border-radius:14px;
+    background:var(--surface2);
+    border:1px solid var(--border);
+  }
+  #accOverlay .account-modal .modal-body{
+    flex:1;
+    min-height:0;
+    max-height:none!important;
+    overflow:auto;
+    -webkit-overflow-scrolling:touch;
+    padding:12px 12px 124px;
+    padding-left:calc(12px + env(safe-area-inset-left,0px));
+    padding-right:calc(12px + env(safe-area-inset-right,0px));
+  }
+  #accOverlay .account-modal .modal-body > .fg{
+    display:grid;
+    grid-template-columns:1fr!important;
+    gap:10px;
+  }
+  #accOverlay .account-modal .modal-foot{
+    position:fixed;
+    left:0;
+    right:0;
+    bottom:0;
+    z-index:6;
+    display:grid;
+    grid-template-columns:minmax(0,.42fr) minmax(0,.58fr);
+    gap:8px;
+    padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));
+    padding-left:calc(12px + env(safe-area-inset-left,0px));
+    padding-right:calc(12px + env(safe-area-inset-right,0px));
+    border-top:1px solid var(--border);
+    background:color-mix(in srgb,var(--surface) 96%,transparent);
+    backdrop-filter:blur(18px);
+  }
+  #accOverlay .account-modal .modal-foot .btn{
+    width:100%;
+    min-height:48px;
+    border-radius:14px;
+    font-size:14px;
+    font-weight:850;
+    justify-content:center;
+  }
+  #accOverlay #accDeleteBtn{
+    grid-column:1/-1;
+    margin-right:0!important;
+    order:-2;
+  }
+  #accOverlay .acc-modal-save-note{
+    grid-column:1/-1;
+    order:-1;
+    flex:none;
+    font-size:11px;
+    line-height:1.35;
+    padding:0 2px 2px;
+  }
+  #accOverlay .acc-creation-mode-field{
+    padding:10px;
+    border:1px solid var(--border);
+    border-radius:16px;
+    background:var(--surface);
+  }
+  #accOverlay .acc-creation-mode-field > .fl{
+    display:none;
+  }
+  #accOverlay .acc-creation-mode-selector{
+    display:grid;
+    grid-template-columns:1fr 1fr!important;
+    gap:6px;
+    padding:4px;
+    border:1px solid var(--border);
+    border-radius:16px;
+    background:var(--surface2);
+  }
+  #accOverlay .acc-creation-mode-opt{
+    min-height:44px;
+    align-items:center;
+    justify-content:center;
+    padding:9px 10px;
+    border-radius:12px;
+    border:1px solid transparent;
+    background:transparent;
+    text-align:center;
+    transform:none!important;
+  }
+  #accOverlay .acc-creation-mode-opt.active-manual{
+    border-color:color-mix(in srgb,var(--blue) 44%,transparent);
+    background:rgba(55,138,221,.16);
+  }
+  #accOverlay .acc-creation-mode-opt.active-automatic{
+    border-color:color-mix(in srgb,var(--green) 44%,transparent);
+    background:rgba(29,158,117,.16);
+  }
+  #accOverlay .acc-creation-mode-copy{align-items:center;gap:0}
+  #accOverlay .acc-creation-mode-title{font-size:13px;font-weight:850}
+  #accOverlay .acc-creation-mode-sub,
+  #accOverlay .acc-sync-flag{display:none!important}
+  #accOverlay .acc-mode-panel.open{
+    display:block;
+  }
+  #accOverlay .acc-mode-panel > .fg,
+  #accOverlay #accManualPanel > .fg{
+    display:grid;
+    grid-template-columns:1fr!important;
+    gap:10px;
+  }
+  #accOverlay .f:not(.acc-creation-mode-field),
+  #accOverlay .funding-config-wrap,
+  #accOverlay .acc-burned-field{
+    padding:12px;
+    border:1px solid var(--border);
+    border-radius:16px;
+    background:var(--surface);
+  }
+  #accOverlay .f .fl{
+    font-size:10px;
+    font-weight:850;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--text3);
+  }
+  #accOverlay .fi,
+  #accOverlay select.fi,
+  #accOverlay textarea.fi{
+    min-height:46px;
+    border-radius:13px;
+    border-color:var(--border);
+    background:var(--surface2);
+    font-size:16px;
+    font-weight:650;
+    padding:10px 12px;
+  }
+  #accOverlay textarea.fi{
+    min-height:98px;
+    font-size:15px;
+    font-weight:500;
+    line-height:1.55;
+  }
+  #accOverlay .fi:focus{
+    border-color:color-mix(in srgb,var(--blue) 62%,var(--border2));
+    box-shadow:0 0 0 3px color-mix(in srgb,var(--blue) 14%,transparent);
+  }
+  #accOverlay .acc-type-selector{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:7px;
+  }
+  #accOverlay .acc-type-opt{
+    min-height:52px;
+    padding:8px 4px;
+    border-radius:13px;
+    border-width:1px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:4px;
+  }
+  #accOverlay .acc-type-opt-icon{
+    width:18px;
+    height:18px;
+    margin:0;
+  }
+  #accOverlay .acc-type-opt-lbl{
+    font-size:11px;
+    font-weight:800;
+  }
+  #accOverlay .acc-color-row{
+    display:grid;
+    grid-template-columns:repeat(6,minmax(0,1fr));
+    gap:8px;
+  }
+  #accOverlay .acc-color-opt{
+    width:100%;
+    height:34px;
+    border-radius:12px;
+  }
+  #accOverlay .acc-connector-alias-field{
+    display:none;
+  }
+  #accOverlay .account-modal.is-automatic-mode .acc-connector-alias-field{
+    display:flex;
+  }
+  #accOverlay .account-modal.is-auto-step-3 .acc-connector-alias-field{
+    display:none;
+  }
+  #accOverlay .funding-config-wrap.open{
+    display:grid;
+    gap:10px;
+  }
+  #accOverlay .funding-wizard{gap:8px}
+  #accOverlay .funding-choice-grid,
+  #accOverlay .funding-choice-grid.market,
+  #accOverlay .funding-choice-grid.firm,
+  #accOverlay .funding-choice-grid.size{
+    grid-template-columns:1fr!important;
+    gap:8px;
+  }
+  #accOverlay .funding-choice-card{
+    min-height:0;
+    padding:11px 12px;
+    border-radius:13px;
+  }
+  #accOverlay .funding-preview{
+    padding:12px;
+    border-radius:14px;
+  }
+  #accOverlay .funding-preview-grid{
+    grid-template-columns:1fr 1fr!important;
+    gap:8px;
+  }
+  #accOverlay .funding-preview-sub,
+  #accOverlay .funding-preview-note{
+    display:none;
+  }
+  #accOverlay .acc-stepper-nav{
+    margin:0 0 10px;
+    padding:8px 10px;
+    border-radius:14px;
+    overflow-x:auto;
+    scrollbar-width:none;
+  }
+  #accOverlay .acc-stepper-nav::-webkit-scrollbar{display:none}
+  #accOverlay .acc-step-indicator{min-width:54px}
+  #accOverlay .acc-step-indicator-num{width:22px;height:22px;font-size:10px}
+  #accOverlay .acc-step-indicator-label{font-size:8.5px}
+  #accOverlay .acc-step-connector{min-width:22px;flex:0 0 22px;margin-bottom:15px}
+  #accOverlay .acc-auto-step-header{
+    display:none;
+  }
+  #accOverlay .acc-provider-grid{
+    grid-template-columns:1fr!important;
+    gap:8px;
+  }
+  #accOverlay .acc-provider-card{
+    min-height:0;
+    padding:12px;
+    border-radius:14px;
+  }
+  #accOverlay .acc-conn-status-bar,
+  #accOverlay .acc-conn-keys-section,
+  #accOverlay .acc-conn-key-row{
+    border-radius:14px;
+  }
+  #accOverlay .acc-step-footer{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    margin-top:10px;
+  }
+  #accOverlay .acc-step-footer .btn-secondary,
+  #accOverlay .acc-step-footer .btn-primary{
+    min-height:42px;
+    justify-content:center;
+  }
+  #accOverlay.account-step-placeholder{display:none}
+  #accOverlay .account-modal.is-auto-step-3 .modal-body{
+    padding-top:12px;
+  }
+  #accOverlay .account-modal.is-auto-step-3 .acc-detected-filter{
+    margin-bottom:8px;
+  }
+  #accOverlay .account-modal.is-auto-step-3 .acc-detected-row{
+    display:grid!important;
+    grid-template-columns:28px minmax(0,1fr) auto;
+    align-items:center!important;
+    flex-direction:initial!important;
+    gap:10px;
+    padding:11px 12px;
+    min-height:66px;
+  }
+  #accOverlay .account-modal.is-auto-step-3 .acc-detected-row-meta-row{
+    flex-direction:row!important;
+    align-items:center!important;
+  }
+  #accOverlay .account-modal.is-auto-step-3 .acc-detected-row-meta{
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  #accOverlay .acc-detected-choose-btn{
+    padding:7px 10px;
+    font-size:11px;
+  }
+}
+
+@media(max-width:480px){
+  #accOverlay .account-modal .modal-body{
+    padding-left:10px;
+    padding-right:10px;
+    padding-bottom:128px;
+  }
+  #accOverlay .account-modal .modal-head h2{font-size:18px}
+  #accOverlay .f:not(.acc-creation-mode-field),
+  #accOverlay .funding-config-wrap,
+  #accOverlay .acc-burned-field{
+    padding:10px;
+    border-radius:15px;
+  }
+  #accOverlay .acc-type-opt{min-height:48px}
+  #accOverlay .funding-preview-grid{grid-template-columns:1fr!important}
+  #accOverlay .account-modal.is-auto-step-3 .acc-detected-row{
+    grid-template-columns:26px minmax(0,1fr);
+  }
+  #accOverlay .account-modal.is-auto-step-3 .acc-detected-choose-btn{
+    grid-column:1/-1;
+    width:100%;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -3545,13 +3924,13 @@ input[type="time"].fi{
 </div><!-- /appShell -->
 
 <!-- ========== MODAL ========== -->
-<div class="overlay trade-overlay" id="overlay" onclick="bgClose(event)">
-  <div class="modal trade-modal">
+<div class="overlay" id="overlay" onclick="bgClose(event)">
+  <div class="modal">
     <div class="modal-head">
       <h2 id="mTitle">Añadir trade</h2>
       <button class="modal-close" onclick="closeModal()">×</button>
     </div>
-    <div class="modal-body trade-modal-body">
+    <div class="modal-body">
       <div class="trade-form-grid">
         <div class="trade-form-section trade-section-main">
           <div class="trade-section-title">Operación</div>
@@ -3631,8 +4010,11 @@ input[type="time"].fi{
           </div>
         </div>
 
-        <div class="trade-form-section trade-section-follow">
-          <div class="trade-section-title">Seguimiento</div>
+        <details class="trade-form-section trade-section-follow">
+          <summary class="trade-section-summary">
+            <span class="trade-section-title">Seguimiento</span>
+            <span class="trade-section-hint">Opcional</span>
+          </summary>
           <div class="trade-follow-grid">
             <div class="f trade-field">
               <label class="fl">SL pips</label>
@@ -3671,10 +4053,13 @@ input[type="time"].fi{
               </select>
             </div>
           </div>
-        </div>
+        </details>
 
-        <div class="trade-form-section trade-section-journal">
-          <div class="trade-section-title">Diario</div>
+        <details class="trade-form-section trade-section-journal">
+          <summary class="trade-section-summary">
+            <span class="trade-section-title">Diario</span>
+            <span class="trade-section-hint">Emociones y notas</span>
+          </summary>
           <div class="f trade-field">
             <label class="fl">Emociones</label>
             <div class="emo-picker" id="emoPicker"></div>
@@ -3683,10 +4068,13 @@ input[type="time"].fi{
             <label class="fl">Observaciones</label>
             <textarea class="fi" id="mRem" rows="2" placeholder="Notas del trade..."></textarea>
           </div>
-        </div>
+        </details>
 
-        <div class="trade-form-section trade-section-shot">
-          <div class="trade-section-title">Captura</div>
+        <details class="trade-form-section trade-section-shot">
+          <summary class="trade-section-summary">
+            <span class="trade-section-title">Captura</span>
+            <span class="trade-section-hint">Imagen</span>
+          </summary>
           <div class="shot-panel">
             <div class="shot-actions">
               <input class="fi" id="mShot" type="file" accept="image/*" style="display:none" onchange="handleTradeScreenshotSelect(event)"/>
@@ -3697,10 +4085,10 @@ input[type="time"].fi{
             <div class="shot-empty" id="mShotEmpty">Añade una captura para guardar el contexto visual del trade y verla desde cualquier dispositivo.</div>
             <div class="shot-meta" id="mShotMeta">Sin captura asociada.</div>
           </div>
-        </div>
+        </details>
       </div>
     </div>
-    <div class="modal-foot trade-modal-foot">
+    <div class="modal-foot">
       <button class="btn" onclick="closeModal()">Cancelar</button>
       <button class="btn btn-primary" id="saveTradeBtn" onclick="saveTrade()">Guardar</button>
     </div>
@@ -6376,6 +6764,18 @@ function syncTradeStrategyOptions(selected=''){
   });
   sel.value=strategies.includes(selected)?selected:'';
 }
+function syncTradeOptionalSections(){
+  const follow=document.querySelector('.trade-section-follow');
+  const journal=document.querySelector('.trade-section-journal');
+  const shot=document.querySelector('.trade-section-shot');
+  const valueOf=id=>`${document.getElementById(id)&&document.getElementById(id).value||''}`.trim();
+  const hasFollow=['mSlPips','mTrend','mRR1','mRR2','mRR3'].some(valueOf);
+  const hasJournal=(Array.isArray(selEmo)&&selEmo.length>0)||Boolean(valueOf('mRem'));
+  const hasShot=Boolean(tradeScreenshotPreview||tradeScreenshotOriginalUrl);
+  if(follow)follow.open=hasFollow;
+  if(journal)journal.open=hasJournal;
+  if(shot)shot.open=hasShot;
+}
 function openModal(id=null){
   if(!activeAccountId){showToast('Abre primero una cuenta para registrar trades.','info');return;}
   editId=id;selEmo=[];buildPicker();
@@ -6417,6 +6817,7 @@ function openModal(id=null){
     seedTradeScreenshot('');
     updateManualTradeQuantityUi('Forex');
   }
+  syncTradeOptionalSections();
   toggleExit();document.getElementById('overlay').classList.add('open');
 }
 function closeModal(){document.getElementById('overlay').classList.remove('open');resetTradeScreenshotState();}
