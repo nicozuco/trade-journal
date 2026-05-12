@@ -292,6 +292,24 @@ tbody tr.phase-split-row:hover td{background:transparent!important}
 .account-modal .modal-body{max-height:calc(92vh - 128px);overflow-y:auto;overflow-x:hidden}
 .account-modal img,.account-modal svg,.account-modal canvas,.account-modal video{max-width:100%;height:auto}
 .account-modal *{overflow-wrap:anywhere}
+.account-modal.is-automatic-mode .modal-body{padding-top:14px}
+.account-modal.is-automatic-mode .acc-creation-mode-field{gap:6px}
+.account-modal.is-automatic-mode .acc-creation-mode-selector{gap:8px}
+.account-modal.is-automatic-mode .acc-creation-mode-opt{align-items:center;padding:9px 11px;border-radius:12px;min-height:46px}
+.account-modal.is-automatic-mode .acc-creation-mode-copy{gap:0}
+.account-modal.is-automatic-mode .acc-creation-mode-title{font-size:12px}
+.account-modal.is-automatic-mode .acc-creation-mode-sub{display:none}
+.account-modal.is-automatic-mode .acc-sync-flag{font-size:9px;padding:4px 8px;line-height:1.1;max-width:74px;text-align:center}
+.account-modal.is-automatic-mode .acc-stepper-nav{margin-bottom:14px;padding:9px 12px;border-radius:12px}
+.account-modal.is-automatic-mode .acc-step-indicator{min-width:50px;gap:4px}
+.account-modal.is-automatic-mode .acc-step-indicator-num{width:22px;height:22px;font-size:10px}
+.account-modal.is-automatic-mode .acc-step-indicator-label{font-size:9px}
+.account-modal.is-automatic-mode .acc-step-connector{margin-bottom:15px}
+.account-modal.is-auto-step-3 .acc-creation-mode-field,
+.account-modal.is-auto-step-3 .acc-stepper-nav{display:none}
+.account-modal.is-auto-step-3 .modal-body{padding-top:18px}
+.account-modal.is-auto-step-3 .acc-auto-step-header{margin-bottom:12px}
+.account-modal.is-auto-step-3 .acc-connector-alias-field{display:none}
 .fg{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .f{display:flex;flex-direction:column;gap:5px}
 .f.full{grid-column:1/-1}
@@ -327,6 +345,14 @@ select.fi{cursor:pointer}
 .shot-view-wrap{display:flex;align-items:center;justify-content:center;padding:6px}
 .shot-view-wrap img{display:block;max-width:100%;max-height:min(76vh,860px);object-fit:contain;border-radius:16px;border:1px solid var(--border);background:var(--surface2)}
 .shot-view-empty{padding:2rem;color:var(--text3);text-align:center;font-size:13px}
+.trade-form-grid{display:grid;gap:12px}
+.trade-form-section{display:grid;gap:12px;padding:14px;border:1px solid var(--border);border-radius:16px;background:rgba(255,255,255,0.025)}
+.trade-section-title{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--text3)}
+.trade-section-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.trade-field-strategy,.trade-field-pnl{grid-column:1/-1}
+.trade-follow-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.trade-section-journal,.trade-section-shot{gap:12px}
+.trade-label-muted{color:var(--text3);font-weight:400}
 
 /* MONTHLY TABLE */
 .mtable{width:100%;border-collapse:collapse;font-size:12px}
@@ -1025,7 +1051,8 @@ select.fi{cursor:pointer}
 .home-quick-group-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .home-quick-group-meta{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em}
 .home-quick-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-.home-quick-card{padding:16px;border-radius:14px;border:1px solid var(--border);background:linear-gradient(180deg, rgba(255,255,255,0.03), transparent);position:relative;overflow:hidden}
+.home-quick-card{padding:16px;border-radius:14px;border:1px solid var(--border);background:linear-gradient(180deg, rgba(255,255,255,0.03), transparent);position:relative;overflow:hidden;cursor:pointer;transition:box-shadow .15s,transform .15s,border-color .15s}
+.home-quick-card:hover{border-color:color-mix(in srgb,var(--border) 55%,rgba(216,155,50,0.32));transform:translateY(-1px)}
 .home-quick-card::before{content:'';position:absolute;inset:0 auto auto 0;width:100%;height:3px;background:var(--quick-accent,var(--border));opacity:.92}
 .home-quick-card.home-quick-fondeo{--quick-accent:var(--amber);background:linear-gradient(180deg, rgba(239,159,39,0.07), transparent 74%)}
 .home-quick-card.home-quick-fondeo .home-quick-name{color:color-mix(in srgb,var(--amber-text) 76%, var(--text))}
@@ -1517,6 +1544,39 @@ select.fi{cursor:pointer}
 .acc-detected-preview-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:6px 14px}
 .acc-detected-preview-list li{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--text2)}
 .acc-detected-preview-list li strong{color:var(--text);font-variant-numeric:tabular-nums}
+.account-modal.is-auto-step-3 .acc-detected-summary{padding:8px 10px;margin-bottom:8px;align-items:center;flex-wrap:nowrap}
+.account-modal.is-auto-step-3 .acc-detected-summary-left{min-width:0;flex:1;flex-wrap:nowrap}
+.account-modal.is-auto-step-3 .acc-detected-summary-counts{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.account-modal.is-auto-step-3 .acc-detected-refresh-btn{flex:none;white-space:nowrap}
+.acc-detected-searchbar{display:flex;align-items:center;gap:8px;margin:0 0 10px}
+.acc-detected-search-input{width:100%;min-height:40px;border:1px solid var(--border2);border-radius:12px;background:var(--surface2);color:var(--text);font-size:13px;padding:9px 12px;outline:none}
+.acc-detected-search-input:focus{border-color:color-mix(in srgb,var(--blue) 60%,var(--border2));box-shadow:0 0 0 3px color-mix(in srgb,var(--blue) 14%,transparent)}
+.acc-detected-clear-btn{border:1px solid var(--border);background:var(--surface2);color:var(--text2);border-radius:10px;padding:9px 11px;font-size:12px;font-weight:700;cursor:pointer}
+.acc-detected-clear-btn:hover{background:var(--surface3);color:var(--text)}
+.account-modal.is-auto-step-3 .acc-detected-filter{margin-bottom:8px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+.account-modal.is-auto-step-3 .acc-detected-filter::-webkit-scrollbar{display:none}
+.account-modal.is-auto-step-3 .acc-detected-filter-chip{flex:none;padding:7px 12px;font-size:12px}
+.account-modal.is-auto-step-3 .acc-detected-conn-filter{padding-top:8px;margin-top:0}
+.account-modal.is-auto-step-3 .acc-detected-list{gap:8px;max-height:min(50vh,520px);padding-right:4px}
+.account-modal.is-auto-step-3 .acc-detected-row{display:grid;grid-template-columns:30px minmax(0,1fr) auto;align-items:center;gap:12px;padding:12px 14px;border-width:1px;border-radius:14px;min-height:74px}
+.account-modal.is-auto-step-3 .acc-detected-row:hover{background:rgba(55,138,221,0.06);border-color:color-mix(in srgb,var(--blue) 36%,var(--border))}
+.account-modal.is-auto-step-3 .acc-detected-row.selected{background:rgba(55,138,221,0.13);border-color:color-mix(in srgb,var(--blue) 76%,var(--border));box-shadow:0 0 0 1px color-mix(in srgb,var(--blue) 35%,transparent) inset}
+.account-modal.is-auto-step-3 .acc-detected-row.is-linked{opacity:.72}
+.account-modal.is-auto-step-3 .acc-detected-row-check{width:24px;height:24px;border-radius:999px;border:2px solid color-mix(in srgb,var(--blue) 58%,var(--border));display:grid;place-items:center;font-size:13px;font-weight:900;color:#fff;background:transparent;align-self:center}
+.account-modal.is-auto-step-3 .acc-detected-row.selected .acc-detected-row-check{background:var(--blue);border-color:var(--blue)}
+.account-modal.is-auto-step-3 .acc-detected-row-name{font-size:14px}
+.account-modal.is-auto-step-3 .acc-detected-row-meta{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.account-modal.is-auto-step-3 .acc-detected-row-meta-row{gap:8px;align-items:center;flex-wrap:nowrap}
+.account-modal.is-auto-step-3 .acc-detected-origin-switch,.account-modal.is-auto-step-3 .acc-detected-origin-tag{flex:none}
+.acc-detected-badge.is-selected{background:rgba(55,138,221,.16);border:1px solid rgba(55,138,221,.42);color:#9dccff}
+.acc-detected-choose-btn{border:1px solid color-mix(in srgb,var(--blue) 32%,var(--border));background:rgba(55,138,221,0.10);color:var(--blue-text);border-radius:999px;padding:8px 13px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap}
+.acc-detected-choose-btn:hover{background:rgba(55,138,221,0.18)}
+.acc-detected-choose-btn.is-selected{background:var(--blue);border-color:var(--blue);color:#fff}
+.acc-detected-selected-bar{display:flex;align-items:center;gap:10px;margin:0 0 10px;padding:10px 12px;border-radius:12px;border:1px solid color-mix(in srgb,var(--blue) 42%,var(--border));background:rgba(55,138,221,.10)}
+.acc-detected-selected-check{width:24px;height:24px;border-radius:999px;display:grid;place-items:center;background:var(--blue);color:#fff;font-size:13px;font-weight:900;flex:none}
+.acc-detected-selected-copy{min-width:0}
+.acc-detected-selected-title{font-size:13px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acc-detected-selected-meta{font-size:11px;color:var(--text2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* AUTO-LINK STEP 4 — buffered import banner */
 .acc-step4-buffer-banner{display:flex;align-items:center;gap:12px;margin:0 0 12px;padding:12px 14px;background:rgba(60,180,120,.1);border:1px solid rgba(60,180,120,.35);border-radius:10px}
@@ -1990,6 +2050,221 @@ input[type="time"].fi{
   textarea.fi{min-height:88px;padding:10px;line-height:1.5}
   select.fi,.toolbar select{padding-right:34px;background-position:right 10px center}
 
+  /* ADD TRADE — app mobile layout */
+  .trade-overlay{
+    z-index:1400;
+    align-items:stretch;
+    justify-content:stretch;
+    background:var(--bg);
+  }
+  .trade-modal{
+    height:100dvh;
+    max-height:100dvh;
+    border-radius:0;
+    display:flex;
+    flex-direction:column;
+    background:var(--bg);
+    box-shadow:none;
+    overflow:hidden;
+  }
+  .trade-modal .modal-head{
+    position:sticky;
+    top:0;
+    z-index:3;
+    padding:calc(12px + env(safe-area-inset-top,0px)) 14px 10px;
+    padding-left:calc(14px + env(safe-area-inset-left,0px));
+    padding-right:calc(14px + env(safe-area-inset-right,0px));
+    background:var(--bg);
+    border-bottom:1px solid var(--border);
+  }
+  .trade-modal .modal-head::before{display:none}
+  .trade-modal .modal-head h2{
+    font-size:20px;
+    font-weight:800;
+    letter-spacing:-.45px;
+  }
+  .trade-modal .modal-close{
+    width:42px;
+    height:42px;
+    min-width:42px;
+    min-height:42px;
+    border-radius:14px;
+    background:var(--surface2);
+    border:1px solid var(--border);
+  }
+  .trade-modal-body{
+    flex:1;
+    min-height:0;
+    max-height:none!important;
+    overflow:auto;
+    padding:12px 12px 104px;
+    padding-left:calc(12px + env(safe-area-inset-left,0px));
+    padding-right:calc(12px + env(safe-area-inset-right,0px));
+    -webkit-overflow-scrolling:touch;
+  }
+  .trade-form-grid{
+    display:grid;
+    gap:10px;
+  }
+  .trade-form-section{
+    display:grid;
+    gap:10px;
+    padding:12px;
+    border-radius:16px;
+    border:1px solid var(--border);
+    background:var(--surface);
+    box-shadow:0 10px 24px rgba(0,0,0,.12);
+  }
+  .trade-section-title{
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:.11em;
+    text-transform:uppercase;
+    color:var(--text3);
+  }
+  .trade-section-grid,
+  .trade-follow-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:9px;
+  }
+  .trade-field-symbol,
+  .trade-field-strategy,
+  .trade-field-pnl{
+    grid-column:1/-1;
+  }
+  .trade-field{gap:5px;min-width:0}
+  .trade-field .fl{
+    font-size:10px;
+    font-weight:800;
+    letter-spacing:.07em;
+    text-transform:uppercase;
+    color:var(--text3);
+  }
+  .trade-field .fi,
+  .trade-field select.fi,
+  .trade-field textarea.fi{
+    min-height:46px;
+    border-radius:13px;
+    border-color:var(--border);
+    background:var(--surface2);
+    font-size:16px;
+    font-weight:650;
+    padding:10px 12px;
+  }
+  .trade-field .fi:focus{
+    border-color:color-mix(in srgb,var(--blue) 62%,var(--border2));
+    box-shadow:0 0 0 3px color-mix(in srgb,var(--blue) 14%,transparent);
+  }
+  .trade-field textarea.fi{
+    min-height:104px;
+    font-size:15px;
+    font-weight:500;
+    line-height:1.55;
+  }
+  .trade-field-direction select.fi,
+  .trade-field-status select.fi{
+    font-weight:800;
+  }
+  .trade-section-prices .trade-field-pnl .fi{
+    font-family:var(--mono);
+    font-size:20px;
+    font-weight:800;
+    letter-spacing:-.3px;
+  }
+  .trade-label-muted{
+    display:inline-flex;
+    margin-left:4px;
+    padding:1px 6px;
+    border-radius:999px;
+    background:rgba(55,138,221,.12);
+    color:var(--blue-text);
+    font-size:9px;
+    font-weight:900;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+  }
+  .trade-section-follow .trade-follow-grid{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+  .trade-section-follow .trade-follow-grid .trade-field:first-child,
+  .trade-section-follow .trade-follow-grid .trade-field:nth-child(2){
+    grid-column:span 3;
+  }
+  .trade-section-journal{gap:12px}
+  .trade-section-journal .emo-picker{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:7px;
+    padding:0;
+    border:0;
+    background:transparent;
+  }
+  .trade-section-journal .eo{
+    justify-content:center;
+    min-height:38px;
+    border-radius:12px;
+    font-size:12px;
+    padding:8px 10px;
+    border-width:1px;
+  }
+  .trade-section-shot .shot-panel{
+    padding:0;
+    border:0;
+    background:transparent;
+    gap:10px;
+  }
+  .trade-section-shot .shot-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+  .trade-section-shot .shot-actions .btn{
+    width:100%;
+    min-height:42px;
+    justify-content:center;
+  }
+  .trade-section-shot .shot-empty{
+    min-height:92px;
+    padding:14px;
+    border-radius:14px;
+    font-size:12px;
+    line-height:1.5;
+  }
+  .trade-section-shot .shot-preview{
+    min-height:130px;
+    border-radius:14px;
+  }
+  .trade-section-shot .shot-preview img{
+    max-height:220px;
+  }
+  .trade-modal-foot{
+    position:fixed;
+    left:0;
+    right:0;
+    bottom:0;
+    z-index:4;
+    display:grid;
+    grid-template-columns:minmax(0,.42fr) minmax(0,.58fr);
+    gap:8px;
+    padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));
+    padding-left:calc(12px + env(safe-area-inset-left,0px));
+    padding-right:calc(12px + env(safe-area-inset-right,0px));
+    border-top:1px solid var(--border);
+    background:color-mix(in srgb,var(--surface) 96%,transparent);
+    backdrop-filter:blur(18px);
+  }
+  .trade-modal-foot .btn{
+    width:100%;
+    min-height:48px;
+    border-radius:14px;
+    font-size:14px;
+    font-weight:800;
+  }
+  .trade-modal-foot .btn-primary{
+    box-shadow:0 10px 24px color-mix(in srgb,var(--blue) 24%,transparent);
+  }
+
   /* ACC stepper / detected */
   .acc-stepper-nav{overflow-x:auto;align-items:flex-start;padding:12px;scrollbar-width:none}
   .acc-stepper-nav::-webkit-scrollbar{display:none}
@@ -2187,6 +2462,298 @@ input[type="time"].fi{
   .strat-donut{height:88px;max-width:88px;margin:8px auto}
   .strat-stats{margin-top:8px;padding-top:8px;gap:14px}
   .strat-stat-val{font-size:14px}
+
+  /* WITHDRAWALS PANEL — mobile (compacto) */
+  #acc-withdrawals-panel{padding:11px!important;margin-top:8px!important}
+  #acc-withdrawals-panel .funding-panel-head{align-items:stretch;margin-bottom:8px;gap:6px}
+  #acc-withdrawals-panel .funding-panel-title{font-size:13px}
+  #acc-withdrawals-panel #acc-withdrawals-sub{font-size:10.5px;margin-top:1px;line-height:1.35}
+  #acc-withdrawals-panel #acc-withdrawals-add-btn{width:100%;justify-content:center;min-height:32px;padding:6px 10px;font-size:11.5px;border-radius:9px}
+  #acc-withdrawals-form{flex-direction:column!important;align-items:stretch!important;gap:7px!important;margin-top:8px!important}
+  #acc-withdrawals-form input{width:100%!important;min-width:0!important;flex:none!important;min-height:40px;font-size:16px;padding:8px 11px;border-radius:9px}
+  #acc-withdrawals-form button{width:100%;justify-content:center;min-height:34px;font-size:11.5px;padding:6px 10px;border-radius:9px}
+  #acc-withdrawals-list{margin-top:6px!important}
+  #acc-withdrawals-list > div{flex-direction:row!important;align-items:center!important;justify-content:space-between!important;gap:8px;padding:7px 0!important;font-size:11.5px}
+  #acc-withdrawals-list > div > div{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #acc-withdrawals-list > div button{flex:none;align-self:auto!important;min-height:26px;padding:3px 9px;font-size:10px;border-radius:7px}
+
+  /* SECTION BAR — Solapamiento + Filtros en una fila */
+  .section-bar .filter-pop{display:flex;flex-direction:row;gap:6px;width:100%;align-items:stretch}
+  .section-bar .filter-pop > .btn{flex:1;width:auto;min-width:0;justify-content:center;font-size:11.5px;padding:7px 10px}
+  #accGroupAvgBtn{gap:5px}
+  #accGroupAvgState{margin-left:2px}
+
+  /* TRADE GROUPS — visibilidad en mobile */
+  .trade-table-compact tr.trade-group-parent{
+    background:rgba(96,165,250,.10)!important;
+    border-color:rgba(96,165,250,.32)!important;
+  }
+  .trade-table-compact tr.trade-group-child{
+    margin-left:14px;
+    border-left:3px solid rgba(96,165,250,.45)!important;
+    background:rgba(96,165,250,.04)!important;
+  }
+  .trade-table-compact tr.trade-group-child .trade-symbol::before{
+    content:'↳ ';color:var(--text3);opacity:.7;margin-right:2px;
+  }
+  /* Mostrar el caret + contador del grupo en mobile */
+  .trade-table-compact tr.trade-group-parent td:nth-child(1){
+    display:flex!important;align-items:center;justify-content:flex-start;
+    grid-area:sym;align-self:center;
+  }
+  .trade-table-compact tr.trade-group-parent td:nth-child(1) .btn{
+    padding:4px 8px;min-height:28px;font-size:11px;border-radius:8px;
+  }
+  .trade-table-compact tr.trade-group-parent{
+    grid-template-columns:auto 1fr auto;
+    grid-template-areas:'sym main pnl' 'sym main pnl' 'act act act';
+  }
+  .trade-table-compact tr.trade-group-parent .trade-group-indent{display:none}
+
+  /* HEADER de cuenta — botones en grid 3 columnas + breadcrumb clamp */
+  .workspace-head > div:last-child{
+    display:grid!important;
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:6px!important;width:100%;flex-wrap:nowrap!important;
+  }
+  .workspace-head .acc-trade-cta{
+    width:100%;min-width:0;justify-content:center;
+    padding:8px 6px;font-size:11px;min-height:38px;gap:4px;
+    white-space:nowrap;overflow:hidden;
+  }
+  .workspace-head .acc-trade-cta > span:not(.acc-trade-cta-icon):not(.ui-icon){
+    font-size:11px;overflow:hidden;text-overflow:ellipsis;min-width:0;
+  }
+  .workspace-head .acc-trade-cta-icon{font-size:13px;line-height:1}
+  #acc-dash-sub{
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+    overflow:hidden;font-size:11px;line-height:1.4;
+  }
+
+  /* Subtítulo del panel de fondeo — line-clamp para textos largos */
+  #acc-funding-panel .funding-panel-sub{
+    font-size:11px;line-height:1.45;
+    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;
+    overflow:hidden;
+  }
+
+  /* Metadatos de las barras (target / daily / total) más compactos */
+  .funding-progress-meta{font-size:10.5px;line-height:1.55}
+
+  /* Trade actions — evitar que "Detalle" se corte */
+  .trade-actions .trade-detail-toggle{white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+
+  /* KPI grid — 3 arriba + 2 abajo para 5 KPIs (sin orphan) */
+  .acc-kpi-primary,.acc-kpi-secondary{
+    grid-template-columns:repeat(6,minmax(0,1fr));
+  }
+  .acc-kpi-primary > .kpi,
+  .acc-kpi-secondary > .kpi{grid-column:span 2}
+  .acc-kpi-primary > .kpi:nth-child(4):nth-last-child(2),
+  .acc-kpi-primary > .kpi:nth-child(5):last-child,
+  .acc-kpi-secondary > .kpi:nth-child(4):nth-last-child(2),
+  .acc-kpi-secondary > .kpi:nth-child(5):last-child{
+    grid-column:span 3;
+  }
+
+  /* Insights — texto que no se rompa feo en pantallas chicas */
+  .acc-trade-insight-value{
+    font-size:12px;line-height:1.2;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .acc-trade-insight-meta{
+    font-size:9.5px;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+    overflow:hidden;
+  }
+
+  /* Trade row — celda principal: dejar wrap si el símbolo es largo */
+  .trade-main-top{flex-wrap:wrap;gap:5px}
+  .trade-meta-line{flex-wrap:wrap;gap:4px}
+
+  /* Calendario semanal — números más legibles */
+  .cal-dn{font-size:11px;font-weight:600;margin-bottom:3px}
+  .cal-pnl,.cal-wpnl{font-size:11px;font-weight:600}
+  .cal-cnt,.cal-wlbl,.cal-wcnt{font-size:9.5px}
+  .cal td,.cal td.wk{min-height:56px;padding:6px 4px}
+  .cal th{font-size:10px;padding:5px 2px}
+
+  /* OVERVIEW + FILTRO POR ETAPA — compactar */
+  .acc-overview-shell{padding:11px!important;border-radius:14px}
+  .acc-overview-head{margin-bottom:8px!important;gap:6px}
+  .acc-overview-copy h2{font-size:14px;margin-bottom:2px;letter-spacing:-.2px}
+  .acc-overview-copy p{font-size:11px;line-height:1.45}
+  .acc-overview-meta{font-size:10px;gap:5px;margin-top:4px;line-height:1.4}
+  .acc-stage-filter{padding:8px 10px!important;margin:8px 0!important;gap:6px}
+  .acc-stage-filter-title{font-size:9.5px!important;letter-spacing:.06em}
+  .acc-stage-filter-sub{
+    font-size:10px!important;line-height:1.35;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+    overflow:hidden;
+  }
+  .acc-overview-config summary{padding:9px 12px;font-size:10px}
+  .acc-overview-config-body{padding:10px 12px 12px}
+
+  /* ======== AJUSTES — mobile ======== */
+  /* Page title compacto */
+  #tab-settings .page-header{margin-bottom:8px}
+  #tab-settings .page-header h1{font-size:15px;line-height:1.1}
+  /* SHELL & layout */
+  .settings-shell{gap:10px!important}
+  .settings-content{gap:12px!important}
+  .settings-section{gap:8px!important;scroll-margin-top:80px}
+  .settings-section-title{
+    font-size:10px!important;padding:0 0 5px 0!important;
+    border-bottom:1px solid var(--border);gap:7px;letter-spacing:.07em;
+  }
+  .settings-section-title .ui-icon{width:12px;height:12px}
+  /* HERO */
+  .settings-hero{padding:13px!important;border-radius:14px;margin-bottom:10px}
+  .settings-hero-top{flex-direction:column;gap:6px;align-items:stretch}
+  .settings-hero-top > div:last-child{display:flex;gap:6px;flex-wrap:wrap}
+  .settings-hero-top > div:last-child .btn{flex:1;min-height:32px;padding:6px 10px;font-size:11px}
+  .settings-hero-title{font-size:15px;gap:8px}
+  .settings-hero-title .ui-icon{width:18px;height:18px}
+  .settings-hero-sub{
+    font-size:10.5px;line-height:1.4;margin-top:3px;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  }
+  /* HERO stats: 3 columnas para 2 filas de 3 (compacto) */
+  .settings-hero-stats{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:5px!important;margin-top:9px!important;
+  }
+  .settings-hero-stat{padding:6px 8px;border-radius:9px;gap:1px;min-width:0}
+  .settings-hero-stat-label{font-size:8px;letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .settings-hero-stat-value{font-size:12.5px!important;letter-spacing:-.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .settings-hero-stat-value > span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .settings-hero-stat-meta{font-size:8.5px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+  /* LAYOUT */
+  .settings-layout{gap:10px!important}
+  /* NAV en formato horizontal scroll */
+  .settings-nav{
+    padding:5px!important;border-radius:11px;gap:3px;
+    position:static!important;display:flex!important;flex-direction:row!important;
+    overflow-x:auto;scrollbar-width:none;
+  }
+  .settings-nav::-webkit-scrollbar{display:none}
+  .settings-nav-head{display:none}
+  .settings-nav-link{
+    padding:6px 10px;font-size:11px;flex:0 0 auto;border-radius:9px;gap:6px;
+    white-space:nowrap;
+  }
+  .settings-nav-link::before{display:none}
+  .settings-nav-link.is-active{background:rgba(216,155,50,0.16);color:var(--text)}
+
+  /* PANEL */
+  .settings-panel{border-radius:13px;margin-bottom:8px}
+  .settings-panel-head{padding:10px 12px!important;gap:7px}
+  .settings-panel-title{font-size:13px;gap:7px}
+  .settings-panel-title .ui-icon{width:16px;height:16px}
+  .settings-panel-sub{
+    font-size:10.5px;line-height:1.4;margin-top:3px;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  }
+  .settings-section-title{font-size:11.5px;padding:8px 0!important}
+
+  /* GRID DE TARJETAS */
+  .settings-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:6px!important;
+  }
+  .settings-card{padding:8px 10px!important;border-radius:10px;gap:3px}
+  .settings-card-label{font-size:8.5px;letter-spacing:.06em}
+  .settings-card-value{font-size:12.5px}
+  .settings-card-meta{font-size:10px;line-height:1.4}
+  .settings-card-actions{gap:4px;margin-top:3px}
+  .settings-card-actions .btn-sm{padding:4px 8px;font-size:10px;min-height:26px}
+
+  /* ENLACES */
+  .settings-account-links-body{padding:10px 12px!important;gap:8px}
+  .settings-account-link-card{padding:10px!important;gap:8px;border-radius:12px}
+  .settings-account-link-name{font-size:12.5px}
+  .settings-account-link-meta{font-size:10.5px;line-height:1.4}
+  .settings-account-link-grid{
+    grid-template-columns:1fr!important;gap:6px;
+  }
+  .settings-account-link-slot{padding:8px 10px;border-radius:10px;gap:6px}
+  .settings-account-link-slot-title{font-size:9px;letter-spacing:.05em}
+  .settings-account-link-preview a{padding:5px 9px;font-size:10.5px}
+
+  /* INT stats / addon keys */
+  .int-stats-row{gap:5px!important;flex-wrap:wrap}
+  .int-stat{padding:7px 10px!important;min-width:0!important;flex:1!important;border-radius:10px}
+  .int-stat-label{font-size:8.5px}
+  .int-stat-value{font-size:13.5px}
+  .int-note{padding:7px 9px;font-size:10.5px;line-height:1.45;border-radius:8px}
+  .int-actions-bar{width:100%;gap:5px}
+  .int-actions-bar .btn{flex:1;min-height:32px;padding:6px 10px;font-size:11px}
+  .addon-key-body{padding:10px 12px!important;gap:9px}
+  .addon-key-create-grid{gap:8px!important}
+  .addon-key-create-actions{gap:5px}
+  .addon-key-create-actions .btn{flex:1;min-height:32px;padding:6px 10px;font-size:11px}
+  .addon-key-value{min-width:0!important;max-width:none!important;gap:5px;flex-wrap:nowrap}
+  .addon-key-secret{font-size:9.5px;padding:3px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;overflow-wrap:normal;max-width:160px}
+  .addon-key-actions{gap:4px}
+  .addon-key-actions .btn-sm{padding:4px 8px;font-size:10px;min-height:26px}
+
+  /* Tablas de Settings — scroll horizontal preservando filas */
+  .int-keys-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:12px}
+  .int-keys-table{min-width:680px;font-size:11px}
+  .int-keys-table thead th{padding:7px 10px;font-size:9px;white-space:nowrap}
+  .int-keys-table tbody td{padding:7px 10px;white-space:nowrap}
+  .int-keys-table tbody td.det-acc-meta-cell{white-space:normal}
+  .int-keys-table .addon-key-value{flex-wrap:nowrap;min-width:0;gap:4px}
+  .int-keys-table .addon-key-actions{flex-wrap:nowrap;gap:4px}
+
+  /* Connection filter (detected accounts) — chips compactos */
+  .acc-detected-filter{
+    padding:0 12px 8px!important;gap:5px;flex-wrap:wrap;
+  }
+  .acc-detected-conn-label{font-size:9.5px;letter-spacing:.06em}
+  .acc-detected-filter-chip{padding:4px 9px;font-size:10px;border-radius:999px}
+  .acc-detected-filter-count{font-size:9px;padding:1px 5px;min-width:auto}
+
+  /* Links rápidos por cuenta — botón principal compacto */
+  .settings-account-link-card .btn-primary{
+    min-height:34px;padding:6px 12px;font-size:11.5px;
+  }
+
+  /* Conexiones (claves del ADDON) */
+  .acc-conn-status-bar{padding:7px 10px;font-size:10.5px;gap:6px;margin-bottom:8px}
+  .acc-conn-keys-head{padding:7px 10px;gap:6px}
+  .acc-conn-keys-label{font-size:9.5px}
+  .acc-conn-key-row{padding:7px 10px;gap:7px;flex-wrap:wrap}
+  .acc-conn-key-info{gap:5px}
+  .acc-conn-key-prefix{font-size:9.5px;padding:2px 5px;border-radius:5px}
+  .acc-conn-key-label,.acc-conn-key-label-text{font-size:10.5px}
+  .acc-conn-key-used,.acc-conn-key-unused{font-size:9px}
+  .acc-conn-key-revoke{padding:3px 7px;font-size:10px}
+
+  /* Storage setup card */
+  .storage-setup{padding:11px!important;border-radius:12px}
+  .storage-setup-title{font-size:13px}
+  .storage-setup-copy p{font-size:11px;line-height:1.45}
+  .storage-setup-item{font-size:11px;line-height:1.45}
+  .storage-setup-sql{min-height:140px;font-size:10.5px}
+
+  /* TARJETAS de cuenta (acc-card) — más densas en mobile */
+  .acc-card-body{padding:11px 12px!important}
+  .acc-card-top-row{margin-bottom:8px;gap:8px}
+  .acc-card-name{font-size:14px;letter-spacing:-.25px}
+  .acc-card-sub{font-size:11px;line-height:1.4;-webkit-line-clamp:2}
+  .acc-card-flags,.home-quick-flags{gap:5px;margin-top:4px}
+  .acc-balance-row{margin:8px 0 8px}
+  .acc-balance-lbl{font-size:9.5px;margin-bottom:2px}
+  .acc-balance-val{font-size:17px}
+  .acc-balance-change{font-size:10.5px;margin-top:2px}
+  .acc-pnl{font-size:12px}
+  .acc-pnl-pct{font-size:10px}
+  .acc-stats-row{padding-top:8px;margin-top:2px}
+  .acc-stat-val{font-size:13.5px}
+  .acc-stat-lbl{font-size:9.5px}
+  .acc-open-btn{margin-top:8px!important;padding:7px;font-size:11px;border-radius:9px}
 }
 
 /* SMALL MOBILE */
@@ -2216,9 +2783,106 @@ input[type="time"].fi{
   .home-mini-value,.home-type-count{font-size:17px}
   .kpi-value{font-size:14px}
   .kpi-grid{grid-template-columns:1fr}
-  .acc-kpi-primary .kpi-value{font-size:14.5px}
-  .acc-kpi-secondary .kpi-value{font-size:13px}
+  /* KPIs de cuenta — mantener 2 columnas, denso */
+  .acc-kpi-primary,.acc-kpi-secondary{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:5px!important;
+  }
+  .acc-kpi-primary>.kpi,.acc-kpi-secondary>.kpi{
+    grid-column:auto!important;
+    padding:7px 9px!important;border-radius:9px;
+  }
+  /* Cuando son 5 ítems, el último spanea las 2 columnas (sin orphan colgado) */
+  .acc-kpi-primary>.kpi:nth-child(5):last-child,
+  .acc-kpi-secondary>.kpi:nth-child(5):last-child{
+    grid-column:1 / -1!important;
+  }
+  .acc-kpi-primary .kpi-value,
+  .acc-kpi-secondary .kpi-value{font-size:13px;line-height:1.1}
+  .kpi-label{font-size:8.5px;margin-bottom:1px}
+  .kpi-subvalue{font-size:9.5px;margin-top:1px}
   .calc-output-value,.avg-result-value{font-size:18px}
+
+  /* OVERVIEW + FILTRO POR ETAPA — flat layout, sin cajas anidadas */
+  .acc-overview-shell{padding:9px!important;border-radius:12px;overflow:hidden}
+  .acc-overview-copy h2{font-size:13px;margin-bottom:1px}
+  .acc-overview-copy p{display:none}
+  .acc-overview-meta{font-size:9.5px;gap:3px;margin-top:3px;flex-wrap:wrap}
+  /* Quitar la caja del filtro por etapa: que las chips queden directas */
+  .acc-stage-filter{
+    padding:0!important;margin:7px 0!important;
+    border:none!important;background:none!important;
+    flex-direction:column!important;gap:4px!important;
+  }
+  .acc-stage-filter-title{display:none!important}
+  .acc-stage-filter-sub{display:none!important}
+  /* Chips: wrap a múltiples líneas en vez de scroll horizontal */
+  .acc-stage-filter-row{
+    flex-wrap:wrap!important;overflow:visible!important;
+    margin:0!important;padding:0!important;gap:4px!important;
+  }
+  .acc-stage-chip{
+    flex:0 0 auto;padding:4px 9px!important;font-size:10px!important;
+    gap:4px!important;height:auto!important;min-height:24px!important;
+  }
+  .acc-stage-chip-count{font-size:8.5px!important}
+  /* Configurar selección — compacto */
+  .acc-overview-config{margin-top:8px}
+  .acc-overview-config summary{padding:8px 11px;font-size:9.5px}
+  .acc-overview-config-body{padding:9px 11px 11px}
+  /* HOME HERO + mini KPIs — compactos */
+  .home-hero{padding:12px!important;border-radius:12px!important;gap:10px}
+  .home-hero-actions{
+    grid-template-columns:1fr 1fr!important;gap:6px!important;margin-top:10px!important;
+  }
+  .home-hero-actions .btn{min-height:34px;padding:6px 10px;font-size:11.5px}
+  .home-mini-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:6px!important;
+    margin-top:8px;
+  }
+  .home-mini-card{padding:8px 10px!important;border-radius:10px}
+  .home-mini-label{font-size:8.5px;margin-bottom:2px;letter-spacing:.06em}
+  .home-mini-value{font-size:16px!important;letter-spacing:-.3px}
+  .home-kicker{font-size:8.5px;padding:3px 7px;margin-bottom:6px}
+
+  /* Bloque "Ganancia conjunta" — compacto en mobile */
+  .acc-overview-visual-meta,
+  .acc-overview-visual-sub{display:none!important}
+  .acc-overview-visual-summary{
+    padding:11px 14px!important;
+    align-items:center!important;
+    flex-wrap:nowrap!important;
+    gap:8px!important;
+  }
+  .acc-overview-visual-summary > div{flex:1;min-width:0}
+  .acc-overview-visual-summary::after{
+    width:24px!important;height:24px!important;font-size:14px!important;flex:none;
+  }
+  .acc-overview-visual-title{font-size:12px!important;font-weight:700;letter-spacing:.02em;color:var(--text2)}
+  .acc-overview-visual-value{font-size:22px!important;margin-top:2px!important;letter-spacing:-.6px}
+  .acc-overview-visual-summary .home-pill{display:none}
+  .acc-overview-visual-body{padding:0 12px 12px!important}
+  .acc-overview-visual-body > div[style*="height:240px"]{height:160px!important}
+
+  /* TARJETAS de cuenta — densidad alta */
+  .acc-card-body{padding:9px 10px!important}
+  .acc-card-top-row{margin-bottom:6px;gap:6px}
+  .acc-card-name{font-size:13px}
+  .acc-card-sub{font-size:10px;line-height:1.35;-webkit-line-clamp:1!important}
+  .acc-card-flags,.home-quick-flags{gap:4px;margin-top:3px}
+  .acc-card-stage-btn{padding:3px 7px;font-size:9px}
+  .acc-balance-row{margin:6px 0 6px}
+  .acc-balance-lbl{font-size:8.5px;margin-bottom:1px}
+  .acc-balance-val{font-size:15px}
+  .acc-balance-change{font-size:9.5px;margin-top:1px}
+  .acc-pnl{font-size:11px}
+  .acc-pnl-pct{font-size:9.5px}
+  .acc-stats-row{padding-top:6px;margin-top:1px}
+  .acc-stat-val{font-size:12px}
+  .acc-stat-lbl{font-size:8.5px}
+  /* El botón "Abrir cuenta" se oculta — toda la tarjeta ya es clickeable */
+  .acc-open-btn{display:none!important}
 
   .home-type-card>div:last-child{align-items:flex-start;flex-direction:column;gap:8px}
   .acc-type-selector{grid-template-columns:1fr}
@@ -2227,6 +2891,27 @@ input[type="time"].fi{
 
   .btn,.btn-primary,.btn-secondary{padding:10px 14px;font-size:12.5px}
   .modal-head h2{font-size:14px}
+
+  .trade-modal .modal-head h2{font-size:18px}
+  .trade-modal-body{
+    padding-left:10px;
+    padding-right:10px;
+    padding-bottom:112px;
+  }
+  .trade-form-grid{gap:8px}
+  .trade-form-section{padding:11px;border-radius:15px;gap:9px}
+  .trade-section-grid{gap:8px}
+  .trade-section-follow .trade-follow-grid{gap:7px}
+  .trade-field .fi,
+  .trade-field select.fi,
+  .trade-field textarea.fi{
+    min-height:44px;
+    padding:9px 10px;
+  }
+  .trade-section-prices .trade-field-pnl .fi{font-size:18px}
+  .trade-section-journal .emo-picker{gap:6px}
+  .trade-section-journal .eo{font-size:11.5px;padding:7px 8px}
+  .trade-modal-foot{padding-left:10px;padding-right:10px}
 
   .trade-symbol{font-size:11.5px}
   .trade-table-compact tr.trade-row-compact{padding:9px 10px}
@@ -2860,82 +3545,100 @@ input[type="time"].fi{
 </div><!-- /appShell -->
 
 <!-- ========== MODAL ========== -->
-<div class="overlay" id="overlay" onclick="bgClose(event)">
-  <div class="modal">
+<div class="overlay trade-overlay" id="overlay" onclick="bgClose(event)">
+  <div class="modal trade-modal">
     <div class="modal-head">
       <h2 id="mTitle">Añadir trade</h2>
       <button class="modal-close" onclick="closeModal()">×</button>
     </div>
-    <div class="modal-body">
-      <div class="fg">
-        <div class="f">
-          <label class="fl">Símbolo</label>
-          <input class="fi" id="mSym" list="symList" placeholder="EURUSD" oninput="handleManualSymbolInput()" onchange="handleManualSymbolInput()"/>
-          <datalist id="symList">
-            <option value="NQ" label="Mini Nasdaq 100"/>
-            <option value="MNQ" label="Micro Nasdaq 100"/>
-            <option value="ES" label="Mini S&P 500"/>
-            <option value="MES" label="Micro S&P 500"/>
-            <option value="EURUSD"/><option value="GBPUSD"/><option value="USDJPY"/>
-            <option value="GBPJPY"/><option value="AUDUSD"/><option value="USDCAD"/>
-            <option value="USDCHF"/><option value="NZDUSD"/><option value="EURJPY"/>
-            <option value="EURGBP"/><option value="XAUUSD"/>
-            <option value="YM"/>
-            <option value="RTY"/><option value="CL"/><option value="GC"/>
-          </datalist>
+    <div class="modal-body trade-modal-body">
+      <div class="trade-form-grid">
+        <div class="trade-form-section trade-section-main">
+          <div class="trade-section-title">Operación</div>
+          <div class="trade-section-grid">
+            <div class="f trade-field trade-field-symbol">
+              <label class="fl">Símbolo</label>
+              <input class="fi" id="mSym" list="symList" placeholder="EURUSD" oninput="handleManualSymbolInput()" onchange="handleManualSymbolInput()"/>
+              <datalist id="symList">
+                <option value="NQ" label="Mini Nasdaq 100"/>
+                <option value="MNQ" label="Micro Nasdaq 100"/>
+                <option value="ES" label="Mini S&P 500"/>
+                <option value="MES" label="Micro S&P 500"/>
+                <option value="EURUSD"/><option value="GBPUSD"/><option value="USDJPY"/>
+                <option value="GBPJPY"/><option value="AUDUSD"/><option value="USDCAD"/>
+                <option value="USDCHF"/><option value="NZDUSD"/><option value="EURJPY"/>
+                <option value="EURGBP"/><option value="XAUUSD"/>
+                <option value="YM"/>
+                <option value="RTY"/><option value="CL"/><option value="GC"/>
+              </datalist>
+            </div>
+            <div class="f trade-field trade-field-market">
+              <label class="fl">Mercado</label>
+              <select class="fi" id="mMkt" onchange="handleManualMarketInput()"><option value="Forex">Forex</option><option value="Futures">Futuros</option></select>
+            </div>
+            <div class="f trade-field trade-field-direction">
+              <label class="fl">Dirección</label>
+              <select class="fi" id="mDir" onchange="calcPnl()"><option value="Long">Long / Buy</option><option value="Short">Short / Sell</option></select>
+            </div>
+            <div class="f trade-field trade-field-status">
+              <label class="fl">Estado</label>
+              <select class="fi" id="mStat" onchange="toggleExit()">
+                <option value="OPEN">Abierto</option><option value="CLOSED">Cerrado</option>
+              </select>
+            </div>
+            <div class="f trade-field trade-field-strategy">
+              <label class="fl">Estrategia</label>
+              <select class="fi" id="mStrat">
+                <option value="">— Sin estrategia</option>
+              </select>
+            </div>
+          </div>
         </div>
-        <div class="f">
-          <label class="fl">Mercado</label>
-          <select class="fi" id="mMkt" onchange="handleManualMarketInput()"><option value="Forex">Forex</option><option value="Futures">Futuros</option></select>
+
+        <div class="trade-form-section trade-section-prices">
+          <div class="trade-section-title">Precios</div>
+          <div class="trade-section-grid">
+            <div class="f trade-field">
+              <label class="fl">Entrada</label>
+              <input class="fi" id="mEntry" type="number" step="0.00001" placeholder="1.15000" oninput="calcPnl()"/>
+            </div>
+            <div class="f trade-field">
+              <label class="fl">Salida</label>
+              <input class="fi" id="mExit" type="number" step="0.00001" placeholder="1.15200" oninput="handleExitInput()"/>
+            </div>
+            <div class="f trade-field">
+              <label class="fl" id="mQtyLabel">Cantidad (lotes)</label>
+              <input class="fi" id="mQty" type="number" step="0.01" placeholder="0.50" oninput="calcPnl()"/>
+            </div>
+            <div class="f trade-field trade-field-pnl">
+              <label class="fl">P&L ($) <span class="trade-label-muted">auto</span></label>
+              <input class="fi" id="mPnl" type="number" step="0.01" placeholder="0.00"/>
+            </div>
+          </div>
         </div>
-        <div class="f">
-          <label class="fl">Dirección</label>
-          <select class="fi" id="mDir" onchange="calcPnl()"><option value="Long">Long / Buy</option><option value="Short">Short / Sell</option></select>
+
+        <div class="trade-form-section trade-section-time">
+          <div class="trade-section-title">Fecha</div>
+          <div class="trade-section-grid">
+            <div class="f trade-field">
+              <label class="fl">Fecha</label>
+              <input class="fi" id="mOpen" type="date"/>
+            </div>
+            <div class="f trade-field">
+              <label class="fl">Hora</label>
+              <input class="fi" id="mOpenTime" type="time" step="1"/>
+            </div>
+          </div>
         </div>
-        <div class="f">
-          <label class="fl">Estrategia</label>
-          <select class="fi" id="mStrat">
-            <option value="">— Sin estrategia</option>
-          </select>
-        </div>
-        <div class="f">
-          <label class="fl">Precio de entrada</label>
-          <input class="fi" id="mEntry" type="number" step="0.00001" placeholder="1.15000" oninput="calcPnl()"/>
-        </div>
-        <div class="f">
-          <label class="fl">Precio de salida</label>
-          <input class="fi" id="mExit" type="number" step="0.00001" placeholder="1.15200" oninput="handleExitInput()"/>
-        </div>
-        <div class="f">
-          <label class="fl" id="mQtyLabel">Cantidad (lotes)</label>
-          <input class="fi" id="mQty" type="number" step="0.01" placeholder="0.50" oninput="calcPnl()"/>
-        </div>
-        <div class="f">
-          <label class="fl">Estado</label>
-          <select class="fi" id="mStat" onchange="toggleExit()">
-            <option value="OPEN">Abierto</option><option value="CLOSED">Cerrado</option>
-          </select>
-        </div>
-        <div class="f">
-          <label class="fl">Fecha del trade</label>
-          <input class="fi" id="mOpen" type="date"/>
-        </div>
-        <div class="f">
-          <label class="fl">Hora del trade</label>
-          <input class="fi" id="mOpenTime" type="time" step="1"/>
-        </div>
-        <div class="f full">
-          <label class="fl">P&L ($) <span style="color:var(--text3);font-weight:400">— auto-calculado, editable</span></label>
-          <input class="fi" id="mPnl" type="number" step="0.01" placeholder="0.00"/>
-        </div>
-        <div class="f full">
-          <label class="fl">Seguimiento del trade</label>
-          <div class="fg" style="margin-top:2px">
-            <div class="f">
+
+        <div class="trade-form-section trade-section-follow">
+          <div class="trade-section-title">Seguimiento</div>
+          <div class="trade-follow-grid">
+            <div class="f trade-field">
               <label class="fl">SL pips</label>
               <input class="fi" id="mSlPips" type="number" step="0.1" placeholder="12.5"/>
             </div>
-            <div class="f">
+            <div class="f trade-field">
               <label class="fl">Tendencia</label>
               <select class="fi" id="mTrend">
                 <option value="">—</option>
@@ -2943,7 +3646,7 @@ input[type="time"].fi{
                 <option value="X">✕ En contra</option>
               </select>
             </div>
-            <div class="f">
+            <div class="f trade-field">
               <label class="fl">1:1</label>
               <select class="fi" id="mRR1">
                 <option value="">—</option>
@@ -2951,7 +3654,7 @@ input[type="time"].fi{
                 <option value="X">✕</option>
               </select>
             </div>
-            <div class="f">
+            <div class="f trade-field">
               <label class="fl">1:2</label>
               <select class="fi" id="mRR2">
                 <option value="">—</option>
@@ -2959,7 +3662,7 @@ input[type="time"].fi{
                 <option value="X">✕</option>
               </select>
             </div>
-            <div class="f">
+            <div class="f trade-field">
               <label class="fl">1:3</label>
               <select class="fi" id="mRR3">
                 <option value="">—</option>
@@ -2969,16 +3672,21 @@ input[type="time"].fi{
             </div>
           </div>
         </div>
-        <div class="f full">
-          <label class="fl">Emociones</label>
-          <div class="emo-picker" id="emoPicker"></div>
+
+        <div class="trade-form-section trade-section-journal">
+          <div class="trade-section-title">Diario</div>
+          <div class="f trade-field">
+            <label class="fl">Emociones</label>
+            <div class="emo-picker" id="emoPicker"></div>
+          </div>
+          <div class="f trade-field">
+            <label class="fl">Observaciones</label>
+            <textarea class="fi" id="mRem" rows="2" placeholder="Notas del trade..."></textarea>
+          </div>
         </div>
-        <div class="f full">
-          <label class="fl">Observaciones</label>
-          <textarea class="fi" id="mRem" rows="2" placeholder="Notas del trade..."></textarea>
-        </div>
-        <div class="f full">
-          <label class="fl">Captura del trade</label>
+
+        <div class="trade-form-section trade-section-shot">
+          <div class="trade-section-title">Captura</div>
           <div class="shot-panel">
             <div class="shot-actions">
               <input class="fi" id="mShot" type="file" accept="image/*" style="display:none" onchange="handleTradeScreenshotSelect(event)"/>
@@ -2992,7 +3700,7 @@ input[type="time"].fi{
         </div>
       </div>
     </div>
-    <div class="modal-foot">
+    <div class="modal-foot trade-modal-foot">
       <button class="btn" onclick="closeModal()">Cancelar</button>
       <button class="btn btn-primary" id="saveTradeBtn" onclick="saveTrade()">Guardar</button>
     </div>
@@ -7101,6 +7809,8 @@ let accDetectedAccountsNextRefreshAt=0;
 let accDetectedAccountsCountdownTimer=null;
 let accDetectedFilter='available';
 let accDetectedConnectionFilter='';
+let accDetectedSearch='';
+let accDetectedSearchRenderTimer=null;
 let accConnectionFilter='';
 let settingsAccountLinksDrafts={};
 let accDetectedConnectionCollapsed=new Set();
@@ -13313,7 +14023,7 @@ function renderHome(){
               const snapshot=getAccountSnapshot(acc);
               const balanceChange=getAccountBalanceChange(acc,snapshot);
               const balanceChangeColor=getBalanceChangeColor(balanceChange);
-              return`<div class="home-quick-card home-quick-${group.type}">
+              return`<div class="home-quick-card home-quick-${group.type}" onclick="viewAccount('${acc.id}')" role="button" tabindex="0">
                 <div class="home-quick-top">
 	                  <div>
 	                    <div class="home-quick-name">${acc.name}</div>
@@ -13329,7 +14039,7 @@ function renderHome(){
                   <span>${snapshot.winRate.toFixed(1)}% win rate</span>
                   <span>${collectAccountStrategies(acc).length} estrategias</span>
                 </div>
-                <button class="acc-open-btn" style="margin-top:14px" onclick="viewAccount('${acc.id}')">Abrir cuenta →</button>
+                <button class="acc-open-btn" style="margin-top:14px" onclick="event.stopPropagation();viewAccount('${acc.id}')">Abrir cuenta →</button>
               </div>`;
             }).join('')}
           </div>
@@ -14413,13 +15123,21 @@ function toggleAccGroupAveraging(){
   accApplyFilters();
 }
 function toggleTradeGroup(groupId,btn){
-  const rows=document.querySelectorAll(`tr[data-group-child="${groupId}"]`);
+  const tradeRows=document.querySelectorAll(`tr.trade-row-compact[data-group-child="${groupId}"]`);
   let anyVisible=false;
-  rows.forEach(r=>{if(!r.hasAttribute('hidden'))anyVisible=true;});
-  rows.forEach(r=>{
+  tradeRows.forEach(r=>{if(!r.hasAttribute('hidden'))anyVisible=true;});
+  tradeRows.forEach(r=>{
     if(anyVisible){r.setAttribute('hidden','');}
     else{r.removeAttribute('hidden');}
   });
+  if(anyVisible){
+    const detailRows=document.querySelectorAll(`tr.trade-detail-row[data-group-child="${groupId}"]`);
+    detailRows.forEach(r=>r.setAttribute('hidden',''));
+    tradeRows.forEach(r=>{
+      const detailBtn=r.querySelector('.trade-detail-toggle');
+      if(detailBtn)detailBtn.setAttribute('aria-expanded','false');
+    });
+  }
   if(btn){
     btn.setAttribute('aria-expanded',(!anyVisible).toString());
     const caret=btn.querySelector('.trade-group-caret');
@@ -15253,10 +15971,20 @@ function renderAutomaticAccountUi(){
   renderAutomaticStepperUi();
   updateAccountModalFooterState();
 }
+function syncAccountModalLayoutState(){
+  const modal=document.querySelector('#accOverlay .account-modal');
+  if(!modal)return;
+  const isAutomatic=accCreationMode==='automatic';
+  modal.classList.toggle('is-automatic-mode',isAutomatic);
+  modal.classList.toggle('is-auto-step-3',isAutomatic&&accAutoStep===3);
+  modal.dataset.creationMode=accCreationMode;
+  modal.dataset.autoStep=isAutomatic?String(accAutoStep):'';
+}
 function renderAccountCreationModeUi(){
   const manualPanel=document.getElementById('accManualPanel');
   const automaticPanel=document.getElementById('accAutomaticPanel');
   const lockNote=document.getElementById('accModeLockNote');
+  syncAccountModalLayoutState();
   if(manualPanel)manualPanel.classList.toggle('open',accCreationMode==='manual');
   if(automaticPanel)automaticPanel.classList.toggle('open',accCreationMode==='automatic');
   if(lockNote){
@@ -15373,6 +16101,11 @@ function initAutomaticStepper(){
   accDetectedAccounts=[];
   accDetectedAccountsLoading=false;
   accDetectedAccountsError='';
+  accDetectedSearch='';
+  if(accDetectedSearchRenderTimer){
+    clearTimeout(accDetectedSearchRenderTimer);
+    accDetectedSearchRenderTimer=null;
+  }
   clearDetectedAccountsRefresh();
   accSelectedDetectedId=null;
   accAutoLinkLoading=false;
@@ -15432,6 +16165,32 @@ function setDetectedFilter(filter){
   accDetectedFilter=next;
   renderAutoStep3();
 }
+function setDetectedSearch(value){
+  accDetectedSearch=`${value||''}`.trim();
+  renderAutoStep3();
+}
+function handleDetectedSearchInput(input){
+  accDetectedSearch=`${input&&input.value||''}`;
+  if(accDetectedSearchRenderTimer)clearTimeout(accDetectedSearchRenderTimer);
+  accDetectedSearchRenderTimer=setTimeout(()=>{
+    accDetectedSearchRenderTimer=null;
+    renderAutoStep3();
+    const searchInput=document.getElementById('accDetectedSearchInput');
+    if(searchInput){
+      searchInput.focus();
+      const len=searchInput.value.length;
+      try{searchInput.setSelectionRange(len,len);}catch(_){}
+    }
+  },140);
+}
+function clearDetectedSearch(){
+  if(accDetectedSearchRenderTimer){
+    clearTimeout(accDetectedSearchRenderTimer);
+    accDetectedSearchRenderTimer=null;
+  }
+  accDetectedSearch='';
+  renderAutoStep3();
+}
 function setAccConnectionFilter(value){
   accConnectionFilter=`${value||''}`.trim();
   renderWholeApp();
@@ -15446,6 +16205,24 @@ function getDetectedConnectionName(a){
     if(m)return m;
   }
   return '';
+}
+function getDetectedConnectionDisplayName(a){
+  const userLabel=getDetectedNinjaTraderUserLabel(a);
+  const raw=getDetectedConnectionName(a);
+  if(userLabel)return userLabel;
+  return isTechnicalConnectionName(raw)?'NinjaTrader':raw;
+}
+function getDetectedSearchText(a){
+  if(!a)return '';
+  return [
+    a.external_account_name,
+    a.external_account_id,
+    a.provider,
+    getDetectedConnectionName(a),
+    getDetectedConnectionDisplayName(a),
+    getDetectedNinjaTraderUserLabel(a),
+    getDetectedLegacyExternalAccountId(a)
+  ].filter(Boolean).join(' ').toLowerCase();
 }
 function getAccountConnectionName(acc){
   if(!acc)return '';
@@ -15584,6 +16361,7 @@ function renderAutoStepIndicators(){
   }).join('');
 }
 function renderAutomaticStepperUi(){
+  syncAccountModalLayoutState();
   renderAutoStepIndicators();
   [1,2,3,4].forEach(n=>{
     const el=document.getElementById(`accAutoStep${n}`);
@@ -15672,15 +16450,6 @@ function renderAutoStep2(){
   ${keysHtml}
   <div class="acc-step2-actions">
     <button class="btn-link${connectorKeyManagerState.loading?' is-loading':''}" onclick="createAndShowConnectorKey()" ${connectorKeyManagerState.loading?'disabled':''}>+ Nueva clave del AddOn</button>
-  </div>
-  <div class="acc-step2-guide">
-    <div class="acc-step2-guide-title">¿Cómo conectar el AddOn?</div>
-    <ol class="acc-step2-guide-list">
-      <li>Genera una clave nueva y cópiala (solo se muestra una vez).</li>
-      <li>En NinjaTrader: <strong>Tools → Add-ons → Zuppie Connector</strong></li>
-      <li>Pega la clave en el campo <em>API Key</em> y guarda.</li>
-      <li>NinjaTrader empezará a enviar operaciones automáticamente.</li>
-    </ol>
   </div>
   <div class="acc-step-footer">
     <button class="btn-secondary" onclick="goToAutomaticStep(1)">← Atrás</button>
@@ -15785,20 +16554,44 @@ function renderAutoStep3(){
   const filter=accDetectedFilter||'available';
   const connOptions=getDetectedConnectionOptions(detectedList);
   const activeConn=accDetectedConnectionFilter||'';
+  const searchQuery=`${accDetectedSearch||''}`.trim().toLowerCase();
   const applyConn=a=>{if(!activeConn)return true;return getDetectedConnectionName(a)===activeConn;};
   const visiblePreConn=filter==='linked'?linked:filter==='all'?detectedList:unlinked;
-  const visible=visiblePreConn.filter(applyConn);
+  const matchesSearch=a=>!searchQuery||getDetectedSearchText(a).includes(searchQuery);
+  const visible=visiblePreConn
+    .filter(applyConn)
+    .filter(matchesSearch)
+    .slice()
+    .sort((a,b)=>{
+      if(a.id===accSelectedDetectedId)return -1;
+      if(b.id===accSelectedDetectedId)return 1;
+      const aRecent=a.last_seen_at?new Date(a.last_seen_at).getTime():0;
+      const bRecent=b.last_seen_at?new Date(b.last_seen_at).getTime():0;
+      if(bRecent!==aRecent)return bRecent-aRecent;
+      const an=`${a.external_account_name||a.external_account_id||''}`;
+      const bn=`${b.external_account_name||b.external_account_id||''}`;
+      return an.localeCompare(bn);
+    });
   const countForConn=name=>detectedList.filter(a=>getDetectedConnectionName(a)===name).length;
+  const searchControls=`<div class="acc-detected-searchbar">
+    <input class="acc-detected-search-input" id="accDetectedSearchInput" value="${escHtml(accDetectedSearch)}" placeholder="Buscar cuenta, conexión o usuario..." oninput="handleDetectedSearchInput(this)" />
+    ${accDetectedSearch?`<button type="button" class="acc-detected-clear-btn" onclick="clearDetectedSearch()">Limpiar</button>`:''}
+    <button type="button" class="acc-detected-clear-btn" onclick="refreshDetectedAccountsNow()" ${accDetectedAccountsLoading?'disabled':''}>${accDetectedAccountsLoading?'Cargando':'Reescanear'}</button>
+  </div>`;
   const filterTabs=`<div class="acc-detected-filter">
     <button class="acc-detected-filter-chip${filter==='available'?' is-active':''}" onclick="setDetectedFilter('available')">Disponibles <span class="acc-detected-filter-count">${unlinked.length}</span></button>
-    <button class="acc-detected-filter-chip${filter==='linked'?' is-active':''}" onclick="setDetectedFilter('linked')">Vinculadas <span class="acc-detected-filter-count">${linked.length}</span></button>
     <button class="acc-detected-filter-chip${filter==='all'?' is-active':''}" onclick="setDetectedFilter('all')">Todas <span class="acc-detected-filter-count">${accDetectedAccounts.length}</span></button>
+    <button class="acc-detected-filter-chip${filter==='linked'?' is-active':''}" onclick="setDetectedFilter('linked')">Vinculadas <span class="acc-detected-filter-count">${linked.length}</span></button>
   </div>`;
   const connFilterRow=connOptions.length>0
     ?`<div class="acc-detected-filter acc-detected-conn-filter">
-        <span class="acc-detected-conn-label">Connection</span>
+        <span class="acc-detected-conn-label">Conexión</span>
         <button class="acc-detected-filter-chip${!activeConn?' is-active':''}" onclick="setDetectedConnectionFilter('')">Todas <span class="acc-detected-filter-count">${accDetectedAccounts.length}</span></button>
-        ${connOptions.map(c=>`<button class="acc-detected-filter-chip${activeConn===c?' is-active':''}" onclick="setDetectedConnectionFilter(${JSON.stringify(c)})" title="${escHtml(c)}">${escHtml(c)} <span class="acc-detected-filter-count">${countForConn(c)}</span></button>`).join('')}
+        ${connOptions.map(c=>{
+          const sample=detectedList.find(a=>getDetectedConnectionName(a)===c);
+          const label=getDetectedConnectionDisplayName(sample)||c;
+          return `<button class="acc-detected-filter-chip${activeConn===c?' is-active':''}" onclick="setDetectedConnectionFilter(${escHtml(JSON.stringify(c))})" title="${escHtml(c)}">${escHtml(label)} <span class="acc-detected-filter-count">${countForConn(c)}</span></button>`;
+        }).join('')}
       </div>`
     :'';
   const totalBuffered=accDetectedAccounts.reduce((acc,a)=>{
@@ -15825,11 +16618,12 @@ function renderAutoStep3(){
     const lastSeen=formatRelativeTime(a.last_seen_at);
     const accountDisplayName=a.external_account_name||a.external_account_id;
     const connectionName=getDetectedConnectionName(a);
+    const connectionDisplayName=getDetectedConnectionDisplayName(a);
     const ninjaTraderUserLabel=getDetectedNinjaTraderUserLabel(a);
     const legacyExternalAccountId=getDetectedLegacyExternalAccountId(a);
     const identityParts=[
       ninjaTraderUserLabel?`Usuario ${ninjaTraderUserLabel}`:'',
-      connectionName?`Conexión ${connectionName}`:'',
+      connectionDisplayName&&connectionDisplayName!=='NinjaTrader'?`Conexión ${connectionDisplayName}`:'',
       legacyExternalAccountId&&legacyExternalAccountId!==a.external_account_id?`Cuenta NT ${legacyExternalAccountId}`:''
     ].filter(Boolean);
     const identityText=identityParts.join(' · ');
@@ -15847,24 +16641,26 @@ function renderAutoStep3(){
     const propFirmBadge=detectedPropFirm?`<span class="acc-detected-prop-badge">${escHtml(detectedPropFirm.label)}</span>`:'';
     const recentBadge=a.last_seen_at&&isDateRecent(a.last_seen_at,30)?'<span class="acc-detected-recent-badge">Activa</span>':'';
     const linkedBadge=isLinkedRow?'<span class="acc-detected-badge is-linked">✓ Vinculada</span>':'';
+    const jsId=JSON.stringify(a.id);
     const originControl=isLinkedRow||originLocked
       ?`<span class="acc-detected-origin-tag">${escHtml(origin==='fondeada'?'Fondeada':'Real')}${originLocked&&!isLinkedRow?' (auto)':''}</span>`
       :`<div class="acc-detected-origin-switch" onclick="event.stopPropagation()">
-          <button type="button" class="acc-detected-origin-btn${origin==='real'?' is-active':''}" onclick="setDetectedOriginOverride('${escHtml(a.id)}','real')">Real</button>
-          <button type="button" class="acc-detected-origin-btn${origin==='fondeada'?' is-active':''}" onclick="setDetectedOriginOverride('${escHtml(a.id)}','fondeada')">Fondeada</button>
+          <button type="button" class="acc-detected-origin-btn${origin==='real'?' is-active':''}" onclick="setDetectedOriginOverride(${escHtml(jsId)},'real')">Real</button>
+          <button type="button" class="acc-detected-origin-btn${origin==='fondeada'?' is-active':''}" onclick="setDetectedOriginOverride(${escHtml(jsId)},'fondeada')">Fondeada</button>
         </div>`;
-    return `<div class="acc-detected-row${sel?' selected':''}${isLinkedRow?' is-linked':''}" onclick="selectDetectedAccount('${escHtml(a.id)}')">
-      <div class="acc-detected-row-check">${sel?'●':isLinkedRow?'✓':'○'}</div>
+    return `<div class="acc-detected-row${sel?' selected':''}${isLinkedRow?' is-linked':''}" onclick="selectDetectedAccount(${escHtml(jsId)})" role="button" tabindex="0">
+      <div class="acc-detected-row-check">${sel?'✓':isLinkedRow?'✓':''}</div>
       <div class="acc-detected-row-info">
         <div class="acc-detected-row-name-row">
           <span class="acc-detected-row-name">${escHtml(accountDisplayName)}</span>
-          ${propFirmBadge}${recentBadge}${linkedBadge}${bufferedBadge}
+          ${sel?'<span class="acc-detected-badge is-selected">Seleccionada</span>':''}${propFirmBadge}${recentBadge}${linkedBadge}${bufferedBadge}
         </div>
         <div class="acc-detected-row-meta-row">
-          <span class="acc-detected-row-meta">${escHtml(a.provider||'NinjaTrader')} · Balance <strong>${escHtml(balanceLabel)}</strong> · ${escHtml(lastSeen)}${identityText?` · ${escHtml(identityText)}`:''}</span>
+          <span class="acc-detected-row-meta">${escHtml(connectionDisplayName||a.provider||'NinjaTrader')} · Balance <strong>${escHtml(balanceLabel)}</strong> · ${escHtml(lastSeen)}${identityText?` · ${escHtml(identityText)}`:''}</span>
           ${originControl}
         </div>
       </div>
+      <button type="button" class="acc-detected-choose-btn${sel?' is-selected':''}" onclick="event.stopPropagation();selectDetectedAccount(${escHtml(jsId)})">${sel?'Elegida':'Elegir'}</button>
     </div>`;
   };
   let listHtml='';
@@ -15883,73 +16679,39 @@ function renderAutoStep3(){
       `</div>`;
   }else if(visible.length===0){
     const filterLabel=filter==='linked'?'vinculadas':filter==='available'?'disponibles':'';
-    const connSuffix=activeConn?` en la connection <strong>${escHtml(activeConn)}</strong>`:'';
-    listHtml=`<div class="acc-detected-empty"><p>No hay cuentas ${escHtml(filterLabel)}${connSuffix}.</p>${activeConn?`<button class="btn-link" onclick="setDetectedConnectionFilter('')">Mostrar todas las connections</button>`:''}</div>`;
+    const activeConnSample=activeConn?detectedList.find(a=>getDetectedConnectionName(a)===activeConn):null;
+    const activeConnLabel=activeConnSample?getDetectedConnectionDisplayName(activeConnSample):activeConn;
+    const connSuffix=activeConn?` en la conexión <strong>${escHtml(activeConnLabel)}</strong>`:'';
+    const searchSuffix=searchQuery?` que coincidan con <strong>${escHtml(accDetectedSearch)}</strong>`:'';
+    listHtml=`<div class="acc-detected-empty"><p>No hay cuentas ${escHtml(filterLabel)}${connSuffix}${searchSuffix}.</p>${activeConn?`<button class="btn-link" onclick="setDetectedConnectionFilter('')">Mostrar todas las conexiones</button>`:''}${searchQuery?`<button class="btn-link" onclick="clearDetectedSearch()">Limpiar búsqueda</button>`:''}</div>`;
   }else{
-    const groups=new Map();
-    visible.forEach(a=>{
-      const key=getDetectedConnectionName(a)||'__no_conn__';
-      if(!groups.has(key))groups.set(key,[]);
-      groups.get(key).push(a);
-    });
-    const orderedKeys=Array.from(groups.keys()).sort((a,b)=>{
-      if(a==='__no_conn__')return 1;
-      if(b==='__no_conn__')return -1;
-      return a.localeCompare(b);
-    });
-    const hasAnyConn=orderedKeys.some(k=>k!=='__no_conn__');
-    if(!hasAnyConn){
-      listHtml=visible.map(renderRow).join('');
-    }else{
-      listHtml=orderedKeys.map(key=>{
-        const rows=groups.get(key)||[];
-        const label=key==='__no_conn__'?'Sin connection':key;
-        const collapsed=accDetectedConnectionCollapsed instanceof Set&&accDetectedConnectionCollapsed.has(key);
-        const bodyHtml=collapsed?'':`<div class="acc-detected-group-body">${rows.map(renderRow).join('')}</div>`;
-        const jsKey=JSON.stringify(key);
-        return `<div class="acc-detected-group${collapsed?' is-collapsed':''}">
-          <button type="button" class="acc-detected-group-head" onclick="toggleDetectedConnectionGroup(${jsKey})" aria-expanded="${collapsed?'false':'true'}">
-            <span class="acc-detected-group-caret" aria-hidden="true">▾</span>
-            <span class="acc-detected-conn-badge">🔌 ${escHtml(label)}</span>
-            <span class="acc-detected-group-count">${rows.length} ${rows.length===1?'cuenta':'cuentas'}</span>
-          </button>
-          ${bodyHtml}
-        </div>`;
-      }).join('');
-    }
+    listHtml=visible.map(renderRow).join('');
   }
   const selectedDetected=accDetectedAccounts.find(a=>a&&a.id===accSelectedDetectedId)||null;
   const selectedOrigin=selectedDetected?getDetectedRowOrigin(selectedDetected):'real';
   const selectedBalance=selectedDetected?getDetectedBalanceFromPayload(selectedDetected.metadata):null;
-  const selectedTrailingMaxDrawdown=selectedDetected?getTrailingMaxDrawdownFromPayload(selectedDetected.metadata):null;
   const selectedBuffered=selectedDetected?getDetectedBufferedBackfillInfo(selectedDetected):{state:'none',count:0};
+  const selectedConnectionDisplayName=selectedDetected?getDetectedConnectionDisplayName(selectedDetected):'';
   const selectedIdentityParts=selectedDetected?[
     getDetectedNinjaTraderUserLabel(selectedDetected)?`Usuario ${getDetectedNinjaTraderUserLabel(selectedDetected)}`:'',
-    getDetectedConnectionName(selectedDetected)?`Conexión ${getDetectedConnectionName(selectedDetected)}`:'',
+    selectedConnectionDisplayName&&selectedConnectionDisplayName!=='NinjaTrader'?`Conexión ${selectedConnectionDisplayName}`:'',
     getDetectedLegacyExternalAccountId(selectedDetected)&&getDetectedLegacyExternalAccountId(selectedDetected)!==selectedDetected.external_account_id?`Cuenta NT ${getDetectedLegacyExternalAccountId(selectedDetected)}`:''
   ].filter(Boolean):[];
   const previewHtml=selectedDetected
-    ?`<div class="acc-detected-preview">
-        <div class="acc-detected-preview-title">Al vincular se aplicará</div>
-        <ul class="acc-detected-preview-list">
-          <li><span>Cuenta</span><strong>${escHtml(selectedDetected.external_account_name||selectedDetected.external_account_id)}</strong></li>
-          ${selectedIdentityParts.length?`<li><span>Identidad NT</span><strong>${escHtml(selectedIdentityParts.join(' · '))}</strong></li>`:''}
-          <li><span>Origen</span><strong>${escHtml(selectedOrigin==='fondeada'?'Fondeada':'Real')}</strong></li>
-          <li><span>Balance detectado</span><strong>${selectedBalance!==null?'$'+Number(selectedBalance).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</strong></li>
-          <li><span>Trailing max DD</span><strong>${selectedTrailingMaxDrawdown!==null?'$'+Number(selectedTrailingMaxDrawdown).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</strong></li>
-          <li><span>Trades en buffer</span><strong>${selectedBuffered.state==='pending'?selectedBuffered.count+' listos para importar':selectedBuffered.state==='imported'?'ya importados':'0'}</strong></li>
-        </ul>
+    ?`<div class="acc-detected-selected-bar">
+        <div class="acc-detected-selected-check">✓</div>
+        <div class="acc-detected-selected-copy">
+          <div class="acc-detected-selected-title">${escHtml(selectedDetected.external_account_name||selectedDetected.external_account_id)}</div>
+          <div class="acc-detected-selected-meta">${escHtml(selectedOrigin==='fondeada'?'Fondeada':'Real')} · Balance ${selectedBalance!==null?'$'+Number(selectedBalance).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}${selectedBuffered.state==='pending'?` · ${selectedBuffered.count} trades en buffer`:''}${selectedIdentityParts.length?` · ${escHtml(selectedIdentityParts.join(' · '))}`:''}</div>
+        </div>
       </div>`
     :'';
-  el.innerHTML=`<div class="acc-auto-step-header">
-    <div class="acc-auto-step-title">Cuentas detectadas</div>
-    <div class="acc-auto-step-sub">Selecciona la cuenta que quieres vincular a Zuppie</div>
-  </div>
-  ${summaryBar}
-  ${filterTabs}
+  el.innerHTML=`${filterTabs}
   ${connFilterRow}
+  ${searchControls}
+  ${previewHtml}
   <div class="acc-detected-list">${listHtml}</div>
-  ${previewHtml}`;
+  `;
   updateAccountModalFooterState();
 }
 function selectDetectedAccount(id){
@@ -17336,7 +18098,7 @@ window.showTab=function(name,btn){
     </div>
     <div class="modal-body">
       <div class="fg" style="grid-template-columns:1fr">
-        <div class="f">
+        <div class="f acc-creation-mode-field">
           <label class="fl">Modo de creación</label>
           <div class="acc-creation-mode-selector" id="accCreationModeSelector">
             <button class="acc-creation-mode-opt active-manual" data-mode="manual" type="button" onclick="selectAccountCreationMode('manual')">
@@ -17462,7 +18224,7 @@ window.showTab=function(name,btn){
 	            </span>
 	          </label>
 	        </div>
-	        <div class="f">
+	        <div class="f acc-connector-alias-field">
 	          <label class="fl">Alias del conector (opcional)</label>
           <input class="fi" id="accMConnectionDisplayName" placeholder="Ej: Apex Slupo, Apex Tradovate..."/>
         </div>
