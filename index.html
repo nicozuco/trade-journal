@@ -2753,6 +2753,7 @@ input[type="time"].fi{
       <div class="section-bar">
         <div><span class="section-label">Trades</span><span class="count-tag" id="acc-tradeCount"></span></div>
         <div class="filter-pop" id="accFilterPop">
+          <button class="btn btn-sm" id="accGroupAvgBtn" type="button" onclick="toggleAccGroupAveraging()" title="Agrupar trades del mismo símbolo y dirección con entradas cercanas en el tiempo">Solapamiento <span class="filter-badge" id="accGroupAvgState">OFF</span></button>
           <button class="btn btn-sm" type="button" onclick="accToggleFilterMenu(event)">Filtros <span class="filter-badge" id="accFilterCount" style="display:none">0</span></button>
           <div class="filter-panel" id="accFilterPanel" onclick="event.stopPropagation()">
             <div class="filter-head">
@@ -7076,6 +7077,8 @@ let accounts=[];
 let accountTrades={};
 let accountWithdrawals={};
 let activeAccountId=null;
+let accGroupAveraging=false;
+const TRADE_GROUP_OVERLAP_MIN=5;
 let accFilterType='all';
 let accFundingStageFilter='all';
 let accEditId=null;
@@ -14237,7 +14240,8 @@ function accUpdateKPIs(f){
   setSub('acc-kpi-balance-pct',formatBalanceChangeLabel(balanceChange),balanceChange.tone);
   set('acc-kpi-pnl',fmt(tp),tp>=0?'pos':'neg');
   set('acc-kpi-wr',wr.toFixed(1)+'%','');
-  set('acc-kpi-total',cl.length,'neu');
+  const totalCount=accGroupAveraging?groupOverlappingTrades(cl,TRADE_GROUP_OVERLAP_MIN).length:cl.length;
+  set('acc-kpi-total',totalCount,'neu');
   set('acc-kpi-wl',wi.length+' / '+lo.length,'');
   set('acc-kpi-avgw',aw!==null?fmt(aw):'—','pos');
   set('acc-kpi-avgl',al!==null?fmt(al):'—','neg');
@@ -14285,10 +14289,149 @@ function toggleTradeDetail(id,btn){
 function tradeDetailItem(label,value){
   return `<div class="trade-detail-item"><div class="trade-detail-label">${escapeHtml(label)}</div><div class="trade-detail-value">${value}</div></div>`;
 }
+function getTradeOpenedMs(trade){
+  if(!trade)return NaN;
+  const iso=trade.openedAt||trade.opened_at||'';
+  if(iso){
+    const t=Date.parse(iso);
+    if(!Number.isNaN(t))return t;
+  }
+  const built=buildTradeTimestamp(trade.openDate||trade.open_date||'',trade.openTime||trade.open_time||'','');
+  const t2=built?Date.parse(built):NaN;
+  return Number.isNaN(t2)?NaN:t2;
+}
+function getTradeClosedMs(trade){
+  if(!trade)return NaN;
+  const iso=trade.closedAt||trade.closed_at||'';
+  if(iso){
+    const t=Date.parse(iso);
+    if(!Number.isNaN(t))return t;
+  }
+  const built=trade.exitDate||trade.exit_date?buildTradeTimestamp(trade.exitDate||trade.exit_date||'',trade.exitTime||trade.exit_time||'',''):'';
+  const t2=built?Date.parse(built):NaN;
+  return Number.isNaN(t2)?NaN:t2;
+}
+function groupOverlappingTrades(trades,marginMin){
+  const marginMs=Math.max(0,Number(marginMin)||0)*60000;
+  const augmented=(trades||[]).map((trade,idx)=>({trade,idx,ms:getTradeOpenedMs(trade)}));
+  const chrono=augmented.slice().sort((a,b)=>{
+    const aMs=Number.isFinite(a.ms)?a.ms:Number.POSITIVE_INFINITY;
+    const bMs=Number.isFinite(b.ms)?b.ms:Number.POSITIVE_INFINITY;
+    if(aMs!==bMs)return aMs-bMs;
+    return a.idx-b.idx;
+  });
+  const groupByTradeIdx=new Map();
+  const openBuckets=new Map();
+  let groupCounter=0;
+  chrono.forEach(entry=>{
+    const t=entry.trade;
+    const symbol=`${t.symbol||''}`.trim();
+    const dir=`${t.dir||''}`.trim();
+    if(!symbol||!dir||!Number.isFinite(entry.ms)){
+      groupByTradeIdx.set(entry.idx,null);
+      return;
+    }
+    const key=`${symbol}__${dir}`;
+    const bucket=openBuckets.get(key);
+    if(bucket&&entry.ms-bucket.lastMs<=marginMs){
+      bucket.members.push(entry.idx);
+      bucket.lastMs=entry.ms;
+      groupByTradeIdx.set(entry.idx,bucket.id);
+    }else{
+      const id=`g${++groupCounter}`;
+      const newBucket={id,members:[entry.idx],lastMs:entry.ms};
+      openBuckets.set(key,newBucket);
+      groupByTradeIdx.set(entry.idx,id);
+    }
+  });
+  const groupMembers=new Map();
+  groupByTradeIdx.forEach((groupId,tradeIdx)=>{
+    if(!groupId)return;
+    if(!groupMembers.has(groupId))groupMembers.set(groupId,[]);
+    groupMembers.get(groupId).push(tradeIdx);
+  });
+  const result=[];
+  const consumedGroups=new Set();
+  (trades||[]).forEach((trade,idx)=>{
+    const groupId=groupByTradeIdx.get(idx);
+    if(!groupId){result.push({kind:'single',trade});return;}
+    const memberIdxs=groupMembers.get(groupId)||[];
+    if(memberIdxs.length<2){result.push({kind:'single',trade});return;}
+    if(consumedGroups.has(groupId))return;
+    consumedGroups.add(groupId);
+    const children=memberIdxs
+      .slice()
+      .sort((a,b)=>{
+        const ma=getTradeOpenedMs(trades[a]);
+        const mb=getTradeOpenedMs(trades[b]);
+        const va=Number.isFinite(ma)?ma:Number.POSITIVE_INFINITY;
+        const vb=Number.isFinite(mb)?mb:Number.POSITIVE_INFINITY;
+        if(va!==vb)return va-vb;
+        return a-b;
+      })
+      .map(i=>trades[i]);
+    result.push({kind:'group',id:groupId,children,representative:trade});
+  });
+  return result;
+}
+function computeTradeGroupTotals(children){
+  const totals={qty:0,pnl:0,commission:0,fee:0,grossPnl:0,wins:0,losses:0,open:0,hasFee:false,entryWeighted:0,entryWeight:0,exitWeighted:0,exitWeight:0,firstMs:Number.POSITIVE_INFINITY,lastCloseMs:Number.NEGATIVE_INFINITY,firstTrade:null,lastTrade:null};
+  (children||[]).forEach(t=>{
+    const qty=Number(t.qty)||0;
+    totals.qty+=qty;
+    if(t.pnl!==null&&t.pnl!==undefined&&Number.isFinite(Number(t.pnl)))totals.pnl+=Number(t.pnl);
+    if(t.commission!==null&&t.commission!==undefined){totals.commission+=Number(t.commission)||0;totals.hasFee=true;}
+    if(t.fee!==null&&t.fee!==undefined){totals.fee+=Number(t.fee)||0;totals.hasFee=true;}
+    if(t.grossPnl!==null&&t.grossPnl!==undefined&&Number.isFinite(Number(t.grossPnl)))totals.grossPnl+=Number(t.grossPnl);
+    if(t.result==='WIN')totals.wins++;
+    else if(t.result==='LOSS')totals.losses++;
+    else totals.open++;
+    const entry=Number(t.entry);
+    if(Number.isFinite(entry)&&qty>0){totals.entryWeighted+=entry*qty;totals.entryWeight+=qty;}
+    const exitVal=Number(t.exit);
+    if(Number.isFinite(exitVal)&&qty>0){totals.exitWeighted+=exitVal*qty;totals.exitWeight+=qty;}
+    const openMs=getTradeOpenedMs(t);
+    if(Number.isFinite(openMs)){
+      if(openMs<totals.firstMs){totals.firstMs=openMs;totals.firstTrade=t;}
+    }
+    const closeMs=getTradeClosedMs(t);
+    if(Number.isFinite(closeMs)&&closeMs>totals.lastCloseMs){totals.lastCloseMs=closeMs;totals.lastTrade=t;}
+  });
+  totals.avgEntry=totals.entryWeight?totals.entryWeighted/totals.entryWeight:null;
+  totals.avgExit=totals.exitWeight?totals.exitWeighted/totals.exitWeight:null;
+  totals.feeTotal=totals.commission+totals.fee;
+  totals.result=totals.open>0?'OPEN':(totals.pnl>0?'WIN':totals.pnl<0?'LOSS':'OPEN');
+  totals.status=totals.open>0?'OPEN':'CLOSED';
+  return totals;
+}
+function toggleAccGroupAveraging(){
+  accGroupAveraging=!accGroupAveraging;
+  const state=document.getElementById('accGroupAvgState');
+  if(state)state.textContent=accGroupAveraging?'ON':'OFF';
+  const btn=document.getElementById('accGroupAvgBtn');
+  if(btn)btn.classList.toggle('is-active',accGroupAveraging);
+  accApplyFilters();
+}
+function toggleTradeGroup(groupId,btn){
+  const rows=document.querySelectorAll(`tr[data-group-child="${groupId}"]`);
+  let anyVisible=false;
+  rows.forEach(r=>{if(!r.hasAttribute('hidden'))anyVisible=true;});
+  rows.forEach(r=>{
+    if(anyVisible){r.setAttribute('hidden','');}
+    else{r.removeAttribute('hidden');}
+  });
+  if(btn){
+    btn.setAttribute('aria-expanded',(!anyVisible).toString());
+    const caret=btn.querySelector('.trade-group-caret');
+    if(caret)caret.textContent=anyVisible?'▸':'▾';
+  }
+}
 function accRenderTable(f){
   const tradeCount=document.getElementById('acc-tradeCount');
   const body=document.getElementById('acc-tradeBody');
-  if(tradeCount)tradeCount.textContent=f.length+' trades';
+  const groupedItems=accGroupAveraging?groupOverlappingTrades(f,TRADE_GROUP_OVERLAP_MIN):null;
+  const displayCount=groupedItems?groupedItems.length:f.length;
+  if(tradeCount)tradeCount.textContent=displayCount+' trades';
   const pagination=document.getElementById('accTradePagination');
   if(pagination)pagination.innerHTML='';
   if(!body)return;
@@ -14309,7 +14452,7 @@ function accRenderTable(f){
     if(value===null||value===undefined||value==='')return fallback;
     return escapeHtml(String(value));
   };
-  body.innerHTML=f.map(t=>{
+  const renderSingleRow=(t,opts={})=>{
     const ps=t.pnl===null?'—':(t.pnl>=0?'+$':'-$')+Math.abs(t.pnl).toFixed(2);
     const feeTotal=(Number(t.commission)||0)+(Number(t.fee)||0);
     const hasFee=(t.commission!==null&&t.commission!==undefined)||(t.fee!==null&&t.fee!==undefined);
@@ -14337,9 +14480,13 @@ function accRenderTable(f){
       tradeDetailItem('Comisión',`<span class="mono">${fmtMoney(commissionVal)}</span>`),
       tradeDetailItem('Fees',`<span class="mono">${fmtMoney(feeVal)}</span>`)
     ].join('');
-    const separator=phaseBreaks.has(t.id)?renderPhaseSplitRow(phaseBreaks.get(t.id).label,9):'';
-    return`${separator}<tr class="trade-row-compact">
-      <td class="mono">${tradeNumber}</td>
+    const groupAttr=opts.groupId?` data-group-child="${opts.groupId}"`:'';
+    const groupClass=opts.groupId?' trade-group-child':'';
+    const hidden=opts.hidden?' hidden':'';
+    const indent=opts.groupId?'<span class="trade-group-indent" style="display:inline-block;width:14px;color:var(--text3)">└</span>':'';
+    const separator=opts.skipSeparator?'':(phaseBreaks.has(t.id)?renderPhaseSplitRow(phaseBreaks.get(t.id).label,10):'');
+    return`${separator}<tr class="trade-row-compact${groupClass}"${groupAttr}${hidden}>
+      <td class="mono">${indent}${tradeNumber}</td>
       <td>
         <div class="trade-main-cell">
           <div class="trade-main-top">
@@ -14364,7 +14511,72 @@ function accRenderTable(f){
         <button class="btn btn-sm btn-danger btn-icon-only" onclick="delTrade(${tradeIdArg})" aria-label="Eliminar trade">${getUiIconMarkup('trash','ui-icon ui-icon-sm')}</button>
       </div></td>
     </tr>
-    <tr class="trade-detail-row" id="${detailId}" hidden><td colspan="10"><div class="trade-detail-panel">${details}</div></td></tr>`;
+    <tr class="trade-detail-row${groupClass}" id="${detailId}"${groupAttr} hidden><td colspan="10"><div class="trade-detail-panel">${details}</div></td></tr>`;
+  };
+  const renderGroupParent=(group)=>{
+    const children=group.children||[];
+    const totals=computeTradeGroupTotals(children);
+    const first=totals.firstTrade||children[0];
+    const last=totals.lastTrade||children[children.length-1];
+    const dir=`${first&&first.dir||''}`.trim();
+    const dirClass=dir==='Long'?'long-t':'short-t';
+    const symbol=`${first&&first.symbol||''}`.trim();
+    const market=`${first&&first.market||''}`.trim();
+    const ps=totals.status==='OPEN'?'—':(totals.pnl>=0?'+$':'-$')+Math.abs(totals.pnl).toFixed(2);
+    const feeTotal=totals.feeTotal;
+    const feeCell=totals.hasFee&&feeTotal>0?`<span class="pnl-n">-$${feeTotal.toFixed(2)}</span>`:(totals.hasFee?'$0.00':'—');
+    const badge=totals.result==='WIN'?'<span class="badge b-win">WIN</span>':totals.result==='LOSS'?'<span class="badge b-loss">LOSS</span>':'<span class="badge b-open">OPEN</span>';
+    const dateRange=(()=>{
+      const a=formatDateLabel(first&&first.openDate||'');
+      const b=formatDateLabel(last&&(last.exitDate||last.openDate)||'');
+      if(!a&&!b)return'—';
+      if(a===b||!b)return a;
+      return `${a} → ${b}`;
+    })();
+    const timeRange=(()=>{
+      const a=shiftTradeTimeForDisplay(first&&first.openTime||'');
+      const b=shiftTradeTimeForDisplay(last&&(last.exitTime||last.openTime)||'');
+      if(!a&&!b)return'';
+      if(a===b||!b)return a;
+      return `${a} → ${b}`;
+    })();
+    const avgEntry=totals.avgEntry===null?'—':(totals.avgEntry>=1000?totals.avgEntry.toFixed(2):totals.avgEntry.toFixed(5));
+    const avgExit=totals.avgExit===null?'—':(totals.avgExit>=1000?totals.avgExit.toFixed(2):totals.avgExit.toFixed(5));
+    const separator=phaseBreaks.has(first&&first.id)?renderPhaseSplitRow(phaseBreaks.get(first.id).label,10):'';
+    const childrenHtml=children.map(child=>renderSingleRow(child,{groupId:group.id,hidden:true,skipSeparator:true})).join('');
+    return`${separator}<tr class="trade-row-compact trade-group-parent" data-group-id="${group.id}" style="background:rgba(96,165,250,.06)">
+      <td class="mono">
+        <button class="btn btn-sm" type="button" onclick="toggleTradeGroup('${group.id}',this)" aria-expanded="false" style="padding:2px 6px;min-width:auto">
+          <span class="trade-group-caret">▸</span> <span style="font-size:11px;opacity:.8">${children.length}</span>
+        </button>
+      </td>
+      <td>
+        <div class="trade-main-cell">
+          <div class="trade-main-top">
+            <span class="trade-symbol">${escapeHtml(symbol||'—')}</span>
+            <span class="trade-dir-pill ${dirClass}">${escapeHtml(dir||'—')}</span>
+            <span class="badge" style="background:rgba(96,165,250,.15);color:#60a5fa">Promedio · ${children.length}</span>
+          </div>
+          <div class="trade-meta-line"><span>${escapeHtml(market)}</span><span class="trade-mobile-date">${escapeHtml(dateRange)} ${escapeHtml(timeRange)}</span></div>
+        </div>
+      </td>
+      <td>${escapeHtml(dateRange)}${timeRange?`<div style="font-size:11px;opacity:.7">${escapeHtml(timeRange)}</div>`:''}</td>
+      <td class="mono">${totals.qty||'—'}<div style="font-size:11px;opacity:.7">@ ${escapeHtml(avgEntry)} → ${escapeHtml(avgExit)}</div></td>
+      <td><span style="opacity:.6;font-size:12px">${children.length} trades</span></td>
+      <td><span style="opacity:.6;font-size:12px">Grupo de solapamiento</span></td>
+      <td class="${totals.status==='OPEN'?'':(totals.pnl>=0?'pnl-p':'pnl-n')}">${ps}</td>
+      <td class="mono">${feeCell}</td>
+      <td>${badge}</td>
+      <td><div class="action-row trade-actions">
+        <button class="btn btn-sm" type="button" onclick="toggleTradeGroup('${group.id}',this)">Ver trades</button>
+      </div></td>
+    </tr>
+    ${childrenHtml}`;
+  };
+  const items=groupedItems||f.map(t=>({kind:'single',trade:t}));
+  body.innerHTML=items.map(item=>{
+    if(item.kind==='group')return renderGroupParent(item);
+    return renderSingleRow(item.trade);
   }).join('');
 }
 function renderAccMonthly(){
