@@ -2695,17 +2695,34 @@ input[type="time"].fi{
   .settings-card-actions{gap:4px;margin-top:3px}
   .settings-card-actions .btn-sm{padding:4px 8px;font-size:10px;min-height:26px}
 
-  /* ENLACES */
-  .settings-account-links-body{padding:10px 12px!important;gap:8px}
-  .settings-account-link-card{padding:10px!important;gap:8px;border-radius:12px}
-  .settings-account-link-name{font-size:12.5px}
-  .settings-account-link-meta{font-size:10.5px;line-height:1.4}
-  .settings-account-link-grid{
-    grid-template-columns:1fr!important;gap:6px;
+  /* ENLACES — compacto y limpio en mobile */
+  .settings-account-links-body{padding:9px 11px!important;gap:7px}
+  .settings-account-link-card{padding:9px!important;gap:6px;border-radius:11px}
+  .settings-account-link-head{margin-bottom:0;gap:6px;flex-wrap:nowrap;align-items:center}
+  .settings-account-link-name{font-size:12px;line-height:1.2}
+  .settings-account-link-meta{
+    font-size:10px;line-height:1.35;
+    display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;
   }
-  .settings-account-link-slot{padding:8px 10px;border-radius:10px;gap:6px}
-  .settings-account-link-slot-title{font-size:9px;letter-spacing:.05em}
-  .settings-account-link-preview a{padding:5px 9px;font-size:10.5px}
+  .settings-account-link-grid{
+    grid-template-columns:1fr!important;gap:5px;
+  }
+  /* Slot sin "ENLACE N" y sin "Nombre/URL" labels — los placeholders ya guían */
+  .settings-account-link-slot{padding:6px 8px;border-radius:9px;gap:4px}
+  .settings-account-link-slot-head{display:none}
+  .settings-account-link-slot .f{gap:0}
+  .settings-account-link-slot .fl{display:none}
+  .settings-account-link-slot .fi{
+    min-height:32px;padding:5px 10px;font-size:13px;border-radius:7px;
+  }
+  .settings-account-link-preview{margin-top:0;min-height:0}
+  .settings-account-link-preview-empty{display:none}
+  .settings-account-link-preview a{padding:4px 8px;font-size:10px}
+  /* Botón "Guardar enlaces" → pequeño y arriba a la derecha */
+  .settings-account-link-card .btn-primary{
+    min-height:28px!important;padding:4px 10px!important;font-size:10.5px!important;
+    border-radius:8px;flex:0 0 auto;
+  }
 
   /* INT stats / addon keys */
   .int-stats-row{gap:5px!important;flex-wrap:wrap}
@@ -2726,10 +2743,28 @@ input[type="time"].fi{
 
   /* Tablas de Settings — scroll horizontal preservando filas */
   .int-keys-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:12px}
-  .int-keys-table{min-width:680px;font-size:11px}
+  .int-keys-table{min-width:auto;font-size:11px}
   .int-keys-table thead th{padding:7px 10px;font-size:9px;white-space:nowrap}
-  .int-keys-table tbody td{padding:7px 10px;white-space:nowrap}
-  .int-keys-table tbody td.det-acc-meta-cell{white-space:normal}
+  .int-keys-table tbody td{padding:7px 10px;white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis}
+  /* Metadata: contenido limitado para que no haga la fila gigante */
+  .int-keys-table tbody td.det-acc-meta-cell{
+    white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis;
+  }
+  .int-keys-table tbody td.det-acc-meta-cell .det-acc-chips{
+    display:inline-flex;flex-wrap:nowrap;gap:4px;overflow:hidden;
+  }
+  .int-keys-table tbody td.det-acc-meta-cell .det-acc-chip{flex:0 0 auto}
+  /* Detected accounts: ocultar columnas menos críticas (origin, provider, linked_account_id, last_seen_at, metadata) */
+  .int-keys-table-detected thead th:nth-child(4),
+  .int-keys-table-detected tbody td:nth-child(4),
+  .int-keys-table-detected thead th:nth-child(6),
+  .int-keys-table-detected tbody td:nth-child(6),
+  .int-keys-table-detected thead th:nth-child(8),
+  .int-keys-table-detected tbody td:nth-child(8),
+  .int-keys-table-detected thead th:nth-child(9),
+  .int-keys-table-detected tbody td:nth-child(9),
+  .int-keys-table-detected thead th:nth-child(10),
+  .int-keys-table-detected tbody td:nth-child(10){display:none}
   .int-keys-table .addon-key-value{flex-wrap:nowrap;min-width:0;gap:4px}
   .int-keys-table .addon-key-actions{flex-wrap:nowrap;gap:4px}
 
@@ -5605,8 +5640,8 @@ function renderSettingsDetectedAccountsPanel(){
   };
   const connOptions=getDetectedConnectionOptions(list);
   const activeConn=accDetectedConnectionFilter||'';
-  const filteredList=activeConn?list.filter(a=>getDetectedConnectionName(a)===activeConn):list;
-  const countForConn=name=>list.filter(a=>getDetectedConnectionName(a)===name).length;
+  const filteredList=activeConn?list.filter(a=>getDetectedConnectionDisplayName(a)===activeConn):list;
+  const countForConn=name=>list.filter(a=>getDetectedConnectionDisplayName(a)===name).length;
   const connFilterRow=connOptions.length>0
     ?`<div class="acc-detected-filter acc-detected-conn-filter" style="padding:0 20px 10px 20px">
         <span class="acc-detected-conn-label">Connection</span>
@@ -5660,7 +5695,7 @@ function renderSettingsDetectedAccountsPanel(){
       ${connFilterRow}
       <div class="addon-key-body">
         <div class="int-keys-table-wrap">
-          <table class="int-keys-table">
+          <table class="int-keys-table int-keys-table-detected">
             <thead>
               <tr>
                 <th>external_account_id</th>
@@ -16687,7 +16722,7 @@ function getDetectedLegacyExternalAccountId(a){
 function getDetectedConnectionOptions(list){
   const set=new Set();
   (Array.isArray(list)?list:[]).forEach(a=>{
-    const c=getDetectedConnectionName(a);
+    const c=getDetectedConnectionDisplayName(a);
     if(c)set.add(c);
   });
   return Array.from(set).sort((a,b)=>a.localeCompare(b));
@@ -16949,7 +16984,12 @@ function isDetectedAccountLinkedForUi(account){
 function renderAutoStep3(){
   const el=document.getElementById('accAutoStep3');
   if(!el)return;
-  const detectedList=accDetectedAccounts;
+  const hasUsableBalance=a=>{
+    const balance=getDetectedBalanceFromPayload(a&&a.metadata);
+    if(balance===null||balance===undefined||balance==='')return false;
+    return Math.abs(Number(balance)||0)>0.0001;
+  };
+  const detectedList=(accDetectedAccounts||[]).filter(hasUsableBalance);
   const linked=detectedList.filter(isDetectedAccountLinkedForUi);
   const unlinked=detectedList.filter(a=>!isDetectedAccountLinkedForUi(a));
   const filter=accDetectedFilter||'available';
