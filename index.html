@@ -22,7 +22,7 @@
 <script>
 window.SUPABASE_URL='https://wyfmmubrtkcgunwbagdq.supabase.co';
 window.SUPABASE_ANON_KEY='sb_publishable_c-hn5yimnUx9ZGeSGI9-WA_RVjqR2-q';
-window.FRONTEND_BUILD_ID='2026-05-14-ninjatrader-trade-alias-rehydrate-v1';
+window.FRONTEND_BUILD_ID='2026-05-14-ninjatrader-trade-performance-fix-v1';
 </script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -11445,6 +11445,16 @@ function normalizeTradeTimeForKey(value){
   if(!normalized)return'';
   return normalized.replace(/(\.\d*?)0+$/,'$1').replace(/\.$/,'').replace(/:00$/,'');
 }
+function normalizeTradeMinuteForKey(value){
+  const normalized=normalizeTradeTimeForTimestamp(value);
+  if(!normalized)return'';
+  return normalized.slice(0,5);
+}
+function normalizeTradeSecondForKey(value){
+  const normalized=normalizeTradeTimeForTimestamp(value);
+  if(!normalized)return'';
+  return normalized.slice(0,8);
+}
 function pickMostPreciseTradeTime(primary,secondary){
   const first=`${primary||''}`.trim();
   const second=`${secondary||''}`.trim();
@@ -11751,6 +11761,13 @@ function getTradeExactAmountTimeDedupeKey(trade){
 function scoreTradeForDedupe(trade){
   if(!trade)return -1;
   let score=0;
+  const importSource=getTradeImportSource(trade);
+  if(importSource==='trade_performance_api'||importSource==='trade_performance')score+=30;
+  else if(importSource==='trace')score+=20;
+  else if(importSource==='execution_replay')score+=10;
+  else if(importSource==='realtime')score+=5;
+  if(trade.pnlIsAuthoritative===true||trade.pnl_is_authoritative===true)score+=8;
+  if(trade.commissionIsAuthoritative===true||trade.commission_is_authoritative===true)score+=4;
   if(trade.externalTradeId||trade.external_trade_id)score+=8;
   if(trade.externalFillPairId||trade.external_fill_pair_id)score+=4;
   if(trade.brokerSource||trade.broker_source)score+=2;
@@ -11775,6 +11792,41 @@ function getTradeContentFingerprint(trade){
   if(!symbol||!openDate||entry===''||qty===''||exit===''||pnl==='')return'';
   return`fp:${symbol}|${openDate}|${openTime}|${exitDate}|${exitTime}|${entry}|${exit}|${qty}|${dir}|${pnl}`;
 }
+function getTradeImportSource(trade){
+  if(!trade)return'';
+  return`${trade.importSource||trade.import_source||trade.rawBrokerPayload&&trade.rawBrokerPayload.import_source||''}`.trim().toLowerCase();
+}
+function getTradeStrongBrokerRowKey(trade){
+  if(!trade)return'';
+  return`${trade.externalTradeKey||trade.external_trade_key||trade.externalTradeId||trade.external_trade_id||trade.externalFillPairId||trade.external_fill_pair_id||''}`.trim();
+}
+function shouldPreserveDistinctBrokerImportRows(a,b){
+  if(!isBrokerImportedTrade(a)||!isBrokerImportedTrade(b))return false;
+  const sourceA=getTradeImportSource(a);
+  const sourceB=getTradeImportSource(b);
+  if(!sourceA||!sourceB||sourceA!==sourceB)return false;
+  const keyA=getTradeStrongBrokerRowKey(a);
+  const keyB=getTradeStrongBrokerRowKey(b);
+  return Boolean(keyA&&keyB&&keyA!==keyB);
+}
+function shouldCollapseHeuristicTradeDuplicate(a,b){
+  return !shouldPreserveDistinctBrokerImportRows(a,b);
+}
+function getBrokerExecutionTradeFingerprint(trade){
+  if(!trade||!isBrokerImportedTrade(trade))return'';
+  const symbol=`${trade.symbol||''}`.trim().toUpperCase();
+  const openDate=`${trade.openDate||trade.open_date||''}`.trim();
+  const openSecond=normalizeTradeSecondForKey(trade.openTime||trade.open_time||'');
+  const exitDate=`${trade.exitDate||trade.exit_date||''}`.trim();
+  const exitSecond=normalizeTradeSecondForKey(trade.exitTime||trade.exit_time||'');
+  const entry=trade.entry===null||trade.entry===undefined||trade.entry===''?'':Number(trade.entry);
+  const exit=trade.exit===null||trade.exit===undefined||trade.exit===''?'':Number(trade.exit);
+  const qty=trade.qty===null||trade.qty===undefined||trade.qty===''?'':Number(trade.qty);
+  const status=`${trade.status||trade.localStatus||''}`.trim().toUpperCase();
+  if(!symbol||!openDate||!openSecond||entry===''||qty===''||exit==='')return'';
+  const pricePair=[entry,exit].sort((a,b)=>a-b).map(v=>Number(v.toFixed(8))).join('|');
+  return`broker-execution:${symbol}|${openDate}|${openSecond}|${exitDate}|${exitSecond}|${pricePair}|${qty}|${status}`;
+}
 function dedupeAccountTradeRows(rows){
   const arr=Array.isArray(rows)?rows:[];
   const removed=[];
@@ -11787,23 +11839,32 @@ function dedupeAccountTradeRows(rows){
     const idB=Number(b.id)||Number.MAX_SAFE_INTEGER;
     return idA<=idB?{winner:a,loser:b}:{winner:b,loser:a};
   };
-  const runPass=(items,keyFn)=>{
-    const bestByKey=new Map();
+  const runPass=(items,keyFn,shouldCollapse=()=>true)=>{
+    const bucketsByKey=new Map();
     const noKey=[];
     items.forEach(trade=>{
       const key=keyFn(trade);
       if(!key){noKey.push(trade);return;}
-      const existing=bestByKey.get(key);
-      if(!existing){bestByKey.set(key,trade);return;}
+      const bucket=bucketsByKey.get(key)||[];
+      const existingIndex=bucket.findIndex(existing=>shouldCollapse(trade,existing));
+      if(existingIndex<0){
+        bucket.push(trade);
+        bucketsByKey.set(key,bucket);
+        return;
+      }
+      const existing=bucket[existingIndex];
       const {winner,loser}=pickWinner(trade,existing);
-      bestByKey.set(key,winner);
+      bucket[existingIndex]=winner;
+      bucketsByKey.set(key,bucket);
       removed.push(loser);
     });
-    return noKey.concat(Array.from(bestByKey.values()));
+    return noKey.concat(Array.from(bucketsByKey.values()).flat());
   };
   let working=arr.slice();
-  working=runPass(working,getTradeExactAmountTimeDedupeKey);
-  working=runPass(working,getTradeContentFingerprint);
+  working=runPass(working,getTradeDedupeKey);
+  working=runPass(working,getTradeExactAmountTimeDedupeKey,shouldCollapseHeuristicTradeDuplicate);
+  working=runPass(working,getTradeContentFingerprint,shouldCollapseHeuristicTradeDuplicate);
+  working=runPass(working,getBrokerExecutionTradeFingerprint,shouldCollapseHeuristicTradeDuplicate);
   return{kept:working,removed};
 }
 function getTradeHistoricalTimestamp(trade){
@@ -12480,22 +12541,31 @@ function chunkArray(values,size=400){
 async function createTradesBulk(accountId,trades){
   const existing=accountTrades[accountId]||[];
   const existingKeys=new Set(existing.map(getTradeDedupeKey).filter(Boolean));
-  const existingFps=new Set(existing.map(getTradeContentFingerprint).filter(Boolean));
   const seenKeys=new Set();
-  const seenFps=new Set();
+  const seenTrades=[];
   const filtered=[];
   let skipped=0;
+  const hasHeuristicDuplicate=(trade,candidates)=>{
+    const fp=getTradeContentFingerprint(trade);
+    const brokerFp=getBrokerExecutionTradeFingerprint(trade);
+    return candidates.some(candidate=>{
+      if(shouldPreserveDistinctBrokerImportRows(trade,candidate))return false;
+      return Boolean(
+        (fp&&fp===getTradeContentFingerprint(candidate))||
+        (brokerFp&&brokerFp===getBrokerExecutionTradeFingerprint(candidate))
+      );
+    });
+  };
   (trades||[]).forEach(trade=>{
     const key=getTradeDedupeKey(trade);
-    const fp=getTradeContentFingerprint(trade);
     const dupByKey=key&&(existingKeys.has(key)||seenKeys.has(key));
-    const dupByFp=fp&&(existingFps.has(fp)||seenFps.has(fp));
-    if(dupByKey||dupByFp){
+    const dupByHeuristic=hasHeuristicDuplicate(trade,existing)||hasHeuristicDuplicate(trade,seenTrades);
+    if(dupByKey||dupByHeuristic){
       skipped++;
       return;
     }
     if(key)seenKeys.add(key);
-    if(fp)seenFps.add(fp);
+    seenTrades.push(trade);
     filtered.push(trade);
   });
   if(skipped>0){
