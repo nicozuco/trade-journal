@@ -22,7 +22,7 @@
 <script>
 window.SUPABASE_URL='https://wyfmmubrtkcgunwbagdq.supabase.co';
 window.SUPABASE_ANON_KEY='sb_publishable_c-hn5yimnUx9ZGeSGI9-WA_RVjqR2-q';
-window.FRONTEND_BUILD_ID='2026-05-08-broker-balance-pass-v1';
+window.FRONTEND_BUILD_ID='2026-05-14-ninjatrader-trade-alias-rehydrate-v1';
 </script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -9890,27 +9890,75 @@ function clearLocalFallbackAccount(accountId,{markDeleted=false}={}){
   if(markDeleted)deletedAccountIds.add(`${accountId}`);
   writeLocalFallbackState({...localState,accounts:nextAccounts,deletedAccountIds:[...deletedAccountIds]});
 }
+function isRemoteSyncedAccountProtectedFromLocalTombstone(acc){
+  if(!acc)return false;
+  const syncSource=`${acc.sync_source||acc.syncSource||''}`.trim().toLowerCase();
+  return Boolean(
+    syncSource==='ninjatrader'||
+    `${acc.linked_external_account_id||acc.linkedExternalAccountId||''}`.trim()||
+    `${acc.linked_external_account_name||acc.linkedExternalAccountName||''}`.trim()
+  );
+}
+function normalizeLogicalExternalAliasKeyValue(value){
+  const raw=`${value||''}`.trim();
+  if(!raw)return '';
+  const accountMatch=raw.match(/(?:^|[|;,\s])account\s*=\s*([^|;,\s]+)/i);
+  const logical=accountMatch&&accountMatch[1]?accountMatch[1]:raw;
+  return logical.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Z0-9]+/g,'');
+}
+function getAccountLogicalExternalAliasKey(acc){
+  if(!acc)return '';
+  const values=[
+    acc.linked_external_account_id,
+    acc.linkedExternalAccountId,
+    acc.legacy_external_account_id,
+    acc.legacyExternalAccountId,
+    acc.linked_external_account_name,
+    acc.linkedExternalAccountName,
+    acc.name
+  ];
+  for(const value of values){
+    const key=normalizeLogicalExternalAliasKeyValue(value);
+    if(key)return key;
+  }
+  return '';
+}
 function mergeLocalFallbackState(remoteState={}){
   const localState=readLocalFallbackState();
   const deletedIds=new Set((Array.isArray(localState.deletedAccountIds)?localState.deletedAccountIds:[]).map(id=>`${id}`.trim()).filter(Boolean));
   if(!localState.accounts.length&&!Object.keys(localState.accountTrades||{}).length&&!deletedIds.size)return remoteState;
-  const remoteAccounts=(Array.isArray(remoteState.accounts)?cloneData(remoteState.accounts):[])
-    .filter(acc=>acc&&acc.id&&!deletedIds.has(`${acc.id}`));
+  const rawRemoteAccounts=Array.isArray(remoteState.accounts)?cloneData(remoteState.accounts):[];
+  const protectedRemoteIds=new Set(
+    rawRemoteAccounts
+      .filter(isRemoteSyncedAccountProtectedFromLocalTombstone)
+      .map(acc=>`${acc&&acc.id||''}`.trim())
+      .filter(Boolean)
+  );
+  const effectiveDeletedIds=new Set([...deletedIds].filter(id=>!protectedRemoteIds.has(id)));
+  const remoteAccounts=rawRemoteAccounts
+    .filter(acc=>acc&&acc.id&&!effectiveDeletedIds.has(`${acc.id}`));
   const remoteTrades=remoteState.accountTrades&&typeof remoteState.accountTrades==='object'?cloneData(remoteState.accountTrades):{};
-  deletedIds.forEach(id=>{delete remoteTrades[id];});
+  effectiveDeletedIds.forEach(id=>{delete remoteTrades[id];});
   const remoteIds=new Set(remoteAccounts.map(acc=>`${acc&&acc.id||''}`).filter(Boolean));
+  const protectedRemoteAliasKeys=new Set(
+    remoteAccounts
+      .filter(isRemoteSyncedAccountProtectedFromLocalTombstone)
+      .map(getAccountLogicalExternalAliasKey)
+      .filter(Boolean)
+  );
   const unsyncedLocalAccounts=[];
   localState.accounts.forEach(acc=>{
-    if(!acc||!acc.id||remoteIds.has(`${acc.id}`)||deletedIds.has(`${acc.id}`))return;
+    if(!acc||!acc.id||remoteIds.has(`${acc.id}`)||effectiveDeletedIds.has(`${acc.id}`))return;
+    if(protectedRemoteAliasKeys.has(getAccountLogicalExternalAliasKey(acc)))return;
     unsyncedLocalAccounts.push(acc);
     remoteAccounts.push(acc);
   });
-  if(unsyncedLocalAccounts.length!==localState.accounts.length){
+  if(unsyncedLocalAccounts.length!==localState.accounts.length||effectiveDeletedIds.size!==deletedIds.size){
     const nextLocalTrades={};
     unsyncedLocalAccounts.forEach(acc=>{
       if(localState.accountTrades&&localState.accountTrades[acc.id])nextLocalTrades[acc.id]=localState.accountTrades[acc.id];
     });
-    writeLocalFallbackState({...localState,accounts:unsyncedLocalAccounts,accountTrades:nextLocalTrades,deletedAccountIds:[...deletedIds]});
+    writeLocalFallbackState({...localState,accounts:unsyncedLocalAccounts,accountTrades:nextLocalTrades,deletedAccountIds:[...effectiveDeletedIds]});
   }
   const unsyncedLocalIds=new Set(unsyncedLocalAccounts.map(acc=>`${acc.id}`));
   Object.entries(localState.accountTrades||{}).forEach(([id,rows])=>{
@@ -9940,6 +9988,7 @@ function getOrCreateSupabaseClient(){
         persistSession:true,
         autoRefreshToken:true,
         detectSessionInUrl:true,
+        storage:window.localStorage,
         storageKey:'zuppis-trade-journal-auth'
       }
     });
@@ -10526,6 +10575,75 @@ function findDetectedAccountMatch(accountLike,detectedByLinkedAccountId,detected
     }
   }
   return null;
+}
+function buildNinjaTraderTradeAliasResolver(accountList=[],detectedRows=[]){
+  const exactAccountByAlias=new Map();
+  const logicalAccountByAlias=new Map();
+  const logicalConflicts=new Set();
+  const aliasValues=[];
+  const aliasesByAccountId=new Map();
+  const addAlias=(value,accountId)=>{
+    const id=`${accountId||''}`.trim();
+    const raw=`${value||''}`.trim();
+    if(!id||!raw)return;
+    if(!aliasesByAccountId.has(id))aliasesByAccountId.set(id,[]);
+    aliasesByAccountId.get(id).push(raw);
+    const exactKey=normalizeExternalAccountLookupKey(raw);
+    if(exactKey){
+      if(!exactAccountByAlias.has(exactKey))exactAccountByAlias.set(exactKey,id);
+      aliasValues.push(raw);
+    }
+    const logicalKey=normalizeLogicalExternalAliasKeyValue(raw);
+    if(!logicalKey)return;
+    const existing=logicalAccountByAlias.get(logicalKey);
+    if(existing&&existing!==id){
+      logicalConflicts.add(logicalKey);
+      logicalAccountByAlias.delete(logicalKey);
+      return;
+    }
+    if(!logicalConflicts.has(logicalKey))logicalAccountByAlias.set(logicalKey,id);
+  };
+  accountList.forEach(acc=>{
+    const id=acc&&acc.id;
+    addAlias(acc&&acc.linked_external_account_id,id);
+    addAlias(acc&&acc.linkedExternalAccountId,id);
+    addAlias(acc&&acc.legacy_external_account_id,id);
+    addAlias(acc&&acc.legacyExternalAccountId,id);
+    addAlias(acc&&acc.linked_external_account_name,id);
+    addAlias(acc&&acc.linkedExternalAccountName,id);
+    if(inferAccountSyncSource(acc)==='ninjatrader')addAlias(acc&&acc.name,id);
+  });
+  detectedRows.forEach(row=>{
+    const id=row&&row.linkedAccountId;
+    addAlias(row&&row.externalAccountId,id);
+    addAlias(row&&row.externalAccountName,id);
+    addAlias(row&&row.legacyExternalAccountId,id);
+  });
+  return{
+    aliasValues:uniqList(aliasValues),
+    resolve(row){
+      const candidates=[
+        row&&row.broker_account_id,
+        row&&row.source_account,
+        row&&row.brokerAccountId,
+        row&&row.sourceAccount
+      ];
+      for(const candidate of candidates){
+        const exactKey=normalizeExternalAccountLookupKey(candidate);
+        if(exactKey&&exactAccountByAlias.has(exactKey))return exactAccountByAlias.get(exactKey);
+      }
+      for(const candidate of candidates){
+        const logicalKey=normalizeLogicalExternalAliasKeyValue(candidate);
+        if(logicalKey&&logicalAccountByAlias.has(logicalKey))return logicalAccountByAlias.get(logicalKey);
+      }
+      return null;
+    },
+    aliasValuesForAccountIds(ids=[]){
+      const wanted=new Set((ids||[]).map(id=>`${id||''}`.trim()).filter(Boolean));
+      if(!wanted.size)return[];
+      return uniqList([...wanted].flatMap(id=>aliasesByAccountId.get(id)||[]));
+    }
+  };
 }
 function normalizeDetectedExternalAccountRow(row){
   if(!row||typeof row!=='object')return null;
@@ -11934,12 +12052,61 @@ function createSupabaseStorage(){
       });
       const tradesMap={};
       accountIds.forEach(id=>{tradesMap[id]=[];});
+      const tradeAliasResolver=buildNinjaTraderTradeAliasResolver(accountList,detectedRows);
+      const seenRemoteTradeIds=new Set();
+      const addTradeRowToMap=(row,reason='account_id')=>{
+        if(!row)return false;
+        const rowId=row.id!==null&&row.id!==undefined?`${row.id}`:'';
+        if(rowId&&seenRemoteTradeIds.has(rowId))return false;
+        const aliasAccountId=tradeAliasResolver.resolve(row);
+        const targetAccountId=aliasAccountId||row.account_id;
+        const acc=accountMap[targetAccountId];
+        if(!acc)return false;
+        if(!tradesMap[targetAccountId])tradesMap[targetAccountId]=[];
+        tradesMap[targetAccountId].push(normalizeTradeForAccount(mapTradeRow({...row,account_id:targetAccountId}),acc));
+        if(rowId)seenRemoteTradeIds.add(rowId);
+        if(aliasAccountId&&aliasAccountId!==row.account_id){
+          try{
+            console.info('[trade-journal] rehydrated NinjaTrader trade by broker alias',{
+              reason,
+              tradeId:row.id,
+              previousAccountId:row.account_id,
+              targetAccountId,
+              brokerAccountId:row.broker_account_id||row.source_account||''
+            });
+          }catch(_){}
+        }
+        return true;
+      };
       tradeRows.forEach(row=>{
-        const acc=accountMap[row.account_id];
-        if(!acc)return;
-        if(!tradesMap[row.account_id])tradesMap[row.account_id]=[];
-        tradesMap[row.account_id].push(normalizeTradeForAccount(mapTradeRow(row),acc));
+        addTradeRowToMap(row,'account_id');
       });
+      const aliasProbeAccountIds=accountList
+        .filter(acc=>inferAccountSyncSource(acc)==='ninjatrader'&&!(tradesMap[acc.id]||[]).length)
+        .map(acc=>acc.id);
+      const aliasProbeValues=tradeAliasResolver.aliasValuesForAccountIds(aliasProbeAccountIds);
+      if(aliasProbeValues.length){
+        const aliasQueries=[
+          selectTradesForApp(columns=>client
+            .from('trades')
+            .select(columns)
+            .eq('user_id',user.id)
+            .in('broker_account_id',aliasProbeValues)
+            .order('id',{ascending:true})),
+          selectTradesForApp(columns=>client
+            .from('trades')
+            .select(columns)
+            .eq('user_id',user.id)
+            .in('source_account',aliasProbeValues)
+            .order('id',{ascending:true}))
+        ];
+        const aliasResults=await Promise.all(aliasQueries);
+        const aliasError=aliasResults.find(result=>result&&result.error);
+        if(aliasError&&aliasError.error)throw aliasError.error;
+        aliasResults.forEach(result=>{
+          (result&&result.data||[]).forEach(row=>addTradeRowToMap(row,'broker_alias'));
+        });
+      }
       accountList.forEach(acc=>{
         acc.strategies=uniqList(strategyMap[acc.id]||[]);
       });
@@ -16719,6 +16886,81 @@ function getDetectedLegacyExternalAccountId(a){
   }
   return '';
 }
+function normalizeDetectedAliasIdentityPart(value){
+  return `${value||''}`.trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Z0-9]+/g,'');
+}
+function extractDetectedAccountPartFromExternalId(value){
+  const raw=`${value||''}`.trim();
+  const match=raw.match(/(?:^|[|;,\s])account\s*=\s*([^|;,\s]+)/i);
+  return match&&match[1]?`${match[1]}`.trim():'';
+}
+function getDetectedLogicalAccountId(a){
+  return getDetectedLegacyExternalAccountId(a)||
+    extractDetectedAccountPartFromExternalId(a&&a.external_account_id)||
+    `${a&&a.external_account_name||''}`.trim()||
+    `${a&&a.external_account_id||''}`.trim();
+}
+function getDetectedAliasKey(a){
+  const provider=`${a&&a.provider||'ninjatrader'}`.trim().toLowerCase();
+  const userLabel=normalizeDetectedAliasIdentityPart(getDetectedNinjaTraderUserLabel(a));
+  const logicalAccount=normalizeDetectedAliasIdentityPart(getDetectedLogicalAccountId(a));
+  return[provider,userLabel,logicalAccount].join('|');
+}
+function isConnectionScopedDetectedId(value){
+  return /^nt:/i.test(`${value||''}`.trim());
+}
+function detectedTimestamp(value){
+  const parsed=new Date(`${value||''}`).getTime();
+  return Number.isFinite(parsed)?parsed:0;
+}
+function chooseDetectedAliasWinner(rows){
+  return rows.slice().sort((a,b)=>{
+    const aLinked=isDetectedAccountLinkedForUi(a)?1:0;
+    const bLinked=isDetectedAccountLinkedForUi(b)?1:0;
+    if(bLinked!==aLinked)return bLinked-aLinked;
+    const aScoped=isConnectionScopedDetectedId(a&&a.external_account_id)?1:0;
+    const bScoped=isConnectionScopedDetectedId(b&&b.external_account_id)?1:0;
+    if(bScoped!==aScoped)return bScoped-aScoped;
+    return detectedTimestamp(b&&b.last_seen_at)-detectedTimestamp(a&&a.last_seen_at);
+  })[0];
+}
+function coalesceDetectedAccountRowsForUi(rows){
+  const groups=new Map();
+  (Array.isArray(rows)?rows:[]).forEach(row=>{
+    const key=getDetectedAliasKey(row);
+    if(!key||key.endsWith('|'))return;
+    const group=groups.get(key)||[];
+    group.push(row);
+    groups.set(key,group);
+  });
+  return Array.from(groups.values()).map(group=>{
+    const winner=chooseDetectedAliasWinner(group);
+    const linked=group.find(isDetectedAccountLinkedForUi);
+    const metadata=group.reduce((acc,row)=>{
+      if(row&&row.metadata&&typeof row.metadata==='object')Object.assign(acc,row.metadata);
+      return acc;
+    },{});
+    if(winner&&winner.metadata&&typeof winner.metadata==='object')Object.assign(metadata,winner.metadata);
+    const aliasExternalIds=[...new Set(group.map(row=>`${row&&row.external_account_id||''}`.trim()).filter(Boolean))];
+    const aliasDetectedIds=[...new Set(group.map(row=>`${row&&row.id||''}`.trim()).filter(Boolean))];
+    const lastSeen=group.map(row=>`${row&&row.last_seen_at||''}`.trim()).filter(Boolean).sort((a,b)=>detectedTimestamp(b)-detectedTimestamp(a))[0]||winner.last_seen_at;
+    const firstSeen=group.map(row=>`${row&&row.first_seen_at||''}`.trim()).filter(Boolean).sort((a,b)=>detectedTimestamp(a)-detectedTimestamp(b))[0]||winner.first_seen_at;
+    return{
+      ...winner,
+      is_linked:Boolean(linked&&linked.linked_account_id),
+      linked_account_id:linked&&linked.linked_account_id||winner.linked_account_id||null,
+      last_seen_at:lastSeen,
+      first_seen_at:firstSeen,
+      metadata:{
+        ...metadata,
+        legacy_external_account_id:getDetectedLegacyExternalAccountId(winner)||getDetectedLogicalAccountId(winner),
+        alias_external_account_ids:aliasExternalIds,
+        duplicate_detected_account_ids:aliasDetectedIds
+      },
+      duplicate_count:group.length
+    };
+  }).sort((a,b)=>detectedTimestamp(b&&b.last_seen_at)-detectedTimestamp(a&&a.last_seen_at));
+}
 function getDetectedConnectionOptions(list){
   const set=new Set();
   (Array.isArray(list)?list:[]).forEach(a=>{
@@ -16938,7 +17180,7 @@ async function loadDetectedAccounts({silentError=false}={}){
     if(!Array.isArray(data.accounts)){
       throw new Error('connector-account-list devolvió un formato inesperado.');
     }
-    accDetectedAccounts=data.accounts;
+    accDetectedAccounts=coalesceDetectedAccountRowsForUi(data.accounts);
     accDetectedAccounts.forEach(account=>{
       const accountName=account&&(account.external_account_name||account.external_account_id)||'unknown';
       if(isDetectedAccountLinkedForUi(account)){
