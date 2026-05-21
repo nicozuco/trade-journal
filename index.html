@@ -22,7 +22,7 @@
 <script>
 window.SUPABASE_URL='https://wyfmmubrtkcgunwbagdq.supabase.co';
 window.SUPABASE_ANON_KEY='sb_publishable_c-hn5yimnUx9ZGeSGI9-WA_RVjqR2-q';
-window.FRONTEND_BUILD_ID='2026-05-18-trade-detail-fees-cleanup-v1';
+window.FRONTEND_BUILD_ID='2026-05-21-calendar-month-exam-v7';
 </script>
 <script>
 (function(){
@@ -1401,9 +1401,9 @@ select.fi{cursor:pointer}
 .acc-step4-program-prompt{margin-top:14px;padding:14px 16px;border-radius:14px;border:1px solid color-mix(in srgb,var(--amber,#ef9f27) 30%,var(--border));background:color-mix(in srgb,var(--amber,#ef9f27) 5%,var(--surface2))}
 .acc-time-limit-field{display:grid;gap:10px;padding:12px;border:1px solid var(--border);border-radius:14px;background:rgba(255,255,255,.025)}
 .acc-time-limit-grid{display:grid;grid-template-columns:1fr 140px;gap:10px}
-.account-time-chip{display:inline-flex;align-items:center;gap:7px;margin-top:8px;padding:7px 10px;border-radius:999px;border:1px solid var(--border);background:rgba(255,255,255,.025);font-size:11px;color:var(--text2)}
-.account-time-chip strong{color:var(--text)}
-.account-time-chip.warn{border-color:color-mix(in srgb,var(--amber) 38%,var(--border));color:var(--amber-text);background:var(--amber-bg)}
+.account-time-chip{display:inline-flex;align-items:center;gap:7px;margin-top:8px;padding:7px 10px;border-radius:9px;border:1px solid color-mix(in srgb,var(--blue) 28%,var(--border));background:color-mix(in srgb,var(--blue) 9%,transparent);font-size:11px;color:var(--blue-text);text-transform:none;letter-spacing:0}
+.account-time-chip strong{color:var(--text);font-family:var(--mono);font-size:11px}
+.account-time-chip.warn{border-color:color-mix(in srgb,var(--blue) 36%,var(--border));color:var(--blue-text);background:color-mix(in srgb,var(--blue) 12%,transparent)}
 .account-time-chip.danger,.account-time-chip.expired{border-color:color-mix(in srgb,var(--red) 38%,var(--border));color:var(--red-text);background:var(--red-bg)}
 .acc-step4-balance-prompt{margin-top:14px;padding:14px 16px;border-radius:14px;border:1px solid var(--border2);background:var(--surface2)}
 .acc-step4-balance-title{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text3);margin-bottom:10px}
@@ -4841,6 +4841,8 @@ input[type="time"].fi{
 .pro-accounts-filterbar-main{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .pro-accounts-pill{display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border-radius:999px;background:var(--surface2);border:1px solid var(--border);font-size:11px;font-weight:750;color:var(--text2)}
 .pro-accounts-pill strong{color:var(--text);font-family:var(--mono);font-size:11px}
+.pro-accounts-pill-action{font-family:inherit;cursor:pointer;transition:border-color .15s,color .15s,background .15s}
+.pro-accounts-pill-action:hover,.pro-accounts-pill-action.active{color:var(--text);border-color:color-mix(in srgb,var(--gold) 34%,var(--border));background:color-mix(in srgb,var(--gold) 10%,var(--surface2))}
 .pro-accounts-note{font-size:11px;color:var(--text3);line-height:1.45}
 .pro-card-latest{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:11px;padding:9px 10px;border-radius:12px;background:rgba(255,255,255,.025);border:1px solid var(--border);font-size:11px;color:var(--text2)}
 .pro-card-latest span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -8419,7 +8421,7 @@ input[type="time"].fi{
     <div class="modal-body" id="csvImportPreviewBody"></div>
     <div class="modal-foot">
       <button class="btn" onclick="closeCsvImportPreview()">Cancelar</button>
-      <button class="btn btn-primary" id="csvImportConfirmBtn" onclick="confirmCsvGlobalImport()">Importar trades nuevos</button>
+      <button class="btn btn-primary" id="csvImportConfirmBtn" onclick="confirmCsvGlobalImport()">Añadir trades faltantes</button>
     </div>
   </div>
 </div>
@@ -12178,8 +12180,18 @@ function normalizeCsvStatus(value,hasExit,hasPnl){
   return(hasExit||hasPnl)?'CLOSED':'OPEN';
 }
 function buildCsvExternalKey(accountId,externalAccountName,trade){
+  // Key = intrinsic fields + dup-index (csv_same_key_index) within the group of
+  // CSV rows that share identical intrinsic fields. Rationale:
+  //  - tradenum cannot be in the key because the broker re-numbers between CSVs.
+  //  - timestamps are normalized to the persisted UTC second so local/UTC import
+  //    paths produce the same key.
+  //  - But intrinsic-only keys collide for true partial-fill twins (multiple
+  //    physical trades with same symbol/dir/qty/entry/exit/times). The dup-index
+  //    is positional within the group (sorted by csv trade number ASC), so it
+  //    is stable across re-exports of the same data.
   const accountKey=normalizeCsvExternalAccountKey(externalAccountName||accountId);
-  const csvTradeNumber=trade&&trade.rawBrokerPayload&&Number(trade.rawBrokerPayload.csv_trade_number);
+  const dup=trade&&trade.rawBrokerPayload&&Number(trade.rawBrokerPayload.csv_same_key_index);
+  const dupPart=Number.isFinite(dup)&&dup>0?`dup=${dup}`:'';
   return[
     'source=csv',
     `account=${accountId}`,
@@ -12190,10 +12202,47 @@ function buildCsvExternalKey(accountId,externalAccountName,trade){
     `entry=${normalizeTradeAmountKey(trade.entry)}`,
     `exit=${normalizeTradeAmountKey(trade.exit)}`,
     `pnl=${normalizeTradeAmountKey(trade.pnl)}`,
-    `open=${trade.openDate||''} ${trade.openTime||''}`,
-    `exit=${trade.exitDate||''} ${trade.exitTime||''}`,
-    Number.isFinite(csvTradeNumber)?`tradenum=${csvTradeNumber}`:''
+    `open=${getTradeExternalTimestampKey(trade,'open')}`,
+    `exit=${getTradeExternalTimestampKey(trade,'exit')}`,
+    dupPart
   ].filter(Boolean).join('|');
+}
+
+/**
+ * Within a CSV group, find trades that share identical intrinsic fields and
+ * assign each a stable positional index (0 for the first, 1 for the second...)
+ * sorted by csv_trade_number ASC. Then rewrite their external_trade_key so the
+ * unique-index in Supabase distinguishes them.
+ */
+function assignCsvSameKeyIndexes(trades,accountId,externalAccountName){
+  const buckets=new Map();
+  trades.forEach(t=>{
+    const ik=[
+      t.symbol||'',t.dir||'',
+      normalizeTradeAmountKey(t.qty),normalizeTradeAmountKey(t.entry),normalizeTradeAmountKey(t.exit),
+      normalizeTradeAmountKey(t.pnl),getTradeCanonicalTimestampKey(t,'open'),getTradeCanonicalTimestampKey(t,'exit')
+    ].join('|');
+    if(!buckets.has(ik))buckets.set(ik,[]);
+    buckets.get(ik).push(t);
+  });
+  buckets.forEach(members=>{
+    if(members.length<=1){
+      members.forEach(t=>{
+        if(t.rawBrokerPayload)t.rawBrokerPayload.csv_same_key_index=0;
+        t.externalTradeKey=buildCsvExternalKey(accountId,externalAccountName,t);
+      });
+      return;
+    }
+    members.sort((a,b)=>{
+      const ta=(a.rawBrokerPayload&&Number(a.rawBrokerPayload.csv_trade_number))||0;
+      const tb=(b.rawBrokerPayload&&Number(b.rawBrokerPayload.csv_trade_number))||0;
+      return ta-tb;
+    });
+    members.forEach((t,idx)=>{
+      if(t.rawBrokerPayload)t.rawBrokerPayload.csv_same_key_index=idx;
+      t.externalTradeKey=buildCsvExternalKey(accountId,externalAccountName,t);
+    });
+  });
 }
 function buildTradeFromCsvRow(row,rowIndex,map,{account,fileName,batchId,externalAccountName=''}){
   const symbol=csvCell(row,map,'symbol').toUpperCase();
@@ -12296,6 +12345,7 @@ function parseTradesCsv(text,{account,fileName='trades.csv'}={}){
     if(result.errors.length)errors.push(...result.errors);
     if(result.trade)trades.push(result.trade);
   });
+  assignCsvSameKeyIndexes(trades,account.id,account.name);
   return{trades,errors};
 }
 function detectCsvAccountColumn(headers){
@@ -12489,39 +12539,68 @@ function buildCsvGroupTrades(group){
     if(result.errors.length)errors.push(...result.errors);
     if(result.trade)trades.push(result.trade);
   });
+  assignCsvSameKeyIndexes(trades,account.id,csvImportState.hasAccountColumn?group.externalName:account.name);
   return{account,trades,errors};
 }
 function hasHeuristicTradeDuplicate(trade,candidates){
+  return findHeuristicTradeDuplicateIndex(trade,candidates)>=0;
+}
+function findHeuristicTradeDuplicateIndex(trade,candidates){
   const fp=getTradeContentFingerprint(trade);
   const brokerFp=getBrokerExecutionTradeFingerprint(trade);
-  return(candidates||[]).some(candidate=>{
-    if(shouldPreserveDistinctBrokerImportRows(trade,candidate))return false;
-    return Boolean(
+  const list=Array.isArray(candidates)?candidates:[];
+  for(let index=0;index<list.length;index++){
+    const candidate=list[index];
+    if(shouldPreserveDistinctBrokerImportRows(trade,candidate))continue;
+    if(
       (fp&&fp===getTradeContentFingerprint(candidate))||
       (brokerFp&&brokerFp===getBrokerExecutionTradeFingerprint(candidate))
-    );
-  });
+    )return index;
+  }
+  return -1;
 }
 function filterNewTradesForAccount(accountId,trades){
   const existing=accountTrades[accountId]||[];
-  const existingKeys=new Set(existing.map(getTradeDedupeKey).filter(Boolean));
-  const seenKeys=new Set();
-  const seenTrades=[];
+  const existingKeyBuckets=new Map();
+  existing.forEach(trade=>{
+    const key=getTradeDedupeKey(trade);
+    if(!key)return;
+    if(!existingKeyBuckets.has(key))existingKeyBuckets.set(key,[]);
+    existingKeyBuckets.get(key).push(trade);
+  });
+  const existingHeuristicCandidates=existing.slice();
   const newTrades=[];
-  let duplicateCount=0;
+  let existingCount=0;
+  const removeFromHeuristicCandidates=trade=>{
+    const index=existingHeuristicCandidates.indexOf(trade);
+    if(index>=0)existingHeuristicCandidates.splice(index,1);
+  };
+  const removeFromKeyBucket=trade=>{
+    const key=getTradeDedupeKey(trade);
+    const bucket=key&&existingKeyBuckets.get(key);
+    if(!bucket)return;
+    const index=bucket.indexOf(trade);
+    if(index>=0)bucket.splice(index,1);
+  };
   (trades||[]).forEach(trade=>{
     const key=getTradeDedupeKey(trade);
-    const dupByKey=key&&(existingKeys.has(key)||seenKeys.has(key));
-    const dupByHeuristic=hasHeuristicTradeDuplicate(trade,existing)||hasHeuristicTradeDuplicate(trade,seenTrades);
-    if(dupByKey||dupByHeuristic){
-      duplicateCount++;
+    const keyBucket=key&&existingKeyBuckets.get(key);
+    if(keyBucket&&keyBucket.length){
+      const matched=keyBucket.shift();
+      removeFromHeuristicCandidates(matched);
+      existingCount++;
       return;
     }
-    if(key)seenKeys.add(key);
-    seenTrades.push(trade);
+    const existingHeuristicIndex=findHeuristicTradeDuplicateIndex(trade,existingHeuristicCandidates);
+    if(existingHeuristicIndex>=0){
+      const matched=existingHeuristicCandidates.splice(existingHeuristicIndex,1)[0];
+      removeFromKeyBucket(matched);
+      existingCount++;
+      return;
+    }
     newTrades.push(trade);
   });
-  return{newTrades,duplicateCount};
+  return{newTrades,duplicateCount:existingCount};
 }
 function buildCsvImportPlan(){
   if(!csvImportState)return{groups:[],totalRows:0,totalTrades:0,totalNewTrades:0,totalDuplicates:0,totalPnl:0,errors:[],mappings:[]};
@@ -12578,10 +12657,10 @@ function renderCsvImportPreview(){
     <div class="csv-import-note">${escapeHtml(note)}</div>
     <div class="csv-import-total-row">
       <span class="csv-import-pill">${plan.totalRows} filas</span>
-      <span class="csv-import-pill">${plan.totalTrades} trades agrupados</span>
-      <span class="csv-import-pill">${plan.totalNewTrades} nuevos</span>
-      <span class="csv-import-pill ${plan.totalDuplicates?'warn':''}">${plan.totalDuplicates} duplicados</span>
-      ${plan.completedGroupCount?`<span class="csv-import-pill">${plan.completedGroupCount} cuenta${plan.completedGroupCount===1?'':'s'} ya al día (ocultas)</span>`:''}
+      <span class="csv-import-pill">${plan.totalTrades} trades en CSV</span>
+      <span class="csv-import-pill">${plan.totalNewTrades} faltante${plan.totalNewTrades===1?'':'s'}</span>
+      <span class="csv-import-pill">${plan.totalDuplicates} ya en journal</span>
+      ${plan.completedGroupCount?`<span class="csv-import-pill">${plan.completedGroupCount} cuenta${plan.completedGroupCount===1?'':'s'} completa${plan.completedGroupCount===1?'':'s'} (ocultas)</span>`:''}
       <span class="csv-import-pill">PnL ${fmt(plan.totalPnl)}</span>
     </div>
     <div class="csv-import-table-wrap">
@@ -12590,9 +12669,9 @@ function renderCsvImportPreview(){
           <th>Cuenta externa</th>
           <th>Cuenta destino</th>
           <th>Filas</th>
-          <th>Trades agrupados</th>
+          <th>Trades CSV</th>
           <th>PnL total</th>
-          <th>Duplicados</th>
+          <th>Ya en journal</th>
         </tr></thead>
         <tbody>
           ${plan.visibleGroups.map(item=>{
@@ -12624,20 +12703,26 @@ function renderCsvImportPreview(){
   </div>`;
   if(btn){
     btn.disabled=Boolean(plan.errors.length)||!plan.totalNewTrades;
-    btn.textContent=plan.totalNewTrades?`Importar ${plan.totalNewTrades} trade${plan.totalNewTrades===1?'':'s'} nuevo${plan.totalNewTrades===1?'':'s'}`:'Sin trades nuevos';
+    btn.textContent=plan.totalNewTrades?`Añadir ${plan.totalNewTrades} trade${plan.totalNewTrades===1?'':'s'} faltante${plan.totalNewTrades===1?'':'s'}`:'No faltan trades';
   }
 }
 function isNewImportPipelineEnabled(){
   try{return localStorage.getItem('zj_new_import_pipeline')==='1';}catch(_){return false;}
 }
 function csvTradeToEdgeRow(trade){
-  const padTime=t=>{const s=`${t||''}`;return s.length===5?`${s}:00`:s;};
-  const openIso=trade.openDate&&trade.openTime?`${trade.openDate}T${padTime(trade.openTime)}Z`:null;
-  const closeIso=trade.exitDate&&trade.exitTime?`${trade.exitDate}T${padTime(trade.exitTime)}Z`:null;
+  const openKey=getTradeCanonicalTimestampKey(trade,'open');
+  const closeKey=getTradeCanonicalTimestampKey(trade,'exit');
+  const openIso=openKey?`${openKey}Z`:null;
+  const closeIso=closeKey?`${closeKey}Z`:null;
   const tradeNumber=trade.rawBrokerPayload&&Number.isFinite(trade.rawBrokerPayload.csv_trade_number)
     ?trade.rawBrokerPayload.csv_trade_number:null;
+  const sameKeyIndex=trade.rawBrokerPayload&&Number.isFinite(trade.rawBrokerPayload.csv_same_key_index)
+    ?trade.rawBrokerPayload.csv_same_key_index:null;
+  const externalTradeKey=`${trade.externalTradeKey||trade.external_trade_key||''}`.trim();
+  const externalTradeId=`${trade.externalTradeId||trade.external_trade_id||externalTradeKey||''}`.trim();
   return{
     csv_trade_number:tradeNumber,
+    csv_same_key_index:sameKeyIndex,
     symbol:trade.symbol,
     market:trade.market||null,
     dir:trade.dir,
@@ -12659,6 +12744,8 @@ function csvTradeToEdgeRow(trade){
     source:trade.source||'csv',
     source_account:trade.sourceAccount||null,
     broker_account_id:trade.brokerAccountId||null,
+    external_trade_key:externalTradeKey||null,
+    external_trade_id:externalTradeId||null,
     import_source:trade.importSource||'csv',
     import_batch_id:trade.importBatchId||null
   };
@@ -12727,13 +12814,13 @@ async function confirmCsvGlobalImport(){
     return;
   }
   if(!plan.totalNewTrades){
-    showToast('No hay trades nuevos para importar.','info',{title:'CSV'});
+    showToast('No faltan trades de este CSV por añadir.','info',{title:'CSV'});
     return;
   }
   const touchedAccountIds=[...new Set(plan.groups.filter(item=>item.account&&item.newTrades.length).map(item=>item.account.id))];
   const useNewPipeline=isNewImportPipelineEnabled();
   setActionBusy(btn,true,'Importando...');
-  const loadingToast=showToast(useNewPipeline?'Importando vía pipeline nuevo...':'Importando trades nuevos desde CSV...','loading',{duration:0,title:'CSV'});
+  const loadingToast=showToast(useNewPipeline?'Comparando y añadiendo faltantes vía pipeline...':'Comparando CSV y añadiendo trades faltantes...','loading',{duration:0,title:'CSV'});
   let pipelineResult=null;
   const ok=await runStorageMutation(async()=>{
     await saveCsvAccountMappings(plan.mappings);
@@ -12753,17 +12840,17 @@ async function confirmCsvGlobalImport(){
   dismissToast(loadingToast);
   setActionBusy(btn,false);
   if(!ok)return;
-  const duplicates=plan.totalDuplicates;
+  const alreadyInJournal=plan.totalDuplicates;
   closeCsvImportPreview();
   if(useNewPipeline&&pipelineResult&&pipelineResult.totals){
     const t=pipelineResult.totals;
     const groupErrors=(pipelineResult.groups||[]).flatMap(g=>g.errors||[]);
     const errorSuffix=groupErrors.length?` · ${groupErrors.length} error${groupErrors.length===1?'':'es'}`:'';
-    showToast(`CSV (pipeline) → ${t.inserted} nuevos · ${t.skipped} duplicados · ${t.rejected} rechazados${t.invalid?` · ${t.invalid} inválidos`:''}${errorSuffix}.`,groupErrors.length?'warning':'success',{title:'CSV'});
+    showToast(`CSV (pipeline) → ${t.inserted} añadidos · ${t.skipped} ya estaban · ${t.rejected} rechazados${t.invalid?` · ${t.invalid} inválidos`:''}${errorSuffix}.`,groupErrors.length?'warning':'success',{title:'CSV'});
     if(groupErrors.length)console.warn('[csv-import] errors',groupErrors);
   }else{
     const imported=plan.totalNewTrades;
-    showToast(`CSV importado: ${imported} trade${imported===1?'':'s'} nuevo${imported===1?'':'s'}${duplicates?`, ${duplicates} duplicado${duplicates===1?'':'s'} omitido${duplicates===1?'':'s'}`:''}.`,'success',{title:'CSV'});
+    showToast(`CSV comparado: ${imported} trade${imported===1?'':'s'} añadido${imported===1?'':'s'}${alreadyInJournal?`, ${alreadyInJournal} ya estaba${alreadyInJournal===1?'':'n'} en el journal`:''}.`,'success',{title:'CSV'});
   }
   scheduleAccountTradeChartPrefetch(touchedAccountIds,{limit:Math.max(200,plan.totalNewTrades*3),includeGroups:true});
   renderHome();
@@ -12774,29 +12861,14 @@ async function replaceAccountTradesWithCsv(accountId,newTrades,{fileName='trades
   invalidateSnapshotCache();
   const acc=getAccount(accountId);
   if(!acc)throw new Error('No se ha encontrado la cuenta.');
-  const previousRows=cloneData(accountTrades[accountId]||[]);
-  const previousIds=previousRows.map(trade=>trade.id).filter(id=>id!==null&&id!==undefined);
   const inserted=await createTradesBulk(accountId,newTrades);
-  const insertedIds=inserted.map(trade=>trade.id).filter(id=>id!==null&&id!==undefined);
-  if(inserted.length!==newTrades.length){
-    await deleteTradesByIds(accountId,insertedIds).catch(()=>{});
-    throw new Error('Supabase no devolvió todos los trades insertados.');
-  }
-  try{
-    await deleteTradesByIds(accountId,previousIds);
-  }catch(error){
-    await deleteTradesByIds(accountId,insertedIds).catch(()=>{});
-    throw error;
-  }
-  const oldScreenshots=previousRows.map(trade=>trade.screenshotUrl).filter(Boolean);
-  Promise.allSettled(oldScreenshots.map(url=>deleteTradeScreenshotAsset(url))).catch(()=>{});
-  accountTrades[accountId]=inserted.map(row=>normalizeTradeForAccount(row,acc));
+  if(!accountTrades[accountId])accountTrades[accountId]=[];
+  accountTrades[accountId].push(...inserted.map(row=>normalizeTradeForAccount(row,acc)));
   refreshFlatTrades();
   scheduleTradeChartPrefetch(accountTrades[accountId],{includeGroups:true});
-  console.log('[trade-journal] csv trades replaced', {
+  console.log('[trade-journal] csv trades appended', {
     accountId,
     fileName,
-    deleted:previousIds.length,
     inserted:inserted.length
   });
 }
@@ -15892,7 +15964,13 @@ function getNinjaTraderTrailingMaxDrawdown(accountLike){
     accountLike.ninjatrader_trailing_max_drawdown!==undefined?accountLike.ninjatrader_trailing_max_drawdown:
     accountLike.ninjaTraderTrailingMaxDrawdown
   );
-  if(direct!==null)return direct;
+  // NinjaTrader devuelve 0 (o negativo) cuando el campo AccountItem.TrailingMaxDrawdown
+  // no está poblado por el broker — caso típico de Apex via Tradovate, cuentas Sim y
+  // cualquier conexión que aún no haya hidratado los AccountItem. Tratar ese 0 como
+  // "drawdown agotado" es incorrecto y marca cuentas sanas como quemadas. Lo trataos
+  // como "valor no disponible" y dejamos que el cálculo local desde trades sea la
+  // fuente de verdad. Solo confiamos en valores estrictamente positivos del broker.
+  if(direct!==null&&direct>0)return direct;
   return getTrailingMaxDrawdownFromPayload(meta);
 }
 function getSupabaseAccountCurrentBalance(accountLike){
@@ -15965,7 +16043,9 @@ function getTrailingMaxDrawdownFromPayload(payload){
   ];
   for(const path of paths){
     const parsed=toFiniteNumberOrNull(readObjectPath(payload,path));
-    if(parsed!==null)return parsed;
+    // Mismo motivo que getNinjaTraderTrailingMaxDrawdown: 0/negativo del broker
+    // significa "campo no disponible", no "drawdown agotado".
+    if(parsed!==null&&parsed>0)return parsed;
   }
   return null;
 }
@@ -16924,6 +17004,37 @@ function normalizeTradeTimeForKey(value){
   if(!normalized)return'';
   return normalized.replace(/(\.\d*?)0+$/,'$1').replace(/\.$/,'').replace(/:00$/,'');
 }
+function normalizeIsoTimestampSecondKey(value){
+  const raw=`${value||''}`.trim();
+  if(!raw)return'';
+  const parsed=new Date(raw);
+  return Number.isNaN(parsed.getTime())?'':parsed.toISOString().slice(0,19);
+}
+function buildTradeTimestampSecondKey(dateValue,timeValue){
+  const safeDate=`${dateValue||''}`.trim();
+  if(!safeDate)return'';
+  const normalizedTime=normalizeTradeTimeForTimestamp(timeValue)||'00:00:00';
+  const parsed=new Date(`${safeDate}T${normalizedTime}`);
+  return Number.isNaN(parsed.getTime())?'':parsed.toISOString().slice(0,19);
+}
+function getTradeCanonicalTimestampKey(trade,kind='open'){
+  if(!trade)return'';
+  const explicit=kind==='exit'
+    ?(trade.closedAt||trade.closed_at||'')
+    :(trade.openedAt||trade.opened_at||'');
+  const explicitKey=normalizeIsoTimestampSecondKey(explicit);
+  if(explicitKey)return explicitKey;
+  const date=kind==='exit'
+    ?`${trade.exitDate||trade.exit_date||''}`.trim()
+    :`${trade.openDate||trade.open_date||''}`.trim();
+  const time=kind==='exit'
+    ?`${trade.exitTime||trade.exit_time||''}`.trim()
+    :`${trade.openTime||trade.open_time||''}`.trim();
+  return buildTradeTimestampSecondKey(date,time);
+}
+function getTradeExternalTimestampKey(trade,kind='open'){
+  return getTradeCanonicalTimestampKey(trade,kind).replace('T',' ');
+}
 function normalizeTradeMinuteForKey(value){
   const normalized=normalizeTradeTimeForTimestamp(value);
   if(!normalized)return'';
@@ -17178,11 +17289,13 @@ function mapTradeRow(row){
     strategy:row.strategy||'',
     entry:row.entry===null||row.entry===undefined?null:Number(row.entry),
     qty:row.qty===null||row.qty===undefined?0:Number(row.qty),
+    openedAt:row.opened_at||'',
     openDate:row.open_date||openedParts.date||null,
     openTime:pickMostPreciseTradeTime(row.open_time,openedParts.time)||'',
     sl:null,
     target:null,
     exit:row.exit===null||row.exit===undefined?null:Number(row.exit),
+    closedAt:row.closed_at||'',
     exitDate:row.exit_date||closedParts.date||null,
     exitTime:pickMostPreciseTradeTime(row.exit_time,closedParts.time)||'',
     pnl:row.pnl===null||row.pnl===undefined?null:Number(row.pnl),
@@ -17263,12 +17376,10 @@ function normalizeTradeAmountKey(value){
 }
 function getTradeExactTimestampKey(trade){
   if(!trade)return'';
-  const openDate=`${trade.openDate||trade.open_date||''}`.trim();
-  const openTime=normalizeTradeTimeForKey(trade.openTime||trade.open_time||'');
-  if(openDate&&openTime)return`${openDate}T${openTime}`;
-  const exitDate=`${trade.exitDate||trade.exit_date||''}`.trim();
-  const exitTime=normalizeTradeTimeForKey(trade.exitTime||trade.exit_time||'');
-  if(exitDate&&exitTime)return`${exitDate}T${exitTime}`;
+  const opened=getTradeCanonicalTimestampKey(trade,'open');
+  if(opened)return opened;
+  const closed=getTradeCanonicalTimestampKey(trade,'exit');
+  if(closed)return closed;
   return'';
 }
 function getTradeExactAmountTimeDedupeKey(trade){
@@ -17299,17 +17410,15 @@ function scoreTradeForDedupe(trade){
 function getTradeContentFingerprint(trade){
   if(!trade)return'';
   const symbol=`${trade.symbol||''}`.trim().toUpperCase();
-  const openDate=`${trade.openDate||trade.open_date||''}`.trim();
-  const openTime=normalizeTradeTimeForKey(trade.openTime||trade.open_time||'');
-  const exitDate=`${trade.exitDate||trade.exit_date||''}`.trim();
-  const exitTime=normalizeTradeTimeForKey(trade.exitTime||trade.exit_time||'');
+  const opened=getTradeCanonicalTimestampKey(trade,'open');
+  const closed=getTradeCanonicalTimestampKey(trade,'exit');
   const entry=trade.entry===null||trade.entry===undefined||trade.entry===''?'':Number(trade.entry);
   const exit=trade.exit===null||trade.exit===undefined||trade.exit===''?'':Number(trade.exit);
   const qty=trade.qty===null||trade.qty===undefined||trade.qty===''?'':Number(trade.qty);
   const dir=`${trade.dir||''}`.trim().toUpperCase();
   const pnl=normalizeTradeAmountKey(trade.pnl);
-  if(!symbol||!openDate||entry===''||qty===''||exit===''||pnl==='')return'';
-  return`fp:${symbol}|${openDate}|${openTime}|${exitDate}|${exitTime}|${entry}|${exit}|${qty}|${dir}|${pnl}`;
+  if(!symbol||!opened||entry===''||qty===''||exit===''||pnl==='')return'';
+  return`fp:${symbol}|${opened}|${closed}|${entry}|${exit}|${qty}|${dir}|${pnl}`;
 }
 function getTradeImportSource(trade){
   if(!trade)return'';
@@ -17319,14 +17428,32 @@ function getTradeStrongBrokerRowKey(trade){
   if(!trade)return'';
   return`${trade.externalTradeKey||trade.external_trade_key||trade.externalTradeId||trade.external_trade_id||trade.externalFillPairId||trade.external_fill_pair_id||''}`.trim();
 }
+function getStableCsvExternalKeyBase(value){
+  const key=`${value||''}`.trim();
+  if(!key.startsWith('source=csv|'))return'';
+  return key.replace(/\|dup=\d+$/,'');
+}
+function isCsvImportedTrade(trade){
+  if(!trade)return false;
+  const importSource=getTradeImportSource(trade);
+  const brokerSource=`${trade.brokerSource||trade.broker_source||trade.source||''}`.trim().toLowerCase();
+  return importSource==='csv'||brokerSource==='csv';
+}
 function shouldPreserveDistinctBrokerImportRows(a,b){
   if(!isBrokerImportedTrade(a)||!isBrokerImportedTrade(b))return false;
   const sourceA=getTradeImportSource(a);
   const sourceB=getTradeImportSource(b);
-  if(!sourceA||!sourceB||sourceA!==sourceB)return false;
+  const csvPair=isCsvImportedTrade(a)&&isCsvImportedTrade(b);
+  if(!csvPair&&(!sourceA||!sourceB||sourceA!==sourceB))return false;
   const keyA=getTradeStrongBrokerRowKey(a);
   const keyB=getTradeStrongBrokerRowKey(b);
-  return Boolean(keyA&&keyB&&keyA!==keyB);
+  if(!(keyA&&keyB&&keyA!==keyB))return false;
+  if(csvPair){
+    const baseA=getStableCsvExternalKeyBase(keyA);
+    const baseB=getStableCsvExternalKeyBase(keyB);
+    return Boolean(baseA&&baseB&&baseA===baseB);
+  }
+  return true;
 }
 function shouldCollapseHeuristicTradeDuplicate(a,b){
   return !shouldPreserveDistinctBrokerImportRows(a,b);
@@ -17334,17 +17461,15 @@ function shouldCollapseHeuristicTradeDuplicate(a,b){
 function getBrokerExecutionTradeFingerprint(trade){
   if(!trade||!isBrokerImportedTrade(trade))return'';
   const symbol=`${trade.symbol||''}`.trim().toUpperCase();
-  const openDate=`${trade.openDate||trade.open_date||''}`.trim();
-  const openSecond=normalizeTradeSecondForKey(trade.openTime||trade.open_time||'');
-  const exitDate=`${trade.exitDate||trade.exit_date||''}`.trim();
-  const exitSecond=normalizeTradeSecondForKey(trade.exitTime||trade.exit_time||'');
+  const opened=getTradeCanonicalTimestampKey(trade,'open');
+  const closed=getTradeCanonicalTimestampKey(trade,'exit');
   const entry=trade.entry===null||trade.entry===undefined||trade.entry===''?'':Number(trade.entry);
   const exit=trade.exit===null||trade.exit===undefined||trade.exit===''?'':Number(trade.exit);
   const qty=trade.qty===null||trade.qty===undefined||trade.qty===''?'':Number(trade.qty);
   const status=`${trade.status||trade.localStatus||''}`.trim().toUpperCase();
-  if(!symbol||!openDate||!openSecond||entry===''||qty===''||exit==='')return'';
+  if(!symbol||!opened||entry===''||qty===''||exit==='')return'';
   const pricePair=[entry,exit].sort((a,b)=>a-b).map(v=>Number(v.toFixed(8))).join('|');
-  return`broker-execution:${symbol}|${openDate}|${openSecond}|${exitDate}|${exitSecond}|${pricePair}|${qty}|${status}`;
+  return`broker-execution:${symbol}|${opened}|${closed}|${pricePair}|${qty}|${status}`;
 }
 function dedupeAccountTradeRows(rows){
   const arr=Array.isArray(rows)?rows:[];
@@ -17429,9 +17554,7 @@ function applyLoadedState(data){
   accountWithdrawals={};
   accounts.forEach(acc=>{accountTrades[acc.id]=[];accountWithdrawals[acc.id]=[];});
   Object.entries(data.accountTrades||{}).forEach(([id,rows])=>{
-    const cloned=cloneData(Array.isArray(rows)?rows:[]);
-    const {kept}=dedupeAccountTradeRows(cloned);
-    accountTrades[id]=kept;
+    accountTrades[id]=cloneData(Array.isArray(rows)?rows:[]);
   });
   Object.entries(data.accountWithdrawals||{}).forEach(([id,rows])=>{
     accountWithdrawals[id]=cloneData(Array.isArray(rows)?rows:[]);
@@ -18061,7 +18184,7 @@ function chunkArray(values,size=400){
 async function createTradesBulk(accountId,trades){
   const {newTrades:filtered,duplicateCount}=filterNewTradesForAccount(accountId,trades);
   if(duplicateCount>0){
-    console.info(`[trade-journal] createTradesBulk: ${duplicateCount} duplicado(s) ignorado(s)`);
+    console.info(`[trade-journal] createTradesBulk: ${duplicateCount} trade(s) ya existentes no reinsertados`);
   }
   const client=getSupabaseClient();
   const inserted=[];
@@ -18260,6 +18383,26 @@ function addDaysToDateKey(dateKey,days){
   d.setDate(d.getDate()+Number(days||0));
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
+function getDaysInMonth(year,monthIndex){
+  return new Date(year,monthIndex+1,0).getDate();
+}
+function addMonthsToDateKey(dateKey,months){
+  const ms=getLocalMidnightMs(dateKey);
+  if(!Number.isFinite(ms))return'';
+  const source=new Date(ms);
+  const originalDay=source.getDate();
+  const target=new Date(source);
+  target.setDate(1);
+  target.setMonth(target.getMonth()+Number(months||0));
+  target.setDate(Math.min(originalDay,getDaysInMonth(target.getFullYear(),target.getMonth())));
+  return `${target.getFullYear()}-${String(target.getMonth()+1).padStart(2,'0')}-${String(target.getDate()).padStart(2,'0')}`;
+}
+function diffDateKeysInDays(fromDateKey,toDateKey){
+  const fromMs=getLocalMidnightMs(fromDateKey);
+  const toMs=getLocalMidnightMs(toDateKey);
+  if(!Number.isFinite(fromMs)||!Number.isFinite(toMs))return null;
+  return Math.round((toMs-fromMs)/86400000);
+}
 function getAccountPurchaseDate(acc){
   return normalizeDateKeyValue(
     acc&&(
@@ -18295,6 +18438,26 @@ function getDefaultAccountTimeLimitDays(acc,profile=getAccountFundingProfile(acc
   if(firmText.includes('apex'))return 30;
   return null;
 }
+function formatAccountTimeLimitLabel(days){
+  const value=Number(days);
+  if(!Number.isFinite(value)||value<=0)return'';
+  const rounded=Math.round(value);
+  if(rounded===30)return'1 mes';
+  return `${rounded} día${rounded===1?'':'s'}`;
+}
+function formatAccountTimeLimitInputValue(days){
+  return formatAccountTimeLimitLabel(days)||'';
+}
+function parseAccountTimeLimitDaysValue(value){
+  const raw=`${value||''}`.trim().toLowerCase();
+  if(!raw)return null;
+  if(/^(1\s*)?(mes|month|m)$/.test(raw)||raw==='un mes')return 30;
+  const normalized=raw.replace(',', '.');
+  const numericMatch=normalized.match(/-?\d+(?:\.\d+)?/);
+  const numeric=Number(numericMatch?numericMatch[0]:normalized);
+  if(!Number.isFinite(numeric)||numeric<=0)return null;
+  return Math.round(raw.includes('mes')||raw.includes('month')||/\bm\b/.test(raw)?numeric*30:numeric);
+}
 function getAccountTimeLimitDays(acc,profile=getAccountFundingProfile(acc)){
   const raw=Number(
     acc&&(
@@ -18309,36 +18472,47 @@ function getAccountTimeLimitDays(acc,profile=getAccountFundingProfile(acc)){
   if(Number.isFinite(raw)&&raw>0)return Math.round(raw);
   return getDefaultAccountTimeLimitDays(acc,profile);
 }
+function getAccountTimeLimitCalendarMonths(acc,profile=getAccountFundingProfile(acc),limitDays=getAccountTimeLimitDays(acc,profile)){
+  const rounded=Math.round(Number(limitDays)||0);
+  if(rounded!==30)return null;
+  return 1;
+}
 function getAccountEvaluationTimeState(acc,profile=getAccountFundingProfile(acc)){
   const purchaseDate=getAccountPurchaseDate(acc);
   const limitDays=getAccountTimeLimitDays(acc,profile);
-  if(!purchaseDate)return{enabled:false,purchaseDate:'',limitDays,elapsedDays:0,remainingDays:null,progress:0,tone:'',dueDate:''};
+  const limitMonths=getAccountTimeLimitCalendarMonths(acc,profile,limitDays);
+  if(!purchaseDate)return{enabled:false,purchaseDate:'',limitDays,limitMonths,elapsedDays:0,remainingDays:null,progress:0,tone:'',dueDate:''};
   const startMs=getLocalMidnightMs(purchaseDate);
   const todayMs=getLocalMidnightMs(typeof getLocalDateKey==='function'?getLocalDateKey():normalizeDateKeyValue(new Date().toISOString()));
-  if(!Number.isFinite(startMs)||!Number.isFinite(todayMs))return{enabled:false,purchaseDate:'',limitDays,elapsedDays:0,remainingDays:null,progress:0,tone:'',dueDate:''};
+  if(!Number.isFinite(startMs)||!Number.isFinite(todayMs))return{enabled:false,purchaseDate:'',limitDays,limitMonths,elapsedDays:0,remainingDays:null,progress:0,tone:'',dueDate:''};
   const elapsedDays=Math.max(1,Math.floor((todayMs-startMs)/86400000)+1);
   if(!limitDays){
-    return{enabled:true,purchaseDate,limitDays:null,elapsedDays,remainingDays:null,progress:0,tone:'',dueDate:''};
+    return{enabled:true,purchaseDate,limitDays:null,limitMonths:null,elapsedDays,remainingDays:null,progress:0,tone:'',dueDate:''};
   }
-  const remainingDays=limitDays-elapsedDays;
-  const progress=Math.max(0,Math.min(100,(elapsedDays/limitDays)*100));
-  const tone=remainingDays<0?'expired':remainingDays<=3?'danger':remainingDays<=7?'warn':'';
+  const todayKey=typeof getLocalDateKey==='function'?getLocalDateKey():normalizeDateKeyValue(new Date().toISOString());
+  const dueDate=limitMonths?addMonthsToDateKey(purchaseDate,limitMonths):addDaysToDateKey(purchaseDate,limitDays-1);
+  const durationDays=(diffDateKeysInDays(purchaseDate,dueDate)||0)+1;
+  const remainingDays=diffDateKeysInDays(todayKey,dueDate);
+  const progress=Math.max(0,Math.min(100,(elapsedDays/Math.max(1,durationDays))*100));
+  const tone=remainingDays<0?'expired':remainingDays<5?'danger':remainingDays<=7?'warn':'';
   return{
     enabled:true,
     purchaseDate,
     limitDays,
+    limitMonths,
+    durationDays,
     elapsedDays,
     remainingDays,
     progress,
     tone,
-    dueDate:addDaysToDateKey(purchaseDate,limitDays-1)
+    dueDate
   };
 }
 function renderAccountTimeChip(acc){
   const state=getAccountEvaluationTimeState(acc);
   if(!state.enabled)return'';
-  const remaining=state.remainingDays===null?'sin límite':(state.remainingDays<0?`${Math.abs(state.remainingDays)} vencido${Math.abs(state.remainingDays)===1?'':'s'}`:`${state.remainingDays} restante${state.remainingDays===1?'':'s'}`);
-  return `<div class="account-time-chip ${state.tone}"><span>Examen</span><strong>${state.elapsedDays}d</strong><span>${escapeHtml(remaining)}</span></div>`;
+  const remaining=state.remainingDays===null?'sin límite':(state.remainingDays<0?`${Math.abs(state.remainingDays)} vencido${Math.abs(state.remainingDays)===1?'':'s'}`:`${state.remainingDays} día${state.remainingDays===1?'':'s'} restante${state.remainingDays===1?'':'s'}`);
+  return `<div class="account-time-chip ${state.tone}"><span>Examen</span><strong>${escapeHtml(remaining)}</strong></div>`;
 }
 function renderFundingTimeProgress(acc,profile=getAccountFundingProfile(acc)){
   const card=document.getElementById('acc-funding-time-card');
@@ -18365,12 +18539,14 @@ function renderFundingTimeProgress(acc,profile=getAccountFundingProfile(acc)){
   }
   const remaining=state.remainingDays;
   const absRemaining=Math.abs(remaining);
+  const limitLabel=formatAccountTimeLimitLabel(state.limitDays)||`${state.limitDays} días`;
   if(value)value.textContent=remaining<0?'Vencida':`${remaining}d`;
   if(bar)bar.style.width=`${state.progress.toFixed(1)}%`;
   if(meta){
+    const remainingLabel=`${remaining} día${remaining===1?'':'s'}`;
     meta.textContent=remaining<0
-      ?`${state.elapsedDays}/${state.limitDays} días · vencida hace ${absRemaining} día${absRemaining===1?'':'s'} · vence ${formatDateLabel(state.dueDate)}`
-      :`${state.elapsedDays}/${state.limitDays} días · quedan ${remaining} · compra ${formatDateLabel(state.purchaseDate)} · vence ${formatDateLabel(state.dueDate)}`;
+      ?`${state.elapsedDays}/${limitLabel} · vencida hace ${absRemaining} día${absRemaining===1?'':'s'} · vence ${formatDateLabel(state.dueDate)}`
+      :`${state.elapsedDays}/${limitLabel} · quedan ${remainingLabel} · compra ${formatDateLabel(state.purchaseDate)} · vence ${formatDateLabel(state.dueDate)}`;
   }
 }
 function tradeResultFor(trade){
@@ -18857,6 +19033,14 @@ function getStageTotalUsage({stageBalance,startBalance,highWaterMark,rules,withd
 function applyBrokerTrailingMaxDrawdown(totalUsage,stageBalance,brokerRemaining,withdrawn){
   const remaining=toFiniteNumberOrNull(brokerRemaining);
   if(!totalUsage||!totalUsage.enabled||totalUsage.limit===null||remaining===null)return totalUsage;
+  const catalogRemaining=toFiniteNumberOrNull(totalUsage.remaining);
+  if(remaining<=0&&(catalogRemaining===null||catalogRemaining>0.0001)){
+    return{
+      ...totalUsage,
+      brokerRemainingIgnored:remaining,
+      brokerRemainingIgnoredReason:'ninjatrader_zero_trailing_max_drawdown'
+    };
+  }
   const withdrawnAmount=Math.max(0,Number(withdrawn)||0);
   const safeRemaining=parseFloat(Math.max(0,remaining+withdrawnAmount).toFixed(2));
   const limit=Number(totalUsage.limit)||0;
@@ -19326,7 +19510,7 @@ function getAccountPayoutTargetAmount(acc){
   return null;
 }
 function isAccountReadyForPayout(acc){
-  if(!acc||acc.type!=='fondeo')return false;
+  if(!acc||normalizeAccountType(acc.type)!=='fondeo')return false;
   const target=getAccountPayoutTargetAmount(acc);
   if(target===null)return false;
   const snap=getAccountSnapshot(acc);
@@ -19335,7 +19519,7 @@ function isAccountReadyForPayout(acc){
   return Number.isFinite(profit)&&profit>=target;
 }
 function getAccountStageFilterValue(acc){
-  if(!acc||acc.type!=='fondeo')return'all';
+  if(!acc||normalizeAccountType(acc.type)!=='fondeo')return'all';
   const state=computeFundingAccountState(acc);
   if(state&&state.status==='failed')return'failed';
   let explicit=getExplicitAccountStageFilterValue(acc);
@@ -19376,7 +19560,7 @@ function getAccountStageTone(acc){
   return getAccountStageFilterDef(getAccountStageFilterValue(acc)).tone;
 }
 function renderAccountStageLabel(acc){
-  if(!acc||acc.type!=='fondeo')return'';
+  if(!acc||normalizeAccountType(acc.type)!=='fondeo')return'';
   const value=getAccountStageFilterValue(acc);
   const def=getAccountStageFilterDef(value);
   return `<span class="acc-stage-label stage-${def.tone}">${escapeHtml(def.label)}</span>`;
@@ -19497,7 +19681,10 @@ function collectAccountStrategies(acc){
   if(!acc)return[];
   const fromModel=Array.isArray(acc.strategies)?acc.strategies:[];
   const fromLegacy=acc.strategy?[acc.strategy]:[];
-  return uniqList([...fromModel,...fromLegacy]);
+  const fromTrades=(acc.id&&typeof accountTrades==='object'&&accountTrades&&Array.isArray(accountTrades[acc.id]))
+    ?accountTrades[acc.id].map(t=>`${t&&t.strategy||''}`.trim()).filter(Boolean)
+    :[];
+  return uniqList([...fromModel,...fromLegacy,...fromTrades]);
 }
 function getAccountSubtitle(acc){
   if(!acc)return'';
@@ -19560,6 +19747,8 @@ function getAccountSnapshot(acc){
   const ts=accountTrades[acc.id]||[];
   const metricTrades=getGroupedMetricTrades(ts);
   const closed=getGroupedClosedMetricTrades(ts);
+  const rawClosed=ts.filter(isClosedPnlTrade);
+  const rawWins=rawClosed.filter(getMetricTradeWin);
   const wins=closed.filter(getMetricTradeWin);
   const tradeTotalPnl=closed.reduce((sum,t)=>sum+getMetricTradePnl(t),0);
   const startBalance=getAccountPerformanceBaseBalance(acc)||0;
@@ -19574,18 +19763,19 @@ function getAccountSnapshot(acc){
     rawTrades:ts,
     closed,
     wins,
-    totalPnl:parseFloat(tradeTotalPnl.toFixed(2)),
+    totalPnl:balanceTotalPnl,
     tradeTotalPnl:parseFloat(tradeTotalPnl.toFixed(2)),
     balanceTotalPnl,
     currentBalance,
     calculatedCurrentBalance,
     ignoredEmptySupabaseBalance:supabaseCurrentLooksEmpty,
     currentBalanceSource:useSupabaseCurrentBalance?'supabase':'trades',
-    winRate:closed.length?(wins.length/closed.length*100):0,
-    tradeCount:metricTrades.length,
-    closedCount:closed.length,
+    winRate:rawClosed.length?(rawWins.length/rawClosed.length*100):0,
+    tradeCount:ts.length,
+    metricTradeCount:metricTrades.length,
+    closedCount:rawClosed.length,
     rawTradeCount:ts.length,
-    rawClosedCount:ts.filter(isClosedPnlTrade).length,
+    rawClosedCount:rawClosed.length,
     openCount:metricTrades.filter(t=>t.status==='OPEN').length
   };
   _snapshotCache.set(cacheKey,result);
@@ -19868,6 +20058,16 @@ function setFundingStageFilter(value='all'){
   accFundingStageFilter=(ACCOUNT_STAGE_FILTER_DEF_MAP[normalized]||ACCOUNT_STAGE_LEGACY_DEF_MAP[normalized])?normalized:'all';
   renderAccOverview();
 }
+function openFundingStageOverview(value='all'){
+  const normalized=normalizeAccountStageFilterValue(value)||value;
+  accFundingStageFilter=(ACCOUNT_STAGE_FILTER_DEF_MAP[normalized]||ACCOUNT_STAGE_LEGACY_DEF_MAP[normalized])?normalized:'all';
+  openAccountsOverview(document.getElementById('nav-accounts'),'fondeo');
+}
+function isAccountArchivedFromMainOverview(acc){
+  if(!acc||normalizeAccountType(acc.type)!=='fondeo')return false;
+  const group=getAccountStageFilterGroup(acc);
+  return group==='passed'||group==='failed';
+}
 function renderOverviewChartFromElement(root=document){
   const overviewCanvas=root.querySelector?root.querySelector('#accOverviewChart'):document.getElementById('accOverviewChart');
   if(!overviewCanvas)return;
@@ -19933,11 +20133,18 @@ function getSelectedOverviewAccounts(type=accFilterType){
   return visible.filter(acc=>selectedIds.has(acc.id));
 }
 function renderAccountsProfessionalHero({visibleAccounts=[],baseVisible=[],scopeLabel='Todas las cuentas',allConnections=[]}={}){
-  const activeAccounts=accounts.filter(acc=>!isAccountBurned(acc));
+  const activeAccounts=accounts.filter(acc=>!isAccountArchivedFromMainOverview(acc));
   const visibleStats=getAccountsOverviewStats(visibleAccounts);
   const activeStats=getAccountsOverviewStats(activeAccounts);
   const stageCounts=getFundingStageFilterCounts(accounts.filter(acc=>normalizeAccountType(acc&&acc.type)==='fondeo'));
+  const passedCount=stageCounts.passed||0;
   const burnedCount=stageCounts.failed||0;
+  const stageDef=accFilterType==='fondeo'?getAccountStageFilterDef(accFundingStageFilter):null;
+  const isArchivedStageView=accFilterType==='fondeo'&&(accFundingStageFilter==='passed'||accFundingStageFilter==='failed');
+  const heroTitle=isArchivedStageView?`Cuentas ${stageDef.label.toLowerCase()}`:'Cuentas activas y listas para trabajar';
+  const heroSub=isArchivedStageView
+    ?'Archivo operativo de fondeo: aquí puedes revisar cuentas que ya no forman parte del flujo principal sin perder su histórico.'
+    :'Vista de gestión limpia: las cuentas pasadas y quemadas se mantienen fuera del flujo principal y se abren desde sus filtros.';
   const visibleClosed=visibleStats.closedCount||0;
   const visiblePnl=Number(visibleStats.totalPnl)||0;
   const pnlClass=visiblePnl>0?'pos':visiblePnl<0?'neg':'';
@@ -19953,13 +20160,14 @@ function renderAccountsProfessionalHero({visibleAccounts=[],baseVisible=[],scope
   return `<div class="pro-accounts-hero">
     <div class="pro-accounts-copy">
       <div class="pro-accounts-kicker">${escapeHtml(scopeLabel)}</div>
-      <div class="pro-accounts-title">Cuentas activas y listas para trabajar</div>
-      <div class="pro-accounts-sub">Vista de gestión limpia: las cuentas quemadas se mantienen fuera del flujo principal y solo aparecen al entrar en su filtro.</div>
+      <div class="pro-accounts-title">${escapeHtml(heroTitle)}</div>
+      <div class="pro-accounts-sub">${escapeHtml(heroSub)}</div>
       <div class="pro-accounts-filterbar">
         <div class="pro-accounts-filterbar-main">
           <span class="pro-accounts-pill"><strong>${visibleAccounts.length}</strong> visibles</span>
           <span class="pro-accounts-pill"><strong>${activeAccounts.length}</strong> activas</span>
-          <span class="pro-accounts-pill"><strong>${burnedCount}</strong> quemadas</span>
+          <button class="pro-accounts-pill pro-accounts-pill-action ${accFilterType==='fondeo'&&accFundingStageFilter==='passed'?'active':''}" type="button" onclick="openFundingStageOverview('passed')"><strong>${passedCount}</strong> pasadas</button>
+          <button class="pro-accounts-pill pro-accounts-pill-action ${accFilterType==='fondeo'&&accFundingStageFilter==='failed'?'active':''}" type="button" onclick="openFundingStageOverview('failed')"><strong>${burnedCount}</strong> quemadas</button>
           ${allConnections.length?`<span class="pro-accounts-pill"><strong>${allConnections.length}</strong> conexiones</span>`:''}
         </div>
         <div class="pro-accounts-note">${escapeHtml(distText)}</div>
@@ -20425,7 +20633,7 @@ function renderMobileHome(metrics,totalAccounts,totalStrategies,openTrades,activ
   const host=document.getElementById('tab-dashboard');
   if(!host)return false;
   const closedCount=metrics.displayClosedCount;
-  const quick=sortAccountsForDisplay(accounts.filter(acc=>!isAccountBurned(acc))).slice(0,3);
+  const quick=sortAccountsForDisplay(accounts.filter(isHomeDashboardActiveAccount)).slice(0,3);
   const today=metrics.todayClosedCount?fmt(metrics.todayPnl):'—';
   const todayTone=metrics.todayPnl>0?'pos':metrics.todayPnl<0?'neg':'';
   const recent=metrics.allTrades.slice().sort((a,b)=>getHomeTradeSortStamp(b.trade).localeCompare(getHomeTradeSortStamp(a.trade))).slice(0,3);
@@ -20504,6 +20712,8 @@ function openAccountsOverview(btn=document.getElementById('nav-accounts'),filter
   document.getElementById('acc-dash').style.display='none';
   document.getElementById('acc-overview').style.display='block';
   showTab('cuentas',btn);
+  if(typeof sbNav==='function')sbNav('accounts');
+  if(typeof refreshSidebarAccount==='function')refreshSidebarAccount();
   const tabs=document.querySelectorAll('#accountsTabs .acc-sub-tab');
   tabs.forEach(t=>t.classList.remove('active'));
   const map={all:0,fondeo:1,backtesting:2,real:3};
@@ -20535,12 +20745,14 @@ function getHomeTradeSortStamp(trade){
   const time=`${trade&&trade.exitTime||trade&&trade.openTime||'00:00:00'}`.trim()||'00:00:00';
   return`${date}T${time}`;
 }
+function isHomeDashboardActiveAccount(acc){
+  if(!acc)return false;
+  if(normalizeAccountType(acc&&acc.type)!=='fondeo')return true;
+  const group=getAccountStageFilterGroup(acc);
+  return group!=='passed'&&group!=='failed';
+}
 function getHomeDashboardMetrics(){
-  const activeAccounts=accounts.filter(acc=>{
-    if(normalizeAccountType(acc&&acc.type)!=='fondeo')return true;
-    const group=getAccountStageFilterGroup(acc);
-    return group!=='passed'&&group!=='failed';
-  });
+  const activeAccounts=accounts.filter(isHomeDashboardActiveAccount);
   const accountRows=activeAccounts.map(acc=>({acc,snapshot:getAccountSnapshot(acc)}));
   const allTrades=[];
   activeAccounts.forEach(acc=>{
@@ -20627,13 +20839,14 @@ function renderHome(){
   const totalStrategies=uniqList(accounts.flatMap(acc=>collectAccountStrategies(acc))).length;
   const metrics=getHomeDashboardMetrics();
   const openTrades=metrics.accountRows.reduce((sum,row)=>sum+row.snapshot.openCount,0);
-  const activeTypes=['fondeo','backtesting','real'].filter(type=>accounts.some(acc=>acc.type===type)).length;
+  const dashboardAccounts=metrics.accountRows.map(row=>row.acc);
+  const activeTypes=['fondeo','backtesting','real'].filter(type=>dashboardAccounts.some(acc=>normalizeAccountType(acc&&acc.type)===type)).length;
   const closedCount=metrics.displayClosedCount;
   const totalTrades=metrics.displayTradeCount;
   const quickPriority=['fondeo','real','backtesting'];
   const quickAccounts=quickPriority.map(type=>({
     type,
-    accounts:sortAccountsForDisplay(accounts.filter(acc=>acc.type===type&&!isAccountBurned(acc)))
+    accounts:sortAccountsForDisplay(accounts.filter(acc=>normalizeAccountType(acc&&acc.type)===type&&isHomeDashboardActiveAccount(acc)))
   })).filter(group=>group.accounts.length);
   if(isMobileLayout()&&renderMobileHome(metrics,totalAccounts,totalStrategies,openTrades,activeTypes))return;
   const desktopHome=document.querySelector('#tab-dashboard .pro-home');
@@ -20725,6 +20938,7 @@ function renderHome(){
 
 // ── Render accounts overview ────────────────────────────────
 function renderMobileAccountsOverview(host,baseVisible,visibleAccounts){
+  const stageCounts=getFundingStageFilterCounts(accounts.filter(acc=>normalizeAccountType(acc&&acc.type)==='fondeo'));
   const counts={
     all:baseVisible.length,
     fondeo:baseVisible.filter(acc=>normalizeAccountType(acc.type)==='fondeo').length,
@@ -20741,14 +20955,16 @@ function renderMobileAccountsOverview(host,baseVisible,visibleAccounts){
     {key:'phase_1',label:'P1'},
     {key:'phase_2',label:'P2'},
     {key:'funded',label:'Funded'},
-    {key:'payout_ready',label:'Withdrawal'}
+    {key:'payout_ready',label:'Withdrawal'},
+    {key:'passed',label:'Pasadas',count:stageCounts.passed||0,archive:true},
+    {key:'failed',label:'Quemadas',count:stageCounts.failed||0,archive:true}
   ];
   host.innerHTML=`<div class="mobile-screen mobile-accounts-screen">
     <div class="mobile-chip-row">
       ${stageFilters.map(item=>`<button class="mobile-filter-chip ${accFilterType===item.key||(item.key==='all'&&accFilterType==='all')?'active':''}" onclick="openAccountsOverview(document.getElementById('nav-accounts'),'${item.key}')">${escapeHtml(item.label)} <small>${item.count}</small></button>`).join('')}
     </div>
     <div class="mobile-chip-row">
-      ${fundingStages.map(item=>`<button class="mobile-filter-chip ${accFundingStageFilter===item.key?'active':''}" onclick="setFundingStageFilter('${item.key}')">${escapeHtml(item.label)}</button>`).join('')}
+      ${fundingStages.map(item=>`<button class="mobile-filter-chip ${accFilterType==='fondeo'&&accFundingStageFilter===item.key?'active':''}" onclick="openFundingStageOverview('${item.key}')">${escapeHtml(item.label)}${item.archive?` <small>${item.count||0}</small>`:''}</button>`).join('')}
     </div>
     <div class="mobile-account-list">
       ${visibleAccounts.length?visibleAccounts.map((acc,index)=>renderMobileAccountCard(acc,index)).join(''):`<div class="pro-empty">No hay cuentas en esta vista.</div>`}
@@ -21014,6 +21230,7 @@ function viewAccount(id,options={}){
   showTab('cuentas',document.getElementById('nav-accounts'));
   if(typeof sbNav==='function')sbNav('home');
   syncSidebarAccountView(targetView);
+  if(typeof refreshSidebarAccount==='function')refreshSidebarAccount();
 }
 
 function backToAccounts(){
@@ -21024,6 +21241,7 @@ function backToAccounts(){
   document.getElementById('acc-overview').style.display='block';
   if(typeof sbNav==='function')sbNav('accounts');
   renderAccOverview();
+  if(typeof refreshSidebarAccount==='function')refreshSidebarAccount();
 }
 function initAccountCharts(){
   const isDk=matchMedia('(prefers-color-scheme:dark)').matches;
@@ -21085,11 +21303,8 @@ function syncAccountStrategiesViewVisibility(acc){
   const hasStrategies=collectAccountStrategies(acc).length>0;
   const tab=document.getElementById('acc-tab-strategies');
   const view=document.getElementById('acc-view-strategies');
-  if(tab)tab.style.display=hasStrategies?'':'none';
-  if(view)view.style.display=hasStrategies?'':'none';
-  if(!hasStrategies&&accActiveView==='strategies'){
-    accActiveView='dashboard';
-  }
+  if(tab)tab.style.display='';
+  if(view)view.style.display='';
   return hasStrategies;
 }
 function syncSidebarAccountView(view=accActiveView){
@@ -21156,10 +21371,6 @@ function switchAccountView(view,btn=null){
     btn=null;
   }
   if(view==='weekly')view='calendar';
-  if(view==='strategies'&&!hasStrategies){
-    view='dashboard';
-    btn=null;
-  }
   accActiveView=view;
   const dash=document.getElementById('acc-dash');
   if(dash)dash.classList.toggle('is-summary-view',view==='dashboard');
@@ -21474,7 +21685,11 @@ function renderFundingDashboard(acc){
     totalMeta.textContent='No hay límite total cargado para este perfil.';
   }else{
     const totalMargin=getFundingMarginState(state.totalUsage);
-    const totalSourceText=state.totalUsage&&state.totalUsage.source==='ninjatrader_trailing_max_drawdown'?' · NinjaTrader Account Data':'';
+    const totalSourceText=state.totalUsage&&state.totalUsage.source==='ninjatrader_trailing_max_drawdown'
+      ?' · NinjaTrader Account Data'
+      :state.totalUsage&&state.totalUsage.brokerRemainingIgnoredReason==='ninjatrader_zero_trailing_max_drawdown'
+        ?' · NinjaTrader DD 0 ignorado'
+        :'';
     totalValue.textContent=totalMargin.breached?'0.0%':`${totalMargin.remainingPct.toFixed(1)}%`;
     totalBar.style.width=`${totalMargin.remainingPct.toFixed(1)}%`;
     totalMeta.textContent=totalMargin.breached
@@ -21516,8 +21731,8 @@ function renderAccountWorkspaceHero(acc){
   }
   setValue('acc-hero-balance',`$${snapshot.currentBalance.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`,balanceChange.tone);
   setText('acc-hero-balance-meta',formatBalanceChangeLabel(balanceChange));
-  setValue('acc-hero-pnl',snapshot.closed.length?fmt(snapshot.totalPnl):'—',snapshot.totalPnl>0?'pos':snapshot.totalPnl<0?'neg':'');
-  setText('acc-hero-pnl-meta',`${snapshot.closed.length} trade${snapshot.closed.length===1?'':'s'} cerrado${snapshot.closed.length===1?'':'s'}`);
+  setValue('acc-hero-pnl',fmt(snapshot.totalPnl),snapshot.totalPnl>0?'pos':snapshot.totalPnl<0?'neg':'');
+  setText('acc-hero-pnl-meta','Balance actual - inicial');
   setValue('acc-hero-wr',snapshot.closed.length?`${snapshot.winRate.toFixed(1)}%`:'—','');
   setText('acc-hero-wr-meta',`${snapshot.wins.length} win${snapshot.wins.length===1?'':'s'} · ${Math.max(snapshot.closed.length-snapshot.wins.length,0)} loss${snapshot.closed.length-snapshot.wins.length===1?'':'es'}`);
   if(latest){
@@ -22779,18 +22994,18 @@ function accRenderTable(f){
   const body=document.getElementById('acc-tradeBody');
   const groupedItems=accGroupAveraging?groupOverlappingTrades(f,TRADE_GROUP_OVERLAP_MIN):null;
   const displayCount=groupedItems?groupedItems.length:f.length;
-  if(tradeCount)tradeCount.textContent=displayCount+' trades';
+  if(tradeCount)tradeCount.textContent=f.length+' trades';
   const scopeSummary=document.getElementById('accTradeScopeSummary');
   if(scopeSummary){
     const allTrades=accountTrades[activeAccountId]||[];
-    const metricVisible=getGroupedMetricTrades(f);
-    const closed=getGroupedClosedMetricTrades(f);
+    const metricVisible=accGroupAveraging?getGroupedMetricTrades(f):f;
+    const closed=f.filter(isClosedPnlTrade);
     const pnl=closed.reduce((sum,t)=>sum+getMetricTradePnl(t),0);
     const open=metricVisible.filter(t=>t.status==='OPEN').length;
     const query=getAccTradeSearchQuery();
-    const allDisplayCount=getOverlappedTradeCount(allTrades);
+    const groupedNote=accGroupAveraging&&displayCount!==f.length?` · ${displayCount} agrupado${displayCount===1?'':'s'} en vista`:'';
     const closedDisplayCount=closed.length;
-    scopeSummary.textContent=`${displayCount} visible${displayCount===1?'':'s'} de ${allDisplayCount} · ${closedDisplayCount} cerrado${closedDisplayCount===1?'':'s'} · ${open} abierto${open===1?'':'s'} · ${closed.length?fmt(pnl):'sin P&L cerrado'}${query?' · búsqueda activa':''}`;
+    scopeSummary.textContent=`${f.length} visible${f.length===1?'':'s'} de ${allTrades.length}${groupedNote} · ${closedDisplayCount} cerrado${closedDisplayCount===1?'':'s'} · ${open} abierto${open===1?'':'s'} · ${closed.length?fmt(pnl):'sin P&L cerrado'}${query?' · búsqueda activa':''}`;
   }
   const pagination=document.getElementById('accTradePagination');
   if(pagination)pagination.innerHTML='';
@@ -24243,10 +24458,11 @@ function syncAccountTimeLimitDefault(profile=getSelectedFundingProfile()){
     firm:automaticFirm&&automaticFirm.label||accAutomaticDraft&&accAutomaticDraft.detected_firm_name||'',
     prop_firm:automaticFirm&&(automaticFirm.id||automaticFirm.slug)||''
   },profile);
-  if(limitInput&&!limitInput.value&&defaultDays)limitInput.value=String(defaultDays);
+  if(limitInput&&!limitInput.value&&defaultDays)limitInput.value=formatAccountTimeLimitInputValue(defaultDays);
   if(hint){
+    const defaultLabel=formatAccountTimeLimitLabel(defaultDays);
     hint.textContent=defaultDays
-      ?`Este programa sugiere ${defaultDays} días. Puedes cambiarlo si tu cuenta tiene otra regla.`
+      ?`Este programa sugiere ${defaultLabel}. Puedes cambiarlo si tu cuenta tiene otra regla.`
       :'Introduce el límite si esta evaluación caduca; si lo dejas vacío, solo se mostrarán los días transcurridos.';
   }
 }
@@ -24255,7 +24471,7 @@ function getAccountTimeLimitFieldsFromModal(accountType=accSelType,profile=getSe
     return{account_purchased_at:null,accountPurchasedAt:null,challenge_time_limit_days:null,challengeTimeLimitDays:null};
   }
   const purchaseDate=normalizeDateKeyValue(document.getElementById('accMPurchaseDate')&&document.getElementById('accMPurchaseDate').value||'');
-  const rawDays=Number(document.getElementById('accMTimeLimitDays')&&document.getElementById('accMTimeLimitDays').value);
+  const rawDays=parseAccountTimeLimitDaysValue(document.getElementById('accMTimeLimitDays')&&document.getElementById('accMTimeLimitDays').value);
   const automaticFirm=accCreationMode==='automatic'?detectPropFirmFromAccount({
     ...accAutomaticDraft,
     name:accAutomaticDraft&&(
@@ -24272,7 +24488,7 @@ function getAccountTimeLimitFieldsFromModal(accountType=accSelType,profile=getSe
     firm:automaticFirm&&automaticFirm.label||accAutomaticDraft&&accAutomaticDraft.detected_firm_name||'',
     prop_firm:automaticFirm&&(automaticFirm.id||automaticFirm.slug)||''
   },profile);
-  const limitDays=Number.isFinite(rawDays)&&rawDays>0?Math.round(rawDays):(fallbackDays||null);
+  const limitDays=rawDays||(fallbackDays||null);
   return{
     account_purchased_at:purchaseDate||null,
     accountPurchasedAt:purchaseDate||'',
@@ -25819,7 +26035,7 @@ function openAccModal(id=null, defaultType=null, fundingPreset=null){
     document.getElementById('accMStrategies').value=(collectAccountStrategies(acc)||[]).join('\n');
     document.getElementById('accMDesc').value=acc.description||'';
     document.getElementById('accMPurchaseDate').value=getAccountPurchaseDate(acc)||'';
-    document.getElementById('accMTimeLimitDays').value=getAccountTimeLimitDays(acc,getAccountFundingProfile(acc))||'';
+    document.getElementById('accMTimeLimitDays').value=formatAccountTimeLimitInputValue(getAccountTimeLimitDays(acc,getAccountFundingProfile(acc)))||'';
     if(connectionAliasInput){
       connectionAliasInput.value=acc.connectionDisplayName||acc.connection_display_name||'';
       connectionAliasInput.placeholder=getAccountConnectionDisplayName(acc)||'Ej: Apex Slupo, Apex Tradovate...';
@@ -26569,7 +26785,6 @@ async function activateAuthenticatedSession(session){
     await ensureMultiAccountData({persist:false});
     setSyncState('online');
     startRemoteRefresh();
-    removeDuplicateTradesAllAccounts().catch(err=>console.warn('[trade-journal] dedupe initial pass failed',err));
     setTimeout(()=>{try{diagnoseConnectionNameCoverage();}catch(_){}}, 1500);
   }catch(error){
     applyLoadedState(mergeLocalFallbackState({accounts:[],accountTrades:{},trades:[]}));
@@ -26893,8 +27108,8 @@ window.showTab=function(name,btn){
 	              <input class="fi" id="accMPurchaseDate" type="date"/>
 	            </div>
 	            <div>
-	              <label class="fl">Límite días</label>
-	              <input class="fi" id="accMTimeLimitDays" type="number" min="1" step="1" placeholder="30"/>
+	              <label class="fl">Límite</label>
+	              <input class="fi" id="accMTimeLimitDays" type="text" inputmode="numeric" placeholder="1 mes"/>
 	            </div>
 	          </div>
 	          <div class="funding-preview-note" id="accTimeLimitHint">Se mostrará el progreso visual de días transcurridos y restantes en esta cuenta.</div>
@@ -26973,6 +27188,12 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
       if(active)el.setAttribute('aria-current','page');
       else el.removeAttribute('aria-current');
     });
+    if(key!=='home'){
+      document.querySelectorAll('.sb-sub-link[data-account-view]').forEach(el=>{
+        el.classList.remove('active');
+        el.removeAttribute('aria-current');
+      });
+    }
   };
   window.openMobileSidebar=function(){
     if(window.innerWidth>760)return;
@@ -27067,13 +27288,15 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
   }
   function pickActiveAccount(){
     try{
-      const list=((typeof accounts!=='undefined'&&Array.isArray(accounts))?accounts:[]).filter(acc=>!(typeof isAccountBurned==='function'&&isAccountBurned(acc)));
-      if(!list.length) return null;
+      const allAccounts=(typeof accounts!=='undefined'&&Array.isArray(accounts))?accounts:[];
+      if(!allAccounts.length) return null;
       const id=(typeof activeAccountId!=='undefined')?activeAccountId:null;
       if(id){
-        const found=list.find(a=>a.id===id||a.account_id===id);
+        const found=allAccounts.find(a=>a&&(a.id===id||a.account_id===id));
         if(found) return found;
       }
+      const list=allAccounts.filter(acc=>!(typeof isAccountBurned==='function'&&isAccountBurned(acc)));
+      if(!list.length) return null;
       if(typeof getVisibleAccounts==='function'){
         const visible=getVisibleAccounts('all').filter(acc=>!(typeof isAccountBurned==='function'&&isAccountBurned(acc)));
         if(Array.isArray(visible)&&visible.length)return visible[0];
@@ -27131,15 +27354,17 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
       return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];
     });
   }
+  function isSidebarAccountMenuEligible(acc){
+    if(!acc)return false;
+    if(typeof isAccountBurned==='function'&&isAccountBurned(acc))return false;
+    if(typeof getAccountStageFilterGroup==='function'&&getAccountStageFilterGroup(acc)==='passed')return false;
+    return true;
+  }
   function accountMenuRows(){
     try{
-      const list=((typeof accounts!=='undefined'&&Array.isArray(accounts))?accounts:[])
-        .filter(acc=>!(typeof isAccountBurned==='function'&&isAccountBurned(acc)));
-      const sorted=typeof sortAccountsForDisplay==='function'?sortAccountsForDisplay(list.slice()):list.slice();
-      const activeId=(typeof activeAccountId!=='undefined')?activeAccountId:null;
-      const activeAcc=(activeId?sorted.find(acc=>acc&&(acc.id===activeId||acc.account_id===activeId)):null)||pickActiveAccount();
-      const activeConnection=accountConnectionKey(activeAcc);
-      return activeConnection?sorted.filter(acc=>accountConnectionKey(acc)===activeConnection):sorted;
+      const allAccounts=((typeof accounts!=='undefined'&&Array.isArray(accounts))?accounts:[]);
+      const list=allAccounts.filter(isSidebarAccountMenuEligible);
+      return typeof sortAccountsForDisplay==='function'?sortAccountsForDisplay(list.slice()):list.slice();
     }catch(e){return [];}
   }
   function accountConnectionLabel(acc){
@@ -27152,10 +27377,10 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
   }
   function accountConnectionKey(acc){
     try{
-      const raw=(typeof getAccountConnectionName==='function'&&getAccountConnectionName(acc))||
-        (typeof getAccountConnectionDisplayName==='function'&&getAccountConnectionDisplayName(acc))||
-        '';
-      return `${raw}`.trim().toLowerCase();
+      const display=(typeof getAccountConnectionDisplayName==='function'&&getAccountConnectionDisplayName(acc))||'';
+      if(`${display}`.trim())return `display:${display}`.trim().toLowerCase();
+      const raw=(typeof getAccountConnectionName==='function'&&getAccountConnectionName(acc))||'';
+      return `raw:${raw}`.trim().toLowerCase();
     }catch(e){return '';}
   }
   function renderSidebarAccountMenu(){
@@ -27163,15 +27388,27 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
     if(!menu)return;
     const rows=accountMenuRows();
     if(!rows.length){
-      menu.innerHTML='<div class="sb-account-menu-empty">No hay cuentas activas para esta conexión.</div>'+
+      menu.innerHTML='<div class="sb-account-menu-empty">No hay cuentas activas para mostrar.</div>'+
         '<div class="sb-account-menu-divider"></div>'+
         '<button type="button" class="sb-account-menu-action" onclick="closeSidebarAccountMenu();openAccModal()">＋ Nueva cuenta</button>';
       return;
     }
     const activeId=(typeof activeAccountId!=='undefined')?activeAccountId:null;
-    const activeAcc=(activeId?rows.find(acc=>acc&&(acc.id===activeId||acc.account_id===activeId)):null)||pickActiveAccount();
-    const groupLabel=activeAcc?accountConnectionLabel(activeAcc):(rows.length?accountConnectionLabel(rows[0]):'');
-    menu.innerHTML=(groupLabel?'<div class="sb-account-menu-group">Conexión · '+esc(groupLabel)+'</div>':'')+rows.map(acc=>{
+    const allAccounts=((typeof accounts!=='undefined'&&Array.isArray(accounts))?accounts:[]);
+    const activeAcc=(activeId?allAccounts.find(acc=>acc&&(acc.id===activeId||acc.account_id===activeId)):null)||pickActiveAccount();
+    const activeConnection=accountConnectionKey(activeAcc);
+    const groups=new Map();
+    rows.forEach(acc=>{
+      const key=accountConnectionKey(acc)||'raw:';
+      if(!groups.has(key))groups.set(key,{key,label:accountConnectionLabel(acc),rows:[]});
+      groups.get(key).rows.push(acc);
+    });
+    const orderedGroups=[...groups.values()].sort((a,b)=>{
+      if(activeConnection&&a.key===activeConnection)return -1;
+      if(activeConnection&&b.key===activeConnection)return 1;
+      return `${a.label||''}`.localeCompare(`${b.label||''}`);
+    });
+    const renderAccountRow=acc=>{
       const id=String(acc&&acc.id||'');
       const name=acc&&acc.name||acc&&acc.account_name||acc&&acc.label||'Cuenta';
       const connectionLabel=accountConnectionLabel(acc);
@@ -27187,7 +27424,12 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
         '<span class="sb-account-item-main"><span class="sb-account-item-name">'+esc(name)+'</span><span class="sb-account-item-conn">'+esc(connectionLabel)+'</span></span>'+
         '<span class="sb-account-item-bal">'+esc(Number.isFinite(bal)?fmtMoney(bal):'—')+'</span>'+
       '</button>';
-    }).join('')+
+    };
+    menu.innerHTML=orderedGroups.map((group,index)=>
+      (index?'<div class="sb-account-menu-divider"></div>':'')+
+      '<div class="sb-account-menu-group">Conexión · '+esc(group.label||'Sin conexión')+'</div>'+
+      group.rows.map(renderAccountRow).join('')
+    ).join('')+
       '<div class="sb-account-menu-divider"></div>'+
       '<button type="button" class="sb-account-menu-action" onclick="closeSidebarAccountMenu();openAccountsOverview(document.getElementById(\'nav-accounts\'))">Ver todas las cuentas</button>'+
       '<button type="button" class="sb-account-menu-action" onclick="closeSidebarAccountMenu();openAccModal()">＋ Nueva cuenta</button>';
